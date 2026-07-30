@@ -12,6 +12,8 @@ changes no game behaviour. **Never uploaded to the Steam Workshop, no CI, no rel
 It exists to close a blind spot in the sibling mods' translation checkers — see
 `../UniqueMeleeWeapons/HANDOVER.md` for the consumer side.
 
+Sam may informally write "lion probe" for L10nProbe ("L10n" reads similar).
+
 **Key technologies:** C# (.NET Framework 4.7.2), RimWorld modding API. No Harmony, no XML defs.
 
 ### Where documentation lives
