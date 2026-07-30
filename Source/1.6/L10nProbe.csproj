@@ -1,0 +1,145 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <OutputPath>../../1.6/Assemblies/</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!-- RimWorld Installation Path Configuration -->
+  <!-- Override with environment variables RIMWORLD_PATH / RIMWORLD_DATA_FOLDER or pass -p: properties to dotnet build -->
+  <PropertyGroup>
+    <RimWorldPath Condition="'$(RimWorldPath)' == ''">$(RIMWORLD_PATH)</RimWorldPath>
+  </PropertyGroup>
+
+  <!-- Platform-specific defaults if RIMWORLD_PATH not set -->
+  <PropertyGroup Condition="'$(RimWorldPath)' == '' And $([MSBuild]::IsOSPlatform('Windows'))">
+    <RimWorldPath>C:\Program Files (x86)\Steam\steamapps\common\RimWorld</RimWorldPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RimWorldPath)' == '' And $([MSBuild]::IsOSPlatform('Linux'))">
+    <RimWorldPath>$(HOME)/.local/share/Steam/steamapps/common/RimWorld</RimWorldPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RimWorldPath)' == '' And $([MSBuild]::IsOSPlatform('OSX'))">
+    <RimWorldPath>$(HOME)/Library/Application Support/Steam/steamapps/common/RimWorld</RimWorldPath>
+  </PropertyGroup>
+
+  <!-- Platform-specific data folder names -->
+  <!-- Override with environment variable RIMWORLD_DATA_FOLDER or pass -p:RimWorldDataFolder="..." to dotnet build -->
+  <PropertyGroup>
+    <RimWorldDataFolder Condition="'$(RimWorldDataFolder)' == ''">$(RIMWORLD_DATA_FOLDER)</RimWorldDataFolder>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RimWorldDataFolder)' == '' And $([MSBuild]::IsOSPlatform('Windows'))">
+    <RimWorldDataFolder>RimWorldWin64_Data</RimWorldDataFolder>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RimWorldDataFolder)' == '' And $([MSBuild]::IsOSPlatform('Linux'))">
+    <RimWorldDataFolder>RimWorldLinux_Data</RimWorldDataFolder>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RimWorldDataFolder)' == '' And $([MSBuild]::IsOSPlatform('OSX'))">
+    <RimWorldDataFolder>RimWorldMac_Data</RimWorldDataFolder>
+  </PropertyGroup>
+  <!-- WSL fallback: if Linux data folder not found, try Windows data folder -->
+  <PropertyGroup Condition="'$(RimWorldPath)' != '' And !Exists('$(RimWorldPath)/$(RimWorldDataFolder)/Managed/Assembly-CSharp.dll') And Exists('$(RimWorldPath)/RimWorldWin64_Data/Managed/Assembly-CSharp.dll')">
+    <RimWorldDataFolder>RimWorldWin64_Data</RimWorldDataFolder>
+  </PropertyGroup>
+
+  <!-- Detect if local RimWorld installation exists -->
+  <PropertyGroup>
+    <UseLocalRimWorld Condition="Exists('$(RimWorldPath)/$(RimWorldDataFolder)/Managed/Assembly-CSharp.dll')">true</UseLocalRimWorld>
+  </PropertyGroup>
+
+  <!-- Use local references when RimWorld is installed -->
+  <ItemGroup Condition="'$(UseLocalRimWorld)' == 'true'">
+    <Reference Include="Assembly-CSharp" Private="false">
+      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine" Private="false">
+      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule" Private="false">
+      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule" Private="false">
+      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule" Private="false">
+      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Fall back to NuGet package when there is no local RimWorld (headless checkout) -->
+  <ItemGroup Condition="'$(UseLocalRimWorld)' != 'true'">
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.*" />
+  </ItemGroup>
+
+  <!-- No Lib.Harmony reference, unlike the family's mods: the probe only calls public
+       startup-time API (DefInjectionUtility, GenCommandLine, LongEventHandler), so it
+       patches nothing. Keep it that way — a probe that alters game behaviour would
+       compromise the dumps it exists to produce. -->
+
+  <!-- Build-time code analysis (warnings only; never ships). Roslynator's analyzers run
+       on every build and surface in the IDE + build log; PrivateAssets="all" keeps them
+       out of the compiled DLL and out of any downstream reference. The global
+       `roslynator` CLI (installed separately) handles bulk fixes. -->
+  <ItemGroup>
+    <PackageReference Include="Roslynator.Analyzers" Version="4.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- ===== Mod packaging / deployment =====
+       The ItemGroup inside StageMod below is the SINGLE source of truth for what files
+       constitute the deployable mod, and feeds the post-build deploy into the local
+       RimWorld Mods folder. There is no CI release and no Workshop packaging here (this
+       mod is never shipped), so unlike the family's mods that target has exactly one
+       caller — but the shape is kept identical so fixes port both ways. -->
+  <PropertyGroup>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../..'))</RepoRoot>
+    <ModDeployPath>$(RimWorldPath)/Mods/L10nProbe</ModDeployPath>
+    <!-- StageMod writes here. Defaults to the local Mods folder. -->
+    <StageDir Condition="'$(StageDir)' == ''">$(ModDeployPath)</StageDir>
+  </PropertyGroup>
+
+  <!-- Clear the staged content then recopy from source: self-cleaning, so a renamed or
+       deleted file never lingers. Invoke directly to stage elsewhere:
+         dotnet build Source/1.6/L10nProbe.csproj -c Release \
+           -t:StageMod -p:StageDir=/path/to/L10nProbe -->
+  <Target Name="StageMod">
+    <Error Condition="'$(StageDir)' == ''" Text="StageMod requires a non-empty -p:StageDir." />
+    <ItemGroup>
+      <!-- The deployable mod = About metadata + the assembly, and nothing else: this mod
+           ships no Defs, Patches, Textures, Sounds or Languages (its own UI is deliberately
+           unlocalized — see SPEC.md non-goals). Each entry is matched at the mod root AND
+           under any one top-level subfolder ("$(RepoRoot)/*/<Folder>") so a future 1.7/
+           needs no change here. Source layout is mirrored verbatim into $(StageDir).
+           To ship a new content type, add ONE <_ModFiles Include="..."/> line — and mirror
+           it in the wipe list below, which is enumerated rather than a blanket RemoveDir. -->
+      <_ModFiles Include="$(RepoRoot)/LoadFolders.xml" />
+      <_ModFiles Include="$(RepoRoot)/About/**/*.xml;$(RepoRoot)/About/**/*.png;$(RepoRoot)/About/**/*.txt" />
+      <_ModFiles Include="$(RepoRoot)/Assemblies/**/*.dll;$(RepoRoot)/*/Assemblies/**/*.dll" />
+    </ItemGroup>
+    <!-- Mirror each file's path relative to the repo root into $(StageDir). Computed as
+         per-item metadata (MakeRelative inside a transform string evaluates only once,
+         not per item). %(FullPath) is concrete, so the version folder (1.6/) matched by
+         the "*/" wildcards is recovered here verbatim. -->
+    <ItemGroup>
+      <_ModFiles>
+        <Dest>$(StageDir)/$([MSBuild]::MakeRelative('$(RepoRoot)', '%(FullPath)'))</Dest>
+      </_ModFiles>
+    </ItemGroup>
+    <!-- Deliberate divergence from the family's `<RemoveDir Directories="$(StageDir)" />`:
+         the probe's default output lands in $(StageDir)/Output/ (the running mod's own
+         folder is the only path it knows without configuration), so a blanket wipe would
+         delete dumps a release script may not have collected yet. Wipe only what we stage. -->
+    <RemoveDir Directories="$(StageDir)/About;$(StageDir)/1.6;$(StageDir)/Assemblies" />
+    <Delete Files="$(StageDir)/LoadFolders.xml" />
+    <Copy SourceFiles="@(_ModFiles)" DestinationFiles="@(_ModFiles->'%(Dest)')" />
+    <Message Text="Staged @(_ModFiles->Count()) mod files -> $(StageDir)" Importance="high" />
+  </Target>
+
+  <!-- After every local build, redeploy into the RimWorld Mods folder. -->
+  <Target Name="DeployToModFolder" AfterTargets="Build" Condition="'$(UseLocalRimWorld)' == 'true'">
+    <CallTarget Targets="StageMod" />
+  </Target>
+</Project>

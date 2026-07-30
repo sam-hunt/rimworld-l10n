@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>L10n Probe</name>
+  <author>Sam Hunt</author>
+  <packageId>shunter.l10nprobe</packageId>
+  <modVersion>0.1.0</modVersion>
+  <description>Dumps the complete expected DefInjected key set, with current English values, for selected loaded mods to machine-readable JSON. It calls the game's own def-injection walker over the live DefDatabase, filtered to one mod at a time, so vanilla-inherited fields and C# field defaults are included and vanilla's own missing translations are not.
+Probe from this mod's settings window, or launch the game with -l10nprobe to dump and quit without touching the UI. Output defaults to this mod's own Output/ folder; a per-mod path override writes straight into a mod's source repo instead.
+Expected keys are language-independent, so no language switching is needed and the active language is irrelevant.
+Load this LAST: it can only see defs that are loaded.</description>
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+  <!-- No modDependencies: no Harmony, no DLC. Everything the probe does is public
+       API over whatever happens to be loaded, so it is deliberately DLC-agnostic. -->
+  <loadAfter>
+    <li>brrainz.harmony</li>
+    <li>ludeon.rimworld</li>
+    <li>ludeon.rimworld.royalty</li>
+    <li>ludeon.rimworld.ideology</li>
+    <li>ludeon.rimworld.biotech</li>
+    <li>ludeon.rimworld.anomaly</li>
+    <li>ludeon.rimworld.odyssey</li>
+    <!-- The probe must load after everything it probes; a newly probed mod belongs here. -->
+    <li>shunter.uniquemeleeweapons</li>
+    <li>shunter.uniqueweaponsunbound</li>
+    <li>shunter.personaweaponsunbound</li>
+  </loadAfter>
+</ModMetaData>

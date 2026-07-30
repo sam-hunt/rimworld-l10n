@@ -23,18 +23,18 @@ missing data, and manual (UI actuation, language switching, desktop output).
 The game's report is just a wrapper. The underlying walker is directly
 callable, mod-filterable, and language-independent — this mod calls it.
 
-## Decompile-verified API surface (RimWorld 1.6, verified 2026-07-30)
+## Decompile-verified API surface (RimWorld 1.6, verified 2026-07-31)
 
 Re-verify against the current build with
 `ilspycmd "$RIMWORLD_PATH/RimWorldWin64_Data/Managed/Assembly-CSharp.dll" -t <Type>`.
 
 - **`Verse.DefInjectionUtility.ForEachPossibleDefInjection(Type defType,
-  PossibleDefInjectionTraverser action, ModMetaData onlyFromMod = null)`** —
+PossibleDefInjectionTraverser action, ModMetaData onlyFromMod = null)`** —
   the ground-truth enumerator.
   - Delegate: `(string suggestedPath, string normalizedPath, bool isCollection,
-    string currentValue, IEnumerable<string> currentValueCollection,
-    bool translationAllowed, bool fullListTranslationAllowed,
-    FieldInfo fieldInfo, Def def)`.
+string currentValue, IEnumerable<string> currentValueCollection,
+bool translationAllowed, bool fullListTranslationAllowed,
+FieldInfo fieldInfo, Def def)`.
   - Walks the live def object graph recursively (visited-set; skips `Thing`
     and `Def`-valued fields), so vanilla-inherited values and C# constructor
     defaults are present in `currentValue`.
@@ -47,15 +47,20 @@ Re-verify against the current build with
   - `onlyFromMod` filters by `def.modContentPack.PackageId` — this is the
     noise-elimination: only the probed mod's defs are visited, vanilla's
     missing translations never appear.
-- **Which entries count as "must translate":** the report's missing-entries
-  pass applies a further filter on top of the walker
-  (`DefInjectionUtility.ShouldCheckMissingInjection` or equivalent — check
-  its name/accessibility in `LanguageReportGenerator.AppendMissingDefInjections`;
-  if internal, call via reflection rather than replicating its logic).
-  Reuse the game's filter verbatim: divergence from the report is a bug.
-- **Def type enumeration:** iterate the same universe the report does
-  (see `AppendMissingDefInjections`; expected to be
-  `GenDefDatabase.AllDefTypesWithDatabases()` — verify).
+- **Which entries count as "must translate":**
+  `Verse.DefInjectionUtility.ShouldCheckMissingInjection(string str,
+  FieldInfo fi, Def def)` — **public**, no reflection needed. The report's
+  missing pass (`DefInjectionPackage.MissingInjections`, called per package by
+  `LanguageReportGenerator.AppendMissingDefInjections`) applies it on top of
+  the walker: scalars count iff `translationAllowed && ShouldCheck(value)`;
+  string collections are checked **per element** with the same predicate.
+  The probe's expected key set is therefore exactly what `MissingInjections`
+  would report for a language with no translation files. Reuse the game's
+  filter verbatim: divergence from the report is a bug.
+- **Def type enumeration:** `GenDefDatabase.AllDefTypesWithDatabases()` —
+  public, verified; it is the universe `TranslationFilesCleaner` generates
+  DefInjected files from (the report iterates the active language's
+  `DefInjectionPackage`s, whose def types come from the same set).
 - **What the probe replaces:** `Verse.LanguageReportGenerator` — UI-only
   (debug action), refuses to run unless a non-English language is active,
   writes `TranslationReport.txt` to a fixed location, and diffs against the
@@ -65,8 +70,9 @@ Re-verify against the current build with
 ## Behavior
 
 1. **When triggered**, for each configured target mod: enumerate every def
-   type, run the walker with `onlyFromMod`, apply the game's
-   missing-injection filter, and write one output file per mod.
+   type, run the walker with `onlyFromMod`, record the game's
+   missing-injection verdict per entry (`required`), and write one output
+   file per mod.
 2. **Triggers:**
    - A **"Probe now"** button in the mod settings window (primary manual path).
    - **Command-line automation:** when the game is launched with
@@ -88,34 +94,67 @@ Re-verify against the current build with
   },
   "defInjections": {
     "ThingDef": {
-      "UMW_Axe_Unique.tools.handle.label": { "english": "handle" },
-      "UMW_Axe_Unique.label": { "english": "unique axe" }
+      "UMW_Axe_Unique.tools.handle.label": { "english": "handle", "required": true },
+      "UMW_Axe_Unique.label": { "english": "unique axe", "required": true },
+      "UMW_Cut_Ragged.comps.HediffComp_TendDuration.labelTendedWell": {
+        "english": "bandaged",
+        "normalized": "UMW_Cut_Ragged.comps.0.labelTendedWell"
+      }
     },
-    "WeaponTraitDef": {
-      "UMW_Lightweight.traitAdjectives": {
-        "english": ["lightweight", "featherlight"],
-        "isCollection": true, "fullListAllowed": true
+    "UniqueWeaponsUnbound.TraitCostRuleDef": {
+      "UWU_Akimbo.labelKeywords": {
+        "english": ["akimbo"],
+        "isCollection": true,
+        "fullListAllowed": true
       }
     }
   }
 }
 ```
 
-   Scalar entries may omit the flag fields (default false). `activeDlcs`
-   matters because `MayRequire`-gated defs (e.g. UMW's Axe/Warhammer uniques
-   need Royalty) only exist — and only emit keys — when their DLC is active;
-   consumer scripts must be able to detect a probe run with the wrong DLC set.
+Every entry is a **legal injection point**: `translationAllowed`, on a
+non-`generated` def, with a non-empty current value — the full set the game
+would actually load a translation into. The game's must-translate filter is
+recorded, not applied as a cut: `"required": true` marks entries
+`ShouldCheckMissingInjection` passes (collections: any element passes,
+mirroring the per-element check in `DefInjectionPackage.MissingInjections`)
+— i.e. exactly what the in-game report would list as missing. Non-required
+entries (single-word labels without `[MustTranslate]`, `[MayTranslate]`
+fields, `fullListAllowed` keyword lists) exist because real translations
+target them and consumers must be able to validate those for staleness.
+
+Flag fields are emitted only when true. `"normalized"` is emitted only when
+it differs from the key: the key is `suggestedPath` (handle form); existing
+translation files may use the equally-valid index form, which the game
+dedups by `normalizedPath` — consumers match legacy keys against it.
+
+Def types are keyed by the DefInjected **folder name the game's loader
+accepts** (`GenTypes.GetTypeInAnyAssembly`): short name for ignored
+namespaces (Verse, RimWorld), full name for custom-namespace def types like
+`UniqueWeaponsUnbound.TraitCostRuleDef`.
+
+A collection is emitted as one entry at its `suggestedPath` carrying **all**
+current elements, because a full-list `<li>` translation must match the
+element count unless `fullListAllowed` is set. `activeDlcs` uses
+`ExpansionDef.defName` (language-independent, unlike labels) in DefDatabase
+order. It matters because `MayRequire`-gated defs (e.g. UMW's Axe/Warhammer
+uniques need Royalty) only exist — and only emit keys — when their DLC is
+active; consumer scripts must be able to detect a probe run with the wrong
+DLC set.
+
 4. **Settings UI** (standard `Mod`/`ModSettings` subclass):
-   - Checkbox list of **active mods** to probe (default: none; the family's
-     three mods are simply ticked once on this machine). Persist packageIds.
-   - Per-mod **output path** override (text field). Default:
-     `<probe mod's own folder>/Output/<packageId>.json`. The point of the
-     override is writing straight into each mod's **source repo** rather than
-     its deployed Mods-folder copy — for this machine that means WSL UNC
-     paths like `\\wsl.localhost\<distro>\home\shunt\dev\<Repo>\Scripts\...`.
-     Verify plain `System.IO` writes to UNC paths work from the game; if they
-     prove flaky, fall back to the default folder and let the WSL-side
-     release script fetch from there.
+
+- Checkbox list of **active mods** to probe (default: none; the family's
+  three mods are simply ticked once on this machine). Persist packageIds.
+- Per-mod **output path** override (text field). Default:
+  `<probe mod's own folder>/Output/<packageId>.json`. The point of the
+  override is writing straight into each mod's **source repo** rather than
+  its deployed Mods-folder copy — for this machine that means WSL UNC
+  paths like `\\wsl.localhost\<distro>\home\shunt\dev\<Repo>\Scripts\...`.
+  Verify plain `System.IO` writes to UNC paths work from the game; if they
+  prove flaky, fall back to the default folder and let the WSL-side
+  release script fetch from there.
+
 5. **Failure loudly:** any exception per mod is logged with a `[L10nProbe]`
    prefix and a clearly invalid/absent output file — a release script must
    never mistake a partial dump for a complete one (write to a temp name,
@@ -129,20 +168,18 @@ Re-verify against the current build with
 - No per-language diffing, no translation writing — consumers do that.
 - No backstories/strings-folder handling (the family's mods have none; add
   later only if a report section for them ever lights up).
-- No Workshop packaging, no CI, no localization of the probe's own UI.
+- No Workshop packaging, no localization of the probe's own UI.
 
 ## Repo/mod conventions
 
-- RimWorld 1.6 mod layout: `About/About.xml` (packageId placeholder
-  `shunt.l10nprobe` — confirm against the family's packageId convention),
+- RimWorld 1.6 mod layout: `About/About.xml` (packageId `shunter.l10nprobe`),
   `1.6/Assemblies/`, C# source under `Source/` mirroring the family's csproj
   layout (auto-detect `RIMWORLD_PATH`, `Krafs.Rimworld.Ref` fallback). No
   Harmony dependency expected — everything is public API calls at startup —
   and none of the family's `MayRequire` gymnastics: the probe itself is
   DLC-agnostic.
-- `loadAfter` everything it probes (or simply rely on it being last in the
-  local mod list; document this in About.xml description).
-- README: one paragraph — what it is, "never upload", the `-l10nprobe` flag,
+- rely on it being last in the local mod list; documented in About.xml description.
+- README: one paragraph — what it is, the `-l10nprobe` flag,
   and a pointer to the family repos' HANDOVER/release-skill integration.
 
 ## Acceptance criteria
