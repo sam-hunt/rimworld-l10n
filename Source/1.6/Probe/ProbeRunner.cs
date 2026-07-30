@@ -25,6 +25,7 @@ public static class ProbeRunner
     // and kept in LastRunSummary). `reason` says which trigger fired, purely for the log.
     public static string RunAll(string reason)
     {
+        System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
         L10nProbeSettings settings = L10nProbeMod.Settings;
         List<string> targets = settings.targetPackageIds.OrderBy(id => id, StringComparer.Ordinal).ToList();
         if (targets.Count == 0)
@@ -62,9 +63,11 @@ public static class ProbeRunner
             }
         }
 
+        // Invariant culture so the seconds figure never grows a comma decimal separator.
+        string elapsed = stopwatch.Elapsed.TotalSeconds.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
         string summary = failed.Count == 0
-            ? $"probe ({reason}): {written}/{targets.Count} dump(s) written."
-            : $"probe ({reason}): {written}/{targets.Count} dump(s) written; FAILED: {string.Join(", ", failed)} — see log.";
+            ? $"probe ({reason}): {written}/{targets.Count} dump(s) written in {elapsed}s."
+            : $"probe ({reason}): {written}/{targets.Count} dump(s) written in {elapsed}s; FAILED: {string.Join(", ", failed)} — see log.";
         Log.Message($"{L10nProbeMod.LogPrefix} {summary}");
         return LastRunSummary = summary;
     }
