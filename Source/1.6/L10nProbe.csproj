@@ -138,8 +138,10 @@
     <Message Text="Staged @(_ModFiles->Count()) mod files -> $(StageDir)" Importance="high" />
   </Target>
 
-  <!-- After every local build, redeploy into the RimWorld Mods folder. -->
-  <Target Name="DeployToModFolder" AfterTargets="Build" Condition="'$(UseLocalRimWorld)' == 'true'">
+  <!-- After every local Release build, redeploy into the RimWorld Mods folder
+       (Release-only so a stray Debug build never deploys). -->
+  <Target Name="DeployToModFolder" AfterTargets="Build"
+          Condition="'$(UseLocalRimWorld)' == 'true' And '$(Configuration)' == 'Release'">
     <CallTarget Targets="StageMod" />
   </Target>
 </Project>
