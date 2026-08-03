@@ -146,6 +146,11 @@ DLC set.
 
 - Checkbox list of **active mods** to probe (default: none; the family's
   three mods are simply ticked once on this machine). Persist packageIds.
+  Ticking a mod pops a reminder dialog: consuming repos pin the probe boot's
+  mod list (`CANONICAL_ACTIVE_MODS` in their refresh scripts), and a mod
+  ticked here but missing there is not loaded during the run, so its dump
+  fails. The tick is the memorable onboarding step; the dialog points at the
+  forgettable one.
 - Per-mod **output path** override (text field). Default:
   `<probe mod's own folder>/Output/<packageId>.json`. The point of the
   override is writing straight into each mod's **source repo** rather than

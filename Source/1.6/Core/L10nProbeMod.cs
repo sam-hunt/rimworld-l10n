@@ -133,6 +133,18 @@ public class L10nProbeMod : Mod
             if (isTargeted)
             {
                 Settings.targetPackageIds.Add(packageId);
+                // Ticking a mod here is the memorable half of onboarding it into the l10n
+                // flow; the forgettable half is the pinned mod list in each consuming repo's
+                // refresh script. Say so at the memorable touchpoint, every time - this is a
+                // dev tool, one dialog per tick is cheap and the refresh script's unpinned-
+                // target warning is the only other guard.
+                Find.WindowStack.Add(new Dialog_MessageBox(
+                    $"'{pack.Name}' will now be included in probe dumps.\n\n" +
+                    "If a repo's release flow consumes this dump, check CANONICAL_ACTIVE_MODS " +
+                    "in its Scripts/refresh-translation-expectations.py: the probe boots on " +
+                    "that pinned mod list, and a mod absent from it is simply not loaded, so " +
+                    "its dump FAILS. Any DLC or mod the content MayRequires must be pinned " +
+                    "too, or the gated defs' keys silently drop out of the expectations."));
             }
             else
             {
