@@ -112,6 +112,44 @@ German keeps and inflects it, Spanish keeps it only before a singular noun —
 French is the fourth, distinct answer of replacing it with a literal
 possessive agreeing with the possessed noun.)
 
+## RulePackDef gender: rule-level constraints
+
+**French solves rulepack gender with rule-level constraints — one rule per
+agreement class, letting the resolver pick — distinct from German's inline
+`|M|`/`|F|` noun markers and Spanish's parallel symbol families.** (Upstreamed
+from UMW's 2026-07-29 pass; examples and counts re-verified against the 1.6
+tar and the constraint claim decompile-verified 2026-08-18.) Core fr uses it
+heavily: 271 gendered constraints tree-wide (116 `gender==Female`, 63
+`gender!=Female`, 51 `gender==Male`, 41 `gender==None`), across combat logs,
+interactions and quest scripts:
+
+```
+<li>staggered(p=3,SUBJECT_gender==Male)->est stupéfait</li>
+<li>staggered(SUBJECT_gender==Female)->est stupéfaite</li>
+<li>staggered(SUBJECT_gender==None)->est mis en échec</li>
+<li>verb_genericattack(INITIATOR_gender!=Female)->s'est rué</li>   <!-- shorthand for Male+None -->
+```
+
+Constraints compose with `p=` weights and with other constants —
+`died(SUBJECT_flesh!=Mechanoid,p=2,SUBJECT_gender==Male)` — so a family can
+be both weighted and agreement-split.
+
+**Always cover `None`** (or use `!=Female` where the masculine form serves
+both): `SUBJECT_gender` is `None` for mechanoids and other genderless pawns,
+and a family whose constraints exclude every rule makes the **whole root
+unresolvable**. Decompile-verified consequence (`Verse.Grammar.GrammarResolver.Resolve`):
+on a non-English language a failed resolution logs `Failed to resolve text.
+Trying again with English.` (`Log.ErrorOnce`) and re-resolves the **entire
+string** with the untranslated English rules — the player-visible symptom is a
+complete English sentence in the middle of French text plus a red log error,
+not a missing word. Core fr itself ships exactly this gap:
+`RulePacks_Transitions.xml`'s `collapsed` family has only `gender==Male` /
+`gender==Female` branches with no `None` branch and no `flesh!=Mechanoid`
+guard, so a collapsing mechanoid's battle-log line silently falls back to
+English — a vanilla bug, not a precedent (its neighbouring `died` family shows
+the careful pattern, guarding every gendered rule with
+`SUBJECT_flesh!=Mechanoid`).
+
 ## Style and corpus findings
 
 - **Formality is `vous`, decisively, across every sample taken** — BTG's
@@ -265,6 +303,10 @@ alternative and why.
 - **There is no `{lookup: …}` support in French** (no `decline.txt`, no
   `Case.txt`, no `TryLookUp` override) — the declension technique used for
   German/Russian simply has nothing to read here.
+- **A gendered rulepack family that misses a gender value falls back to
+  English for the whole string** — always cover `gender==None` (mechanoids)
+  or use `!=Female`; Core fr's own `collapsed` family ships this bug (see the
+  rule-level constraints section).
 - **Dash and guillemet usage cannot be judged from `Keyed/` alone** — both
   are real but rare/contextual conventions that only show up once
   `DefInjected` prose is included in the count. Always walk the whole tar.
