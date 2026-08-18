@@ -22,13 +22,12 @@ per-mod path override writes straight into a mod's source repo instead.
 
 ## Consumers
 
-The dumps are consumed by the `Scripts/check-translations.py` checker in
-[UniqueMeleeWeapons](https://github.com/sam-hunt/UniqueMeleeWeapons),
-[UniqueWeaponsUnbound](https://github.com/sam-hunt/UniqueWeaponsUnbound) and
-[PersonaWeaponsUnbound](https://github.com/sam-hunt/PersonaWeaponsUnbound), which check a dump
-in as a sidecar and fail when it is stale. `../UniqueMeleeWeapons/HANDOVER.md` holds the
-integration plan (sidecar, regeneration script, release-skill step); `SPEC.md` here holds this
-mod's design and the decompile-verified API surface it is built on.
+The dumps are consumed by the `Scripts/check-translations.py` checker every sidecar-bearing
+repo in the mod family carries (a thin shim over the shared engine in `../checker/`), which
+checks a dump in as a sidecar and fails when it is stale. Each repo's
+`Scripts/refresh-translation-expectations.py` (a shim over `../refresh/`) regenerates its
+sidecar by driving this probe in the deployed Mods folder. `Docs/SPEC.md` (local-only,
+untracked) holds this mod's design and the decompile-verified API surface it is built on.
 
 ## Development
 

@@ -139,9 +139,18 @@
   </Target>
 
   <!-- After every local Release build, redeploy into the RimWorld Mods folder
-       (Release-only so a stray Debug build never deploys). -->
+       (Release-only so a stray Debug build never deploys). Only the canonical
+       rimworld-l10n checkout may deploy: in a submodule (or worktree) checkout the
+       repo root's .git is a gitfile, not a directory, so .git/HEAD does not exist
+       and the deploy is skipped — a mod repo's pinned copy can never clobber the
+       deployed probe with a stale version. -->
+  <PropertyGroup>
+    <IsCanonicalCheckout Condition="Exists('$(RepoRoot)/../.git/HEAD')">true</IsCanonicalCheckout>
+  </PropertyGroup>
   <Target Name="DeployToModFolder" AfterTargets="Build"
           Condition="'$(UseLocalRimWorld)' == 'true' And '$(Configuration)' == 'Release'">
-    <CallTarget Targets="StageMod" />
+    <Message Condition="'$(IsCanonicalCheckout)' != 'true'" Importance="high"
+             Text="Skipping probe deploy: this is a submodule/worktree checkout of rimworld-l10n. Build from the canonical clone to deploy." />
+    <CallTarget Condition="'$(IsCanonicalCheckout)' == 'true'" Targets="StageMod" />
   </Target>
 </Project>
