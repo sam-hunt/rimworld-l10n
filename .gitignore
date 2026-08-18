@@ -1,0 +1,15 @@
+# Python bytecode (the checker/refresh engines are imported by consuming
+# repos' shims, so caches land inside this tree — including when it is a
+# submodule checkout; never track them)
+__pycache__/
+*.py[cod]
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup files
+*~
+*.bak
+*.orig
