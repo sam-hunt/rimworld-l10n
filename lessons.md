@@ -163,7 +163,8 @@ the originating passes.
   ModContentPack by their path under `Languages/<Lang>/`, silently skipping
   the duplicate — and the winner is not determined by LoadFolders order).
   A gated compat root that mirrors the main tree's file names therefore
-  shadows whole files with zero errors: UMW shipped 9 languages whose
+  shadows whole files with zero errors: UMW's unreleased tree carried 9
+  languages whose
   main-tree ThingDef/WeaponTraitDef/ColorDef injections never loaded in-game
   because the Royalty compat root reused `Weapons_Unique.xml`,
   `WeaponTraits.xml` and `Colors.xml`. Neither the game's own load errors,
