@@ -21,10 +21,13 @@ whatever the public mod-roster display name calls the language.
   accepts either the cut name or the full tar name — so a mod folder named
   exactly `ChineseSimplified` loads correctly. The same mechanism holds for
   `Japanese`.
-- **`LanguageWorker_ChineseSimplified` imposes no authoring requirements at
-  all** (BTG) — no particle insertion, no elision, no contraction
-  rewriting, nothing analogous to the numeral/case machinery other
-  languages need. zh's translation difficulty is entirely about
+- **No `LanguageWorker_ChineseSimplified` type exists at all** (corrected
+  2026-08-19 by UMW's zh-Hant pass, which enumerated the assembly's full
+  `LanguageWorker_*` typedef list: no Chinese entry of either script; BTG's
+  earlier "imposes no authoring requirements" finding was right about the
+  behaviour but implied the type existed). As with Japanese, the base worker
+  runs and only merges repeated spaces — no particle insertion, no elision,
+  no contraction rewriting. zh's translation difficulty is entirely about
   terminology and register choice, never about engine mechanics.
 
 ## Style and corpus findings
