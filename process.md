@@ -77,7 +77,14 @@ English is always the source of truth; every other language derives from it.
   gate is inactive); the checker enforces the placement in both directions.
   Compat roots sit beside the well-known folders, never inside one — anything
   under `1.6/Defs/**` or `1.6/Languages/**` loads unconditionally at any
-  depth.
+  depth. **A compat root's language files must not reuse a main-tree file's
+  language-relative path** (`DefInjected/<Type>/<File>.xml`,
+  `Keyed/<File>.xml`): the game dedups language files per mod by that path
+  and silently skips the duplicate (decompile-verified,
+  `Verse.LoadedLanguage.TryRegisterFileIfNew`), in an enumeration order that
+  is not LoadFolders order — a same-named file shadows one side wholesale
+  with no error anywhere. Suffix compat-root file names with the gate
+  (`WeaponTraits_Royalty.xml`); the checker errors on any collision.
 - **EN comment convention (required):** every translated entry carries the
   current English source directly above it:
   `<!-- EN: Reset to defaults -->` — this is how the checker detects

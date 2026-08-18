@@ -508,6 +508,30 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report):
     # demand the whole Keyed set and every other def's injections from it.
     lang = lang_dirs[0].name
 
+    # --- Cross-root file-path collisions ---
+    # The game dedups language files per ModContentPack by their path relative
+    # to the language folder (decompile-verified 2026-08-19,
+    # Verse.LoadedLanguage.TryRegisterFileIfNew): when two load roots of the
+    # same mod carry the same relative path (Keyed/ or DefInjected/ alike),
+    # only the first-enumerated file loads and the other is SILENTLY skipped —
+    # no load error, no translation-report entry, and the enumeration order is
+    # not LoadFolders order, so which side wins is not even stable by
+    # construction. Every file under a compat root must therefore have a
+    # basename path that exists in no other root of the same language. UMW
+    # shipped 27 shadowed files across 9 languages before this check existed.
+    rel_seen = {}
+    for lang_dir in lang_dirs:
+        for path in sorted(lang_dir.glob("**/*.xml")):
+            rel = path.relative_to(lang_dir)
+            if rel in rel_seen:
+                report.error(path, f"language-relative path {rel} collides with "
+                                   f"{rel_seen[rel]} — the game loads only one of "
+                                   f"the two files and silently skips the other "
+                                   f"(Verse.LoadedLanguage.TryRegisterFileIfNew "
+                                   f"dedups per mod by this path); rename one file")
+            else:
+                rel_seen[rel] = path
+
     # --- Keyed ---
     keyed = collect_keyed(lang_dirs, report)
     label = f"[{lang}/Keyed]"

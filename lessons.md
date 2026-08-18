@@ -157,6 +157,20 @@ the originating passes.
 - Mod-coined terms recur across Keyed prose that restates them. When
   generation is chunked across files or subagents, reconcile those terms
   across the whole language before committing.
+- **Two load roots of one mod must never carry the same language-relative
+  file path** (decompile-verified 2026-08-19, UMW's zh-Hant pass:
+  `Verse.LoadedLanguage.TryRegisterFileIfNew` dedups files per
+  ModContentPack by their path under `Languages/<Lang>/`, silently skipping
+  the duplicate — and the winner is not determined by LoadFolders order).
+  A gated compat root that mirrors the main tree's file names therefore
+  shadows whole files with zero errors: UMW shipped 9 languages whose
+  main-tree ThingDef/WeaponTraitDef/ColorDef injections never loaded in-game
+  because the Royalty compat root reused `Weapons_Unique.xml`,
+  `WeaponTraits.xml` and `Colors.xml`. Neither the game's own load errors,
+  the sidecar (it walks defs, not files), nor content-level checks can see
+  it — only a file-path collision check can, and the checker engine now has
+  one. The in-game tell: one load root's strings translated, the other
+  root's English, split exactly along def ownership.
 
 RulePackDef-specific lessons — which part of speech a
 `traitAdjectives`/`namerLabels`-style field needs per language, the several
