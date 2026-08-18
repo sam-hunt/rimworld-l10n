@@ -1,0 +1,57 @@
+# Claude Code (local settings/hooks stay private; skills would be shared if any land here)
+.claude/*
+!.claude/skills/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Build results
+**/bin/
+**/obj/
+*.cache
+*.zip
+
+# Debug symbols
+*.pdb
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Build artifacts
+*/Assemblies/*.dll
+*/Assemblies/*.pdb
+
+# Probe output. Dumps belong in the CONSUMING repo (each mod's Scripts/ sidecar),
+# never here — this mod only produces them.
+Output/
+
+# RimWorld local testing
+*.rws
+*.rws.old
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup files
+*~
+*.bak
+*.orig
+
+# Logs
+*.log
+
+# Research documentation (decompile dumps etc; kept locally, not tracked)
+Docs/
