@@ -170,6 +170,7 @@ strings unless noted):
 | Quest failed: [resolvedQuestName] | 임무 실패: [resolvedQuestName] | | Core `TradeRequest` — quest = 임무 |
 | colour labels | `~색` (은색, 회색) | | Core `ColorDef`s |
 | reportStrings (clean/rescue/tend/feed/open/hack) | TargetA 청소 중 / TargetA 구조 중 / TargetA 간호 중 / TargetB에게 TargetA 먹여주는 중 / TargetA 여는 중 / {TargetA} 해킹 중 | | Core `JobDef`s — verbatim. Core's own `Hack.reportString` keeps braces around `{TargetA}`; drop them when reusing the pattern in a mod's own def, since the English `TargetA` symbol has no braces and a placeholder-parity checker reads the retained braces as an invented placeholder |
+| advanced fabrication (research) | 고급 부품 | 고급 제작 | Core `AdvancedFabrication.label` — verbatim; vanilla ko deliberately names the research identically to the advanced-component item, don't "fix" it (verified 2026-08-18) |
 
 ## Pitfalls and lessons
 

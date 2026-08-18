@@ -171,6 +171,7 @@ family and are safe defaults for new work.
 | {0} from {1} are attacking your {2}. | {1}の{0}は {2}を攻撃中です. | | every Odyssey `FactionDef` — verbatim, including its internal double space |
 | Attack {0} / Attacking {0}. | {0}を攻撃 / {0}を攻撃中 | | Odyssey `Outpost` approach strings — verbatim; ja drops the English's trailing period on both |
 | reportStrings (clean/rescue/tend/feed/hack/open/board) | TargetAを掃除中 / TargetAを救助中 / TargetAの看病中 / TargetAをTargetBに給仕中 / TargetAをハッキングしている / TargetAを開封中 / TargetAに乗り込んでいる | | Core+Odyssey `JobDef`s — verbatim. No trailing period, and TargetA/TargetB stay bare |
+| advanced fabrication (research) | 先進組立製造 | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
 
 ## Pitfalls and lessons
 

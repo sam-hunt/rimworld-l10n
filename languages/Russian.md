@@ -120,6 +120,7 @@ strings unless noted):
 | [faction_name] became hostile to you. | Фракция [faction_name] теперь враждебна к вам. | | Core `TradeRequest` — verbatim |
 | starting people (ScenPart) | людей в начале | | Core `ConfigPage_ConfigureStartingPawns.label` — identical English source, reuse verbatim |
 | reportStrings (clean/rescue/tend/feed/hack/open) | убирает TargetA / спасает TargetA / лечит TargetA / скармливает TargetA TargetB / взламывает TargetA / открывает TargetA | | Core `JobDef`s — verbatim; a mod's NPC-safe copies of these JobDefs can reuse them 1:1. Odyssey's `Open`/`EnterTransporter` wrap TargetA in `{lookup: {TargetA}; Case; 3}` — **don't copy that**, the bare English `TargetA` has no braces so a placeholder-parity checker reads the wrapper as an invented placeholder |
+| advanced fabrication (research) | сверхвысокоточное производство | высокоточное производство | Core `AdvancedFabrication.label` — verbatim; the сверх- prefix is required, the shorter form reads as the fabrication-bench root (высокоточный станок) (verified 2026-08-18) |
 
 ## Pitfalls and lessons
 

@@ -171,6 +171,8 @@ reinforces market value above.
   research=机械加工)
 - fabrication bench: 精密装配台, never 制造台 (Core `FabricationBench.label`)
 - smithing (research): 锻造 (Core `Smithing`)
+- advanced fabrication (research): 高级精密装配 (Core
+  `AdvancedFabrication.label`, verified 2026-08-18)
 - Crafting (the skill): 手工, never 制作 — 制作 is the verb, never the
   skill name (Core `Crafting.label`)
 - bill (work bill): 清单, never 工单/账单 — the common community rendering

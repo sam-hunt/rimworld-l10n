@@ -200,6 +200,7 @@ strings unless noted):
 | reportStrings (clean/rescue/tend/feed/hack/open/board) | limpiando TargetA. / rescatando a TargetA. / tratando a TargetA. / alimentando a TargetB con TargetA. / hackeando TargetA. / abriendo TargetA. / entrando en TargetA. | | Core `JobDef`s — verbatim; keep the trailing period and the personal `a` before animate targets |
 | starting people (ScenPart) | personas iniciales | | Core `ConfigPage_ConfigureStartingPawns.label` — identical English source, reuse verbatim |
 | fueled / electric smithy vs machining table vs fabrication bench vs generic workbench | forja de leña / forja eléctrica vs mesa de maquinado vs mesa de ensamblaje vs mesa de trabajo | banco de trabajo, estación de trabajo (generic); mesa de fabricación, mesa de mecanizado (specific benches) | Core building labels — each specific bench has its own name; only the *generic* concept is `mesa de trabajo`. `Smithing` the **skill**/WorkType is `Forja` while `Smithing` the **research project** is `herrería` — same defName pattern, two different defs, two different words; check the def type before reusing a lookup |
+| advanced fabrication (research) | fabricación avanzada | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
 
 ## Pitfalls and lessons
 

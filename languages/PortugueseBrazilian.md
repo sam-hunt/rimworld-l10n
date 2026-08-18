@@ -187,6 +187,7 @@ mod-coined, and several are independently corroborated by more than one repo.
 | colour labels | lowercase adjectives (dourado, cinza, jade) | | Core + Odyssey `ColorDef`s |
 | reportStrings (clean/rescue/**hack**/open/board) | limpando TargetA. / resgatando TargetA. / **hackeando TargetA.** / abrindo TargetA. / entrando em TargetA. | | Core+Odyssey `JobDef`s — verbatim gerund phrases that KEEP the trailing period (matches Spanish/French, unlike Russian/Korean) |
 | starting people (ScenPart) | Pessoas Iniciais | | Core `ConfigPage_ConfigureStartingPawns.label` |
+| advanced fabrication (research) | fabricação avançada | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
 
 ## Pitfalls and lessons
 

@@ -190,6 +190,7 @@ strings unless noted):
 | ideoligion / reform | Ideologie / Ideologie reformieren | Ideoligion | Ideology `IdeoligionOf`, `ReformIdeoligion` — de uses the plain word, no portmanteau |
 | tech levels | neolithisch / mittelalterlich / industriell / Raumfahrt / Ultra / Archotech | Weltraum, Ultratech | Core `TechLevel_*`; "tech level" itself is Techstufe |
 | wood / plasteel / uranium / jade / steel / silver / gold | Holz / Plastahl / Uran / Jade / Stahl / Silber / Gold | Plasteel, Plastik | Core labels — Plastahl is translated, unlike some other family languages |
+| advanced fabrication (research) | Hightech-Fabrikation | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
 
 ## Pitfalls and lessons
 

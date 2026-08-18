@@ -236,6 +236,7 @@ alternative and why.
 | quality tiers | horrible · médiocre · normal · bon · excellent · merveille · légendaire | | Core `QualityCategory_*` — identically confirmed across every pass in the family; note Masterwork = **merveille**, a noun sitting among adjectives, and all tiers ship masculine |
 | Cancel / Reset / Confirm | Annuler / Réinitialiser / Confirmer | | Core buttons |
 | Reset to defaults / Default / None | Réinitialiser les valeurs par défaut / Par défaut / Aucune | | Core `ResetBinding`, `Default`, `None` |
+| advanced fabrication (research) | fabrication avancée | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
 
 ## Pitfalls and lessons
 
