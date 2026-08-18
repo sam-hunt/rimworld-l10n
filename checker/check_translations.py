@@ -13,6 +13,7 @@
 #   REQUIRED_DLCS         set[str]        DLCs the sidecar must be generated with
 #   DEF_TYPE_ALIASES      dict[str, str]  subclass element tag -> dumped def type
 #   ALLOW_NO_KEYED_SURFACE bool           tolerate a mod with no Languages/Keyed tree
+#   WORKSHOP_TITLE_KEY    str|None        Keyed key holding the localized Workshop title
 #
 # The DefInjected expected set comes from Scripts/expected-injections.json —
 # a dump of every legal injection point the LIVE game sees for this mod,
@@ -125,6 +126,16 @@ DEF_TYPE_ALIASES = {}
 # error. When False (the default, matching every repo but BionicThumbGuild),
 # either condition is a hard failure (stderr + exit 2).
 ALLOW_NO_KEYED_SURFACE = False
+
+# The Keyed key whose per-language value IS the localized Steam Workshop
+# title (the settings-window header: BTG_Settings_ModName,
+# UWU_SettingsCategory, ...). When set, each language's
+# .steamworkshop/Description/<Language>.txt title line (line 1) must equal
+# that language's value for this key — the title-coupling rule the toolkit's
+# workshop.md documents. None (the default) skips the coupling check (e.g. a
+# mod with no Keyed surface); the format and coverage checks still run
+# whenever .steamworkshop/Description/ exists.
+WORKSHOP_TITLE_KEY = None
 
 # The consuming repo's root. Shims set this from their own file location
 # (Path(__file__).resolve().parent.parent), which keeps the historical
@@ -614,6 +625,68 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report):
     return found
 
 
+def check_workshop(root, languages, english_keyed, report):
+    # .steamworkshop/Description/<Language>.txt: line 1 is the localized
+    # Workshop title, line 2 blank, then the BBCode description (see the
+    # toolkit's workshop.md). Nothing in that folder ships with the mod;
+    # these checks keep the publishing metadata in lockstep with the shipped
+    # languages:
+    #   - format: the three-part layout above (error)
+    #   - coupling: title line == WORKSHOP_TITLE_KEY's value for that
+    #     language (error; skipped when the key is missing in that language,
+    #     since the Keyed parity check already reports that)
+    #   - coverage: every shipped language has a description file (warning —
+    #     Steam pastes are manual, so a missing file is backlog, not
+    #     breakage, and CI's non-strict release gate must not fail on it)
+    # Staleness of the translated descriptions themselves is NOT checkable
+    # here (they carry no EN comments); the release skill's diff of
+    # English.txt against the last release tag remains the guard for that.
+    desc_dir = root / ".steamworkshop" / "Description"
+    if not desc_dir.is_dir():
+        return
+    for path in sorted(desc_dir.glob("*.txt")):
+        lang = path.stem
+        try:
+            lines = path.read_text(encoding="utf-8").lstrip("﻿").splitlines()
+        except UnicodeDecodeError:
+            report.error(path, "not valid UTF-8")
+            continue
+        if len(lines) < 3 or not lines[0].strip() or lines[1].strip() \
+                or not any(line.strip() for line in lines[2:]):
+            report.error(path, "expected line 1 title, line 2 blank, then a "
+                               "non-empty description")
+            continue
+        if WORKSHOP_TITLE_KEY is None:
+            continue
+        if lang == "English":
+            keyed = english_keyed
+        elif lang in languages:
+            # Re-parse this language's Keyed with a throwaway report:
+            # hygiene/duplicate findings were already recorded when
+            # check_language read the same files, and re-reporting them
+            # here would double them up.
+            keyed = collect_keyed(languages[lang], Report())
+        else:
+            continue  # description for an unshipped language: no Keyed value to couple to
+        entry = keyed.get(WORKSHOP_TITLE_KEY)
+        if entry is None:
+            if lang == "English":
+                report.warn(path, f"<{WORKSHOP_TITLE_KEY}> not found in "
+                                  "English Keyed — title coupling cannot be "
+                                  "checked (is WORKSHOP_TITLE_KEY right?)")
+            continue  # missing translated key is already a Keyed parity error
+        value = entry[0]
+        if isinstance(value, str) and lines[0] != value:
+            report.error(path, f"title line {lines[0]!r} != "
+                               f"<{WORKSHOP_TITLE_KEY}> {value!r} — the "
+                               "Workshop title and the settings header must "
+                               "change together")
+    for lang in sorted(set(languages) | ({"English"} if english_keyed else set())):
+        if not (desc_dir / f"{lang}.txt").is_file():
+            report.warn("[.steamworkshop/Description]",
+                        f"shipped language {lang} has no {lang}.txt description")
+
+
 def main():
     ap = argparse.ArgumentParser(description="Validate mod translation files.")
     # Default: the shim-provided REPO_ROOT (derived from the shim's own
@@ -714,6 +787,8 @@ def main():
             for key in sorted(extra):
                 report.error(f"[{lang}/DefInjected/{def_type}]",
                              f"missing <{key}> (translated in other languages)")
+
+    check_workshop(args.root, languages, english_keyed, report)
 
     for line in report.errors:
         print(f"ERROR   {line}")

@@ -35,6 +35,13 @@ check for gaps whenever a language lands.
   header: `BTG_Settings_ModName`, `UWU_SettingsCategory`, or the repo's
   equivalent — named in the repo's CLAUDE.md localization note). Always change
   the two together; the English pair keeps the English mod name in both.
+  **The checker enforces this** (each shim names its key via
+  `WORKSHOP_TITLE_KEY`), along with the file format above (both errors) and
+  per-shipped-language description coverage (a warning, since Steam pastes
+  are manual and CI's non-strict release gate must not fail on backlog).
+  Staleness of the translated descriptions is the one part no check covers —
+  the release skill's diff of `English.txt` against the last release tag
+  remains the guard there.
 
 ## Publishing workflow
 

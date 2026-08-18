@@ -54,4 +54,11 @@ engine.DEF_TYPE_ALIASES = {}
 # RATIONALE: <why this mod does or doesn't ship a Keyed surface today>
 engine.ALLOW_NO_KEYED_SURFACE = False
 
+# The Keyed key whose per-language value is the localized Steam Workshop
+# title (the settings-window header). Enforces the title-coupling rule from
+# the toolkit's workshop.md: each .steamworkshop/Description/<Language>.txt
+# title line must equal this key's value for that language. None for a mod
+# with no Keyed surface (format/coverage checks still run).
+engine.WORKSHOP_TITLE_KEY = "PLACEHOLDER_SettingsCategory"
+
 raise SystemExit(engine.main())
