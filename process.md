@@ -89,6 +89,17 @@ English is always the source of truth; every other language derives from it.
   current English source directly above it:
   `<!-- EN: Reset to defaults -->` — this is how the checker detects
   staleness.
+- **Never refresh an EN comment on its own.** The comment is the staleness
+  ledger, not formatting: updating it marks the translation as revalidated,
+  so a comment-only refresh silences the checker's staleness signal forever
+  and hides the drift from every later pass (this happened: an English
+  `(BTG Recommended)` → `(suggested)` rewording got its EN comments synced
+  without retranslation, leaving "recommended by BTG" translations the
+  checker now reports as current). Touch an EN comment only in the same
+  edit that retranslates the entry, or after explicitly judging the English
+  change meaning-neutral for that language (pure casing or typo fixes).
+  When a source-text edit lands, leave the translations' comments stale so
+  the next update pass sees the delta.
 - Formatting: UTF-8 without BOM, LF endings, 2-space indent, final newline,
   root element `<LanguageData>`.
 - Placeholders (`{0}`, `{1}`, named args) must match English exactly per key.
