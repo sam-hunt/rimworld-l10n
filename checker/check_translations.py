@@ -35,8 +35,12 @@
 #   DefInjected: folder names are sidecar def types, every key is a legal
 #                injection point (directly, via the sidecar's normalized
 #                alias, or as element N of a collection entry), placeholder
-#                and stale-EN-comment checks against the sidecar's English,
-#                completeness of the sidecar's required subset
+#                and stale-EN-comment checks against the sidecar's English
+#                (full-list collection translations included: their EN
+#                comment must reproduce the current English list, and their
+#                placeholder union must not invent placeholders no English
+#                element carries), completeness of the sidecar's required
+#                subset
 #   All files:   well-formed XML, <LanguageData> root, UTF-8 no BOM, LF line
 #                endings, no tabs, final newline (hygiene -> warnings)
 # Plus, language-independent:
@@ -152,9 +156,73 @@ def norm(text):
     return re.sub(r"\s+", " ", (text or "").replace("\\n", "\n").strip())
 
 
+# {replace: ...} and {lookup: ...} are the grammar system's post-resolution
+# text-rewrite constructs, and like the ?-constructs above they are
+# language-side: inflecting languages introduce them where uninflected
+# English has none (Core de writes "{replace: [weapon_noun]; \"|M|\"-\"Der \";
+# ...}" for gender articles, Core es contracts "de el" to "del"; Core ships
+# 600+ of each across its translated languages, zero in English). They
+# consume no caller argument — their inputs are bracketed rule symbols — so
+# they are excluded from the argument comparison the same way.
+REWRITE_CONSTRUCT_RE = re.compile(r"\{\s*(?:replace|lookup)\s*:[^{}]*\}")
+
+
 def placeholders(text):
     text = NUM_CASE_RE.sub(r"{\1}", text or "")
-    return set(PLACEHOLDER_RE.findall(GRAMMAR_CONSTRUCT_RE.sub("", text)))
+    text = GRAMMAR_CONSTRUCT_RE.sub("", text)
+    return set(PLACEHOLDER_RE.findall(REWRITE_CONSTRUCT_RE.sub("", text)))
+
+
+# A full-list translation replaces a whole collection, so its EN comment
+# quotes the whole English list. Two conventions exist across the consuming
+# repos: li form (one <li>...</li> per element, usually multi-line — quest
+# rulesStrings) and a single comma-joined line (keyword lists like UWU's
+# labelKeywords). Either counts as fresh when it reproduces the current
+# English list element-for-element after norm(); anything else is stale.
+EN_LI_RE = re.compile(r"<li>(.*?)</li>", re.DOTALL)
+
+
+def en_comment_matches_list(en, en_list):
+    lis = EN_LI_RE.findall(en)
+    if lis:
+        return [norm(x) for x in lis] == [norm(x) for x in en_list]
+    return norm(en) == norm(", ".join(en_list))
+
+
+def check_full_list(key, text, en, en_list, full_list_allowed, path, report):
+    # The full-list form of a collection has no per-element English to pin
+    # each item to, so it gets list-shaped versions of the scalar checks
+    # (this used to be a blind spot: en_text stayed None and both the
+    # placeholder and stale-EN checks silently skipped every full list).
+    #
+    # Placeholders: with fullListAllowed the translator may merge or drop
+    # variants, so a placeholder used only by a dropped English element can
+    # legitimately vanish — but a placeholder absent from EVERY English
+    # element is never supplied by the call site, so inventing one is always
+    # broken. Hence union(translated) must be a subset of union(English).
+    # Without fullListAllowed the counts are locked and elements are
+    # positional (the game's .N form maps by index), so each element gets the
+    # same exact comparison an indexed translation would.
+    if not full_list_allowed and len(text) == len(en_list):
+        for i, (got, exp) in enumerate(zip(text, en_list)):
+            if placeholders(got) != placeholders(exp):
+                report.error(path, f"<{key}.{i}> placeholders "
+                                   f"{sorted(placeholders(got))} != English "
+                                   f"{sorted(placeholders(exp))}")
+    else:
+        got_ph = set().union(*(placeholders(t) for t in text)) if text else set()
+        en_ph = set().union(*(placeholders(t) for t in en_list)) if en_list else set()
+        extra = got_ph - en_ph
+        if extra:
+            report.error(path, f"<{key}> full-list translation introduces "
+                               f"placeholders {sorted(extra)} that appear in "
+                               f"no English element")
+    # Staleness: the missing-EN-comment warning stays with the caller's
+    # shared tail; here only an EN comment that fails to reproduce the
+    # current English list is flagged.
+    if en is not None and not en_comment_matches_list(en, en_list):
+        report.error(path, f"<{key}> is STALE: EN comment does not match "
+                           f"current English source")
 
 
 def parse_with_comments(path):
@@ -547,11 +615,26 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report):
             if placeholders(text) != placeholders(en_text):
                 report.error(path, f"<{key}> placeholders {sorted(placeholders(text))} "
                                    f"!= English {sorted(placeholders(en_text))}")
+        elif isinstance(text, list) and isinstance(en_text, str) \
+                or isinstance(text, str) and isinstance(en_text, list):
+            report.error(path, f"<{key}> is a <li> list where English is "
+                               f"scalar, or vice versa")
         if en is None:
             report.warn(path, f"<{key}> has no EN: comment")
         elif isinstance(en_text, str) and norm(en) != norm(en_text):
             report.error(path, f"<{key}> is STALE: EN comment does not match current "
                                f"English text")
+        elif isinstance(en_text, list) and not en_comment_matches_list(en, en_text):
+            report.error(path, f"<{key}> is STALE: EN comment does not match current "
+                               f"English text")
+        if isinstance(text, list) and isinstance(en_text, list):
+            got_ph = set().union(*(placeholders(t) for t in text)) if text else set()
+            en_ph = set().union(*(placeholders(t) for t in en_text)) if en_text else set()
+            extra = got_ph - en_ph
+            if extra:
+                report.error(path, f"<{key}> full-list translation introduces "
+                                   f"placeholders {sorted(extra)} that appear "
+                                   f"in no English element")
 
     # --- DefInjected ---
     found = {}       # def_type -> canonical keys / "<key>.<idx>" elements
@@ -602,11 +685,15 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report):
                     if not isinstance(text, list):
                         report.error(path, f"<{key}> is a collection but the "
                                            f"translation is not a <li> list")
-                    elif not entry.get("fullListAllowed") \
-                            and len(text) != len(entry["english"]):
-                        report.error(path, f"<{key}> full-list translation has "
-                                           f"{len(text)} elements, English has "
-                                           f"{len(entry['english'])}")
+                    else:
+                        if not entry.get("fullListAllowed") \
+                                and len(text) != len(entry["english"]):
+                            report.error(path, f"<{key}> full-list translation has "
+                                               f"{len(text)} elements, English has "
+                                               f"{len(entry['english'])}")
+                        check_full_list(key, text, en, entry["english"],
+                                        entry.get("fullListAllowed"), path,
+                                        report)
                 else:
                     found.setdefault(def_type, set()).add(canonical)
                     en_text = entry["english"]
