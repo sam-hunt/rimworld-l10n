@@ -3,8 +3,9 @@
 First grounded by Unique Melee Weapons' (UMW) 2026-08-19 machine-assisted
 generation pass, mined from the official zh-Hant tars (Core + Royalty +
 Odyssey), and extended by Better Traders Guild's 2026-08-22 pass over the
-orbital/trade half of Odyssey. **No entry below has had native-speaker
-review.** RimWorld's language folder is `ChineseTraditional` (tar:
+orbital/trade half of Odyssey and Persona Weapons Unbound's 2026-08-22 pass
+over the persona-weapon and crafting half of Royalty. **No entry below has
+had native-speaker review.** RimWorld's language folder is `ChineseTraditional` (tar:
 `ChineseTraditional (繁體中文).tar`) — the same cut-at-`(` folder-name
 resolution verified for zh-Hans/ja applies.
 
@@ -30,11 +31,20 @@ inversions from the 2026-08-19 pass:
 | leader (crew `leaderTitle`) | 领袖 | 領導者 (Odyssey `GravshipCrew`) |
 | parentheses | full-width （） | ASCII () (528:0, see style) |
 | JobDef reportString | ends with 。 | no trailing 。 (see style) |
+| persona weapon label form | Δ' prefix: Δ'单分子剑 | `(羈絆武器)` suffix: 單分子劍(羈絆武器) |
+| techprint | 科研蓝图 | 科技藍圖 (Core `ResearchTechprintRequirement`) |
+| stopping power | 抑止能力 | 攔截力 (Core `StoppingPower`) |
+| burst count | 连射次数 | 連發次數 (Core `BurstShotCount`) |
+| Crafting (skill) | 制作 | 手工 (Core `Crafting.skillLabel`) |
 
 Always re-ground every term against the zh-Hant tars even when the zh-Hans
-table already has an answer — the 2026-08-22 pass found six further
+table already has an answer — the 2026-08-22 BTG pass found six further
 inversions in one mod's surface alone, three of them punctuation rules rather
-than words, which a character-conversion pass cannot catch at all.
+than words, which a character-conversion pass cannot catch at all, and PWU's
+zh-Hant pass the same day added the last five above out of Royalty's half of
+the corpus. Two of those five are that mod's own central vocabulary
+(techprint, the persona-weapon label form), so a converted zh-Hans tree would
+have been wrong in its most-repeated strings.
 
 ## Engine mechanics (LanguageWorker)
 
@@ -88,6 +98,16 @@ than words, which a character-conversion pass cannot catch at all.
   vanilla keeps it, so this is a third slot-rule inversion between the two
   Chinese localizations. SitePartDef `approachOrderString` /
   `approachingReportString` are likewise bare (Odyssey: 調查{0} for both).
+- **RecipeDef `jobString` is bare too, and is byte-identical to the recipe's
+  own `label`** (verified 2026-08-22 over Core's RecipeDef tree during PWU's
+  pass): `Make_ComponentSpacer` renders BOTH `.label` and `.jobString` as
+  製作高級零件, while its `.description` in the same file keeps 製作高級零件。
+  Same across 製作麥汁, 製作乾肉餅, 安裝仿生手臂, 移植心臟. English gives the
+  three fields three distinct forms (`make X` / `Making X.` / a sentence), so
+  the natural instinct to differentiate them in translation is wrong here —
+  translate label and jobString once and reuse, and keep 。 only on the
+  description. The transitive/intransitive 中 split above applies to
+  jobStrings as well.
 - Dash baseline: **13.35 per 100k value-chars** (the no-new-dashes density
   test's 1x reference for zh-Hant). Split by DLC it is Core 10.6 and Odyssey
   34.8, the latter almost entirely `——` mirroring an English `-` in the same
@@ -191,6 +211,34 @@ ones) are byte-identical-English and reusable by any mod copying that quest
 shape. Note Core's own 誰應該作為[…]以完成此次交易任務？ is a loose reading of
 "Who should be credited with"; reuse it anyway so one English string does not
 get two renderings.
+
+## Grounded common vocabulary, persona-weapon / crafting domain (Core+Royalty, 2026-08-22)
+
+Mined during Persona Weapons Unbound's pass; the Royalty half of the corpus
+that the melee-weapon and orbital/trade passes never reached. Where a row
+disagrees with the zh-Hans file, the zh-Hant form here is the attested one —
+see the inversion table above.
+
+| English | Use | Why |
+|---|---|---|
+| persona weapon / bladelink weapon | 羈絆武器 | Royalty `MeleeWeapon_*Bladelink.label` renders English `persona monosword` as 單分子劍(羈絆武器); also prose (`LetterBladelinkWeaponBondedLabel`). Unlike zh-Hans, zh-Hant HAS a standalone term — no coinage needed |
+| persona (the onboard mind, prose) | 人格 (AI人格 in the weapon descriptions, AI set solid) | Royalty `NeverBond.description` 這把武器的人格; weapon descs 這件武器自身具備AI人格 |
+| persona weapon trait (stat) | 特性 | Royalty `Stat_Thing_PersonaWeaponTrait_Label`, Core Keyed `Traits`, `BladelinkEquipWarningTraits` — **diverges from Odyssey's 特質** (`Stat_ThingUniqueWeaponTrait_Label`), so pick by the mod's domain DLC. zh-Hans has no such split |
+| freewielder (trait label) | 自由 | Royalty `NeverBond.label` — quote as 「自由」特性 when naming it |
+| bond (verb/state) / the bond (noun) | 綁定 / 羈絆 | Royalty `BladelinkAlreadyBonded*`, `LetterBladelinkWeaponBonded` |
+| persona core | 人格核心 | Core `AIPersonaCore.label` |
+| techprint | 科技藍圖 | Core `ResearchTechprintRequirement` — NOT zh-Hans's 科研蓝图 |
+| fabrication bench / advanced fabrication | 精密製作桌 / 高級精密製作 | Core `FabricationBench.label`, `AdvancedFabrication.label` |
+| advanced component | 高級零件 | Core `ComponentSpacer.label` |
+| bill (workbench order) | 工作 (add-bill menu 新增工作) | Core `AddBill`; 訂單 is already spent on `Quest_TradeRequest` 訂單任務, so it is the wrong slot |
+| customize (verb + UI command) | 自訂 | Core Keyed `Customize`; `CustomizeIdeoligion` 自訂理念 |
+| appearance | 外觀 | Core Keyed `Appearance`; 紋理 is reserved for `TextureCompression` (graphics settings), so do not spend it on a weapon-texture feature |
+| Crafting (skill) | 手工 | Core `Crafting.skillLabel` — 製作 is the verb, never the skill name |
+| stopping power / burst count / burst speed | 攔截力 / 連發次數 / 射速 | Core `StoppingPower`, `BurstShotCount`, `BurstShotFireRate` |
+| Empire (faction) | 破碎帝國 | Royalty `Empire.label` |
+| relic / ideoligion | 聖物 / 理念 | Ideology `IdeoRelic`, `CustomizeIdeoligion` |
+| machine persuasion (research) | 機械核心 | Core `ShipComputerCore.label` — bears no resemblance to the English label OR to zh-Hans's 飞船电脑核心. A worked case for resolving a translator-comment hint through the tar by defName, never by its English wording |
+| DLC brand names | 「皇權」/「漫遊」/「理念」 | Core `SimulateNotOwning*` — zh-Hant localizes them, in corner brackets, as zh-Hans does (most other languages keep English) |
 
 ## RulePackDef / name-generation grammar
 
