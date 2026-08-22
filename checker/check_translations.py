@@ -141,6 +141,16 @@ ALLOW_NO_KEYED_SURFACE = False
 # whenever .steamworkshop/Description/ exists.
 WORKSHOP_TITLE_KEY = None
 
+# Steam's Workshop description save limit, measured in UTF-8 BYTES with CRLF
+# newlines (what a browser textarea submits) — not characters, which is all
+# the edit UI counts client-side. An over-limit paste fails to save with no
+# useful feedback; CJK/Cyrillic text (2-3 bytes/char) hits this long before
+# Latin scripts do. Not a shim setting — it is Steam's, the same for every
+# repo. MARGIN is the headroom under the limit at which the checker starts
+# warning instead of erroring.
+WORKSHOP_DESC_BYTE_LIMIT = 8000
+WORKSHOP_DESC_BYTE_MARGIN = 200
+
 # The consuming repo's root. Shims set this from their own file location
 # (Path(__file__).resolve().parent.parent), which keeps the historical
 # behavior of working from any cwd; left None, --root falls back to the
@@ -749,6 +759,12 @@ def check_workshop(root, languages, english_keyed, report):
     #   - coverage: every shipped language has a description file (warning —
     #     Steam pastes are manual, so a missing file is backlog, not
     #     breakage, and CI's non-strict release gate must not fail on it)
+    #   - size: the description body must fit Steam's save limit, which is
+    #     8000 UTF-8 BYTES with CRLF newlines — not characters. The Workshop
+    #     edit UI only counts characters client-side, so an oversized CJK or
+    #     Cyrillic paste (2-3 bytes/char) passes the visible check and then
+    #     silently fails to save (observed 2026-08: PWU ja/ko/ru, UWU/UMW ru).
+    #     Error over the limit, warning within the safety margin.
     # Staleness of the translated descriptions themselves is NOT checkable
     # here (they carry no EN comments); the release skill's diff of
     # English.txt against the last release tag remains the guard for that.
@@ -767,6 +783,21 @@ def check_workshop(root, languages, english_keyed, report):
             report.error(path, "expected line 1 title, line 2 blank, then a "
                                "non-empty description")
             continue
+        # Body as pasted into the edit UI: everything after the title +
+        # blank separator, with the CRLF newlines a browser textarea submits.
+        body_bytes = len("\r\n".join(lines[2:]).encode("utf-8"))
+        if body_bytes > WORKSHOP_DESC_BYTE_LIMIT:
+            report.error(path, f"description body is {body_bytes} UTF-8 bytes "
+                               f"as CRLF — over Steam's "
+                               f"{WORKSHOP_DESC_BYTE_LIMIT}-byte save limit "
+                               "(the edit UI counts characters, so the save "
+                               "fails silently); condense the text")
+        elif body_bytes > WORKSHOP_DESC_BYTE_LIMIT - WORKSHOP_DESC_BYTE_MARGIN:
+            report.warn(path, f"description body is {body_bytes} UTF-8 bytes "
+                              f"as CRLF — within {WORKSHOP_DESC_BYTE_MARGIN} "
+                              f"bytes of Steam's {WORKSHOP_DESC_BYTE_LIMIT}-"
+                              "byte save limit; any growth risks silent "
+                              "save failures")
         if WORKSHOP_TITLE_KEY is None:
             continue
         if lang == "English":

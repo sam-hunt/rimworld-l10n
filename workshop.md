@@ -19,6 +19,23 @@ pending native review. Format:
 Every language present in `1.6/Languages/` should have a description file;
 check for gaps whenever a language lands.
 
+## Size limit: 8000 UTF-8 bytes, not characters
+
+Steam's description save limit is **8000 UTF-8 bytes with CRLF newlines**
+(what a browser textarea submits). The Workshop edit UI only counts
+*characters* client-side, so an oversized paste passes the visible check and
+then silently fails to save. CJK text (3 bytes/char) and Cyrillic
+(2 bytes/char) hit the limit long before Latin scripts do — observed 2026-08
+across the family: PWU Japanese/Korean/Russian and UWU/UMW Russian all failed
+to save while every Latin-script sibling (largest: PWU French at 7988 CRLF
+bytes) saved fine.
+
+Practical budget: keep each body (everything after the title + blank line) at
+or below 7700 CRLF bytes. For Russian that means roughly 2800 Cyrillic chars
+of prose alongside typical BBCode/URL overhead — translations must be
+noticeably terser than the English, not sentence-for-sentence. **The checker
+enforces this** (error over 8000 bytes, warning within 200 bytes of it).
+
 ## Title conventions
 
 - **Lean on vanilla vocabulary.** Each mod's English title deliberately reuses
