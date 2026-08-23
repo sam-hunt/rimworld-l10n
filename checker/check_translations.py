@@ -47,6 +47,13 @@
 #   Sidecar:     generated with the right DLC set (MayRequire-gated defs
 #                vanish from a dump made without their DLC), fresh against
 #                Defs/ (defNames and label/description English text)
+#   Engine pin:  this engine checkout's HEAD (the l10n/ submodule in a
+#                consuming repo, or the canonical checkout) must be the
+#                upstream rimworld-l10n default-branch tip (git ls-remote —
+#                no fetch, nothing local mutates). Mismatch is a WARNING, so
+#                everyday/CI runs stay green but --strict release gates fail
+#                on a stale pin. Offline / not-a-git-checkout skips with a
+#                note; L10N_SKIP_PIN_CHECK=1 skips explicitly.
 #
 # Staleness relies on the EN-comment convention: every translated entry carries
 # the English source directly above it, e.g.
@@ -59,7 +66,9 @@
 
 import argparse
 import json
+import os
 import re
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -465,6 +474,54 @@ def load_sidecar(root, report):
     return sidecar
 
 
+def check_engine_pin_freshness(report):
+    # The engine checkout IS the version contract: consuming repos pin this
+    # repo as their l10n/ submodule, and nothing else ever compares that pin
+    # to upstream — CI checks out whatever is pinned, and the release skills
+    # run whatever is checked out. So the checker, which every gate already
+    # runs, verifies its own checkout: HEAD must be the upstream
+    # default-branch tip, read with ls-remote so nothing local mutates. A
+    # mismatch is a warning, not an error: everyday and CI runs stay green,
+    # while release flows running --strict fail until the pin is bumped (or
+    # until unpushed upstream work is pushed — the other way the two can
+    # differ, equally worth catching before a release). Offline and
+    # non-git-checkout states (release tarballs) skip with a note, never a
+    # warning: a network flake must not fail a gate --strict would otherwise
+    # pass. L10N_SKIP_PIN_CHECK=1 skips explicitly.
+    if os.environ.get("L10N_SKIP_PIN_CHECK"):
+        return
+    engine_root = Path(__file__).resolve().parent.parent
+    label = "[l10n engine pin]"
+    if not (engine_root / ".git").exists():
+        print(f"note: {engine_root} is not a git checkout; skipping engine "
+              f"pin freshness check.")
+        return
+    try:
+        local = subprocess.run(
+            ["git", "-C", str(engine_root), "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=10)
+        remote = subprocess.run(
+            ["git", "-C", str(engine_root), "ls-remote", "origin", "HEAD"],
+            capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        print("note: git unavailable or upstream unreachable; skipping "
+              "engine pin freshness check.")
+        return
+    if local.returncode != 0 or remote.returncode != 0 or not remote.stdout.split():
+        print("note: could not reach the rimworld-l10n upstream (offline?); "
+              "skipping engine pin freshness check.")
+        return
+    local_sha = local.stdout.strip()
+    remote_sha = remote.stdout.split()[0]
+    if local_sha != remote_sha:
+        report.warn(label,
+                    f"engine checkout {local_sha[:9]} at {engine_root} is "
+                    f"not the upstream rimworld-l10n tip {remote_sha[:9]} — "
+                    f"update the checkout to the tip and commit the "
+                    f"consuming repo's pin bump, or push unpushed upstream "
+                    f"work first")
+
+
 def check_sidecar_freshness(defs, sidecar, report):
     # The rule that makes stale expectations loud: every def carrying a
     # label/description in XML must appear in the sidecar, so new or edited
@@ -865,6 +922,7 @@ def main():
             return 2
 
     report = Report()
+    check_engine_pin_freshness(report)
     sidecar = load_sidecar(args.root, report)
     if sidecar is None:
         return 2
