@@ -19,6 +19,7 @@ consumes this repo as a git submodule (conventionally at `l10n/`).
 | `checker/` | The `check-translations` engine. Each repo's `Scripts/check-translations.py` is a thin config shim importing it |
 | `refresh/` | The `refresh-translation-expectations` engine (drives the probe), consumed the same way |
 | `probe/` | L10nProbe, the local-only dev mod that dumps a mod's expected DefInjected key set to the sidecar JSON. See `probe/README.md` |
+| `tools/` | `tag.sh` cuts a `vX.Y.Z` release tag; `consumer-status.sh` lists every sibling's pin against it; `bump-consumer.sh` moves one consumer's pin to a tag |
 
 ## How the mod repos consume this
 
@@ -41,11 +42,19 @@ consumes this repo as a git submodule (conventionally at `l10n/`).
 ## Updating shared content
 
 New mod-independent learnings land here, once — never in a single repo's
-skill (see `process.md` § Recording new learnings). After committing here,
-bump the submodule pin in each mod repo (`git -C <repo> submodule update
---remote l10n`, commit). A repo left unbumped is pinned-stale, which is
-visible and recoverable — unlike the silent divergence the pre-submodule
-copies suffered.
+skill (see `process.md` § Recording new learnings). Commit, push, and when
+the batch is complete cut a release tag with `tools/tag.sh major|minor|patch`
+(major = consumers must edit their shim or flow; minor = behaviour they pick
+up unchanged; patch = vocabulary, lessons, doc fixes — see `CLAUDE.md`
+§ Versioning).
+
+Consumers pin release tags, and a pin moves only at that repo's release, at
+the start of a translation pass, or when a new major lands — never per
+upstream commit, so a stable mod's history stays free of pin bumps. A repo
+left on an older tag is pinned-stale, which is visible (`git submodule
+status` prints the tag; `tools/consumer-status.sh` lists all siblings) and
+recoverable (`l10n/tools/bump-consumer.sh` from inside the repo) — unlike the
+silent divergence the pre-submodule copies suffered.
 
 ## The probe and deployment
 

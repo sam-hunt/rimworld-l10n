@@ -48,12 +48,17 @@
 #                vanish from a dump made without their DLC), fresh against
 #                Defs/ (defNames and label/description English text)
 #   Engine pin:  this engine checkout's HEAD (the l10n/ submodule in a
-#                consuming repo, or the canonical checkout) must be the
-#                upstream rimworld-l10n default-branch tip (git ls-remote —
-#                no fetch, nothing local mutates). Mismatch is a WARNING, so
-#                everyday/CI runs stay green but --strict release gates fail
-#                on a stale pin. Offline / not-a-git-checkout skips with a
-#                note; L10N_SKIP_PIN_CHECK=1 skips explicitly.
+#                consuming repo) is compared to upstream rimworld-l10n's
+#                release tags (vMAJOR.MINOR.PATCH, read via git ls-remote —
+#                no fetch, nothing local mutates). Pins move only at release,
+#                at the start of a translation pass, or when a new MAJOR
+#                lands, so: a MAJOR lag or an untagged pin is a WARNING
+#                always (a major means the shim/flow contract changed);
+#                a minor/patch lag is a WARNING only under --strict (release
+#                gates must be on the latest tag) and a note otherwise, so
+#                everyday/CI runs on a stable mod stay quiet. Offline /
+#                not-a-git-checkout skips with a note; L10N_SKIP_PIN_CHECK=1
+#                skips explicitly.
 #
 # Staleness relies on the EN-comment convention: every translated entry carries
 # the English source directly above it, e.g.
@@ -474,20 +479,53 @@ def load_sidecar(root, report):
     return sidecar
 
 
-def check_engine_pin_freshness(report):
+RELEASE_TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")
+
+
+def _upstream_release_tags(engine_root):
+    # {(major, minor, patch): commit sha} for every vX.Y.Z tag on the
+    # upstream remote. ls-remote lists an annotated tag twice — the tag
+    # object as refs/tags/vX and the commit it points at as refs/tags/vX^{} —
+    # so the peeled entry wins where present (lightweight tags have only the
+    # plain entry, which already is the commit).
+    remote = subprocess.run(
+        ["git", "-C", str(engine_root), "ls-remote", "--tags", "origin"],
+        capture_output=True, text=True, timeout=30)
+    if remote.returncode != 0:
+        return None
+    plain, peeled = {}, {}
+    for line in remote.stdout.splitlines():
+        sha, _, ref = line.partition("\t")
+        if not ref.startswith("refs/tags/"):
+            continue
+        name = ref[len("refs/tags/"):]
+        target = peeled if name.endswith("^{}") else plain
+        target[name.removesuffix("^{}")] = sha
+    tags = {}
+    for name, sha in plain.items():
+        m = RELEASE_TAG_RE.match(name)
+        if m:
+            tags[tuple(int(g) for g in m.groups())] = peeled.get(name, sha)
+    return tags
+
+
+def check_engine_pin_freshness(report, strict):
     # The engine checkout IS the version contract: consuming repos pin this
     # repo as their l10n/ submodule, and nothing else ever compares that pin
     # to upstream — CI checks out whatever is pinned, and the release skills
     # run whatever is checked out. So the checker, which every gate already
-    # runs, verifies its own checkout: HEAD must be the upstream
-    # default-branch tip, read with ls-remote so nothing local mutates. A
-    # mismatch is a warning, not an error: everyday and CI runs stay green,
-    # while release flows running --strict fail until the pin is bumped (or
-    # until unpushed upstream work is pushed — the other way the two can
-    # differ, equally worth catching before a release). Offline and
-    # non-git-checkout states (release tarballs) skip with a note, never a
-    # warning: a network flake must not fail a gate --strict would otherwise
-    # pass. L10N_SKIP_PIN_CHECK=1 skips explicitly.
+    # runs, verifies its own checkout against upstream's release tags
+    # (vMAJOR.MINOR.PATCH; see the upstream CLAUDE.md for what each part
+    # means). The policy this enforces: pins move only at release, at the
+    # start of a translation pass, or when a new major lands — never per
+    # upstream commit, so a stable mod's history is not littered with pin
+    # bumps. Hence a MAJOR lag (the shim/flow contract changed) or a pin on
+    # an untagged commit warns always; a minor/patch lag warns only under
+    # --strict, where a release gate must be on the latest tag, and is a
+    # note otherwise. Offline and non-git-checkout states (release tarballs)
+    # skip with a note, never a warning: a network flake must not fail a
+    # gate --strict would otherwise pass. L10N_SKIP_PIN_CHECK=1 skips
+    # explicitly.
     if os.environ.get("L10N_SKIP_PIN_CHECK"):
         return
     engine_root = Path(__file__).resolve().parent.parent
@@ -500,26 +538,47 @@ def check_engine_pin_freshness(report):
         local = subprocess.run(
             ["git", "-C", str(engine_root), "rev-parse", "HEAD"],
             capture_output=True, text=True, timeout=10)
-        remote = subprocess.run(
-            ["git", "-C", str(engine_root), "ls-remote", "origin", "HEAD"],
-            capture_output=True, text=True, timeout=30)
+        tags = _upstream_release_tags(engine_root)
     except (OSError, subprocess.TimeoutExpired):
         print("note: git unavailable or upstream unreachable; skipping "
               "engine pin freshness check.")
         return
-    if local.returncode != 0 or remote.returncode != 0 or not remote.stdout.split():
+    if local.returncode != 0 or tags is None:
         print("note: could not reach the rimworld-l10n upstream (offline?); "
               "skipping engine pin freshness check.")
         return
+    if not tags:
+        print("note: upstream rimworld-l10n has no vX.Y.Z release tags; "
+              "skipping engine pin freshness check.")
+        return
     local_sha = local.stdout.strip()
-    remote_sha = remote.stdout.split()[0]
-    if local_sha != remote_sha:
+    fmt = lambda v: "v" + ".".join(str(n) for n in v)  # noqa: E731
+    latest = max(tags)
+    pinned = [v for v, sha in tags.items() if sha == local_sha]
+    if not pinned:
         report.warn(label,
-                    f"engine checkout {local_sha[:9]} at {engine_root} is "
-                    f"not the upstream rimworld-l10n tip {remote_sha[:9]} — "
-                    f"update the checkout to the tip and commit the "
-                    f"consuming repo's pin bump, or push unpushed upstream "
-                    f"work first")
+                    f"engine checkout {local_sha[:9]} at {engine_root} is not "
+                    f"a tagged rimworld-l10n release (latest is {fmt(latest)}) "
+                    f"— pin a release tag: l10n/tools/bump-consumer.sh")
+        return
+    current = max(pinned)
+    if current == latest:
+        return
+    if current[0] < latest[0]:
+        report.warn(label,
+                    f"pinned {fmt(current)} is a MAJOR behind upstream "
+                    f"{fmt(latest)}: the shim/flow contract changed — bump "
+                    f"the pin (l10n/tools/bump-consumer.sh) and apply the "
+                    f"per-repo edit the upstream release notes describe")
+    elif strict:
+        report.warn(label,
+                    f"pinned {fmt(current)} is behind upstream {fmt(latest)} "
+                    f"— releases run on the latest tag: "
+                    f"l10n/tools/bump-consumer.sh")
+    else:
+        print(f"note: l10n pin {fmt(current)} is behind upstream "
+              f"{fmt(latest)} (minor/patch; bumped at the next release or "
+              f"translation pass).")
 
 
 def check_sidecar_freshness(defs, sidecar, report):
@@ -922,7 +981,7 @@ def main():
             return 2
 
     report = Report()
-    check_engine_pin_freshness(report)
+    check_engine_pin_freshness(report, args.strict)
     sidecar = load_sidecar(args.root, report)
     if sidecar is None:
         return 2

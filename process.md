@@ -216,6 +216,7 @@ substitute for the checker.
 Mod-independent findings (engine mechanics, a language's grammar rule, a
 corpus-derived style rule, a checker technique) land HERE — in
 `languages/<Language>.md`, `lessons.md`, or this file — never in a single
-repo's skill, so every mod inherits them on the next submodule bump.
+repo's skill, so every mod inherits them at its next pin bump (release or
+translation-pass start — pins are not bumped per upstream commit).
 Mod-specific findings (a coined term, a phrasing decision, a def-type quirk
 of one mod) land in that repo's skill or glossary.

@@ -14,7 +14,7 @@ full layout; in short: `process.md` (workflow authority), `lessons.md`,
 `workshop.md`, `languages/<Language>.md` (per-language mechanics and
 vanilla-grounded vocabulary), `checker/` and `refresh/` (script engines
 consumed via per-repo `Scripts/*.py` config shims), `probe/` (the L10nProbe
-dev mod), `tools/bump-consumers.sh`.
+dev mod), `tools/` (release tagging and consumer pin management).
 
 ## The content contract
 
@@ -31,15 +31,49 @@ dev mod), `tools/bump-consumers.sh`.
   brief resolution note (see `languages/German.md`'s lookup correction for
   the pattern).
 
+## Versioning
+
+Every release of this repo is an annotated `vMAJOR.MINOR.PATCH` tag, cut
+with `tools/tag.sh major|minor|patch` once the batch is pushed — one tag per
+coherent batch, not per commit. The part to bump is decided by what a
+CONSUMER has to do, never by how important the change feels:
+
+- **major** — consumers must edit something or their flow changes: a shim
+  attribute added/renamed, a checker CLI flag or output-format change, a
+  sidecar format change, a release/translate skill step that must be
+  reworded. Every consumer is bumped now, and each bump commit carries that
+  edit. Say what the edit is in the tag's commit message.
+- **minor** — behaviour consumers pick up unchanged at their next bump: a
+  new checker rule, a new engine, a language-mechanics or grammar finding, a
+  process.md refinement.
+- **patch** — vocabulary/grounding additions in `languages/*.md`, lessons,
+  doc fixes, roster/wording changes.
+
+Consumers pin release tags only, never an untagged commit. `git submodule
+status` in a consumer then prints the pinned tag, so staleness is visible
+without tooling, and a repo still on `v1.x` while the family is on `v2.x` is
+one that owes a shim/flow edit — `tools/consumer-status.sh` lists this for
+every sibling.
+
 ## The propagation loop
 
 1. Edit the relevant file in THIS checkout (`~/dev/rimworld-l10n` is the
-   canonical clone), commit here.
-2. `git push` (consumers fetch pins from the remote, not this working tree).
-3. `tools/bump-consumers.sh` — dynamically discovers every `~/dev` sibling
-   repo carrying an `l10n` submodule, fast-forwards each pin to origin/main,
-   and commits the bump per repo (it does not push the consumers; push them
-   when their state is ready).
+   canonical clone), commit here, `git push` (consumers fetch pins and tags
+   from the remote, not this working tree).
+2. When the batch is complete, `tools/tag.sh <part>` (pushes the tag).
+3. Do NOT bump consumers per upstream change. A pin moves at exactly three
+   moments, and a stable mod's history must never fill with pin bumps:
+   - **at release** — the consumer's release skill runs
+     `l10n/tools/bump-consumer.sh` before the checker;
+   - **at the start of a translation pass** — the translate skill runs it
+     first, so the pass reads current language docs;
+   - **on a new major** — bump every consumer now (`tools/consumer-status.sh`
+     shows who is behind; `tools/bump-consumer.sh <repo>` bumps one), with
+     the required per-repo edit in the same commit.
+   The checker enforces this from the consumer side (`[l10n engine pin]`):
+   a major lag or an untagged pin warns always; a minor/patch lag warns only
+   under `--strict` (release gates run on the latest tag) and is a note
+   otherwise.
 
 Never edit a consuming repo's `l10n/` checkout in place — it is a pinned
 read-only copy and the change would be lost on the next bump.
