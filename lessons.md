@@ -173,6 +173,17 @@ the originating passes.
   one. The in-game tell: one load root's strings translated, the other
   root's English, split exactly along def ownership.
 
+- **CJK labels are single tokens to any keyword matcher.** CJK scripts have
+  no word boundaries (no spaces, no hyphens), so any consumer that does
+  keyword or substring matching against a CJK label sees the entire label as
+  one indivisible token — there is no way to match a "root" or "half" of a
+  label the way an English keyword like `bladed` can. Any tool or cross-mod
+  integration built on English `labelKeywords`-style matching needs the full
+  CJK label as its own list entry per language, and relabeling breaks that
+  entry silently: nothing in either side's checker can see the coupling
+  (2026-08-26, UWU's zh-Hant `TraitCostRuleDef` rules matching UMW's shipped
+  trait labels — UMW's glossary now lists the 21 labels UWU depends on).
+
 RulePackDef-specific lessons — which part of speech a
 `traitAdjectives`/`namerLabels`-style field needs per language, the several
 techniques for solving name-grammar gender (German's inline markers, Spanish's
