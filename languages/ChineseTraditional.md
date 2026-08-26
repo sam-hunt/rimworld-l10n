@@ -36,6 +36,10 @@ inversions from the 2026-08-19 pass:
 | stopping power | 抑止能力 | 攔截力 (Core `StoppingPower`) |
 | burst count | 连射次数 | 連發次數 (Core `BurstShotCount`) |
 | Crafting (skill) | 制作 | 手工 (Core `Crafting.skillLabel`) |
+| charge weapons | 电荷- (电荷步枪) | 電能- (Core `Gun_ChargeRifle`=電能步槍) |
+| flare | 照明弹 | 閃焰彈 (Anomaly `DisruptorFlare`=干擾閃焰彈) |
+| ultratech / archotech (tech levels) | 极致科技 / 超凡科技 | 高科技 / 遠古科技 (Core `TechLevel_Ultra`, `TechLevel_Archotech`) |
+| fabrication (research/bench) | 精密装配 | 精密製作 (Core `Fabrication`, `FabricationBench`) |
 
 Always re-ground every term against the zh-Hant tars even when the zh-Hans
 table already has an answer — the 2026-08-22 BTG pass found six further
@@ -91,6 +95,12 @@ have been wrong in its most-repeated strings.
 - **ASCII spaces around embedded Latin acronyms**: 內置 EMP 裝置, 被 EMP
   擊昏了, EMP 抗性 — zh-Hans sets EMP solid, zh-Hant spaces it. Digits still
   attach directly (移動速度增加15%).
+  **This spacing is not only cosmetic — it changes tokenization.** Any mod
+  feature that splits a label on spaces (UniqueWeaponsUnbound's
+  `TraitCostRuleDef.labelKeywords` matcher, for one) sees zh-Hant `EMP 子彈` as
+  `{emp, 子彈}` and therefore still matches an English `emp` keyword, while the
+  zh-Hans solid `EMP子弹` is one opaque token. Check the spacing before assuming
+  a localized label needs a localized keyword.
 - **JobDef `reportString`s carry NO trailing 。** (verified 2026-08-22 over
   every Core+Odyssey `reportString`): 清理TargetA, 破解TargetA, 救援TargetA,
   治療TargetA, 給TargetB餵食TargetA, and intransitive ones take 中 instead
@@ -239,6 +249,41 @@ see the inversion table above.
 | relic / ideoligion | 聖物 / 理念 | Ideology `IdeoRelic`, `CustomizeIdeoligion` |
 | machine persuasion (research) | 機械核心 | Core `ShipComputerCore.label` — bears no resemblance to the English label OR to zh-Hans's 飞船电脑核心. A worked case for resolving a translator-comment hint through the tar by defName, never by its English wording |
 | DLC brand names | 「皇權」/「漫遊」/「理念」 | Core `SimulateNotOwning*` — zh-Hant localizes them, in corner brackets, as zh-Hans does (most other languages keep English) |
+
+## Grounded common vocabulary, crafting / cost / settings-UI domain (Core+Odyssey+Ideology, 2026-08-26)
+
+Mined during Unique Weapons Unbound's pass: the workbench-and-economy half of
+Core plus the settings-dialog register no earlier pass needed. Rows that
+disagree with the persona-weapon table above are noted inline.
+
+| English | Use | Why |
+|---|---|---|
+| workbench (generic) | 工作桌 | Every vanilla bench *description* says 工作桌 (`ElectricSmithy`, `FueledSmithy`, `TableMachining`, `FabricationBench`, `Brewery`, `DrugLab`); 工作台 (12 hits) appears only in generic help prose such as `BillsTab.helpText`, so the bench descriptions are the nearer analog for anything naming a specific bench |
+| smithy / machining table | 燃料鍛造桌・電力鍛造桌 / 機械加工桌 | Core `FueledSmithy`, `ElectricSmithy`, `TableMachining` labels |
+| Smithing / Machining / Fabrication (research) | 鍛造 / 機械加工 / 精密製作 | Core research labels — note 精密製作, NOT zh-Hans's 精密装配 |
+| pulse-charged munitions (`ChargedShot`) | 高能電磁 | Core `ChargedShot.label` — bears no resemblance to the English label; resolve it by defName, never by its English wording |
+| beam (weapons) | 光束 | Odyssey `Gun_BeamRepeater`=光束連發槍 |
+| charge (the *act* of charging, vs the weapon class) | 充能 (weapon class is 電能-) | Odyssey `ChargeCapacitor`=充能電容, `PulseCharger`=脈衝充能器 vs Core `Gun_ChargeRifle`=電能步槍 — two different words for one English root, so pick by slot |
+| tech levels | 原始部落 / 中世紀 / 工業 / 太空 / 高科技 / 遠古科技 | Core `TechLevel_Neolithic`…`_Archotech` |
+| components / advanced components | 零件 / 高級零件 | Core `ComponentIndustrial`, `ComponentSpacer` — 零件 is also the generic "part", so 部件 (51 hits) is the word for a physical part in prose, 元件 (8) is rare |
+| chemfuel / herbal medicine / thrumbofur / birdskin | 化合燃料 / 草藥 / 獨角獸皮 / 鳥皮 | Core labels |
+| steel slag chunk / bioferrite / hemogen pack | 金屬碎片 / 生化鐵氧體 / 血原包 | Core `ChunkSlagSteel`, Anomaly `Bioferrite`, Biotech `HemogenPack` |
+| ingredients / stuff | 材料 / 素材 | Core `Ingredients`=材料 and `Stat_Stuff_Name`=材料 collide, so when a string must distinguish them use 素材 for stuff (`FabricationBench.description` 將簡易素材製作成科技結晶) |
+| cost | 成本 (an economic cost) / 花費 (a price paid) | Core `Difficulty_MaintenanceCostFactor_Label`=砲塔整備成本 vs `RequestTrader`=請求交易旅隊(花費：{0}友好度). Both attested; pick by slot rather than harmonizing |
+| refund | 返還 | Core `Flagstone*.description` 拆除石板路並不會返還資源 — the exact "does not refund resources" slot |
+| free (at no cost) | 免費 | Royalty `CommandCallRoyalAidFreeOption` |
+| prerequisites | 前置條件 (research 研究前置條件) | Core `Prerequisites`, `ResearchPrerequisites` |
+| research project / research window | 研究項目 / 研究視窗 | Core `NeedResearchProject`, `ClickToOpenResearchTab`=點擊打開研究視窗 — **vanilla zh-Hant has no tree metaphor**, so 研究樹 is a coinage, not a translation |
+| forbidden / reserved / unreachable / no path | 禁用 / 預留 / 無法接觸 / 沒有路徑 | Core `CommandForbid`, `Reserved`=被預留給其他人。, `CannotReach`, `NoPath` |
+| haul / stack | 搬運 / 堆疊 | Core `HaulFromSource`, `OnlyStacksWithCompatibleMeals` |
+| accuracy penalty / ignores | 準度懲罰 / 忽略 | Odyssey `AimAssistance.description` 使武器忽略壞天氣和煙霧帶來的準度懲罰 — verbatim, and the nearest analog for any "ignores accuracy penalties" line |
+| damage type / extra damage / armor penetration | 傷害類型 / 額外傷害 / 護甲穿透值 | Core `Damage`, `ArmorPenetration`; `DamageType` itself is the formatted {0}傷害 |
+| log / palette / menu / right-click / command (gizmo) | 日誌 / 調色盤 / 選單 / 右鍵 / 指令 | Core `LogFileFolder`=日誌資料夾 (記錄 is "to record", a different slot), `StartDevPaletteOn`=開發者調色盤, `BillsTab.helpText`, tips |
+| texture | **貼圖 is free to coin** (0 vanilla hits); 紋理 is spent on `TextureCompression`=紋理壓縮 and 材料 on `Stat_Stuff_Name` | Core Keyed |
+| none / none (brackets) | 無 / (無) | Core `None`, `NoneBrackets` — the bracket form confirms ASCII parens set solid |
+| structure colours (the building-paint palette) | 建築顏色 | Core's `Structure_*` ColorDefs are what `DesignatorPaintBuilding` 粉刷建築 applies; Ideology's Keyed `Structure`=結構 is the *ideoligion*-structure slot and must not be borrowed for it |
+| blue (plain colour label) | 藍色 | Core `Structure_Blue.label`; Core Keyed `Blue` is left untranslated English and is not a usable source |
+| DLC brand names (full set) | 「皇權」/「理念」/「生機」/「異邪」/「漫遊」 | Core `SimulateNotOwning*` — extends the Royalty/Ideology/Odyssey trio recorded above with Biotech and Anomaly |
 
 ## RulePackDef / name-generation grammar
 
