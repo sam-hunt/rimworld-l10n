@@ -7,7 +7,7 @@ this repository.
 
 **rimworld-l10n** is the shared localization toolkit for this author's family
 of RimWorld mods (BetterTradersGuild, UniqueWeaponsUnbound,
-UniqueMeleeWeapons, PersonaWeaponsUnbound, TradersStockXenogerms,
+UniqueMeleeWeapons, PersonaWeaponsUnbound, XenogermTraderStock,
 ArchotechAndroidHardware, ArchotechThumb, BionicThumbGuild). Every consuming
 mod repo pins this repo as its `l10n/` git submodule. See README.md for the
 full layout; in short: `process.md` (workflow authority), `lessons.md`,

@@ -2,7 +2,7 @@
 
 The shared localization toolkit for this author's family of RimWorld mods
 (BetterTradersGuild, UniqueWeaponsUnbound, UniqueMeleeWeapons,
-PersonaWeaponsUnbound, TradersStockXenogerms, ArchotechAndroidHardware,
+PersonaWeaponsUnbound, XenogermTraderStock, ArchotechAndroidHardware,
 ArchotechThumb, BionicThumbGuild, ...). Everything localization-related that
 is true for *every* mod lives here, exactly once; each mod repo keeps only its
 own facts (its translation surface, compat roots, coined-term glossary) and
