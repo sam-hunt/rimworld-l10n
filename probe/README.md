@@ -32,8 +32,8 @@ The dumps are consumed by the `Scripts/check-translations.py` checker every side
 repo in the mod family carries (a thin shim over the shared engine in `../checker/`), which
 checks a dump in as a sidecar and fails when it is stale. Each repo's
 `Scripts/refresh-translation-expectations.py` (a shim over `../refresh/`) regenerates its
-sidecar by driving this probe in the deployed Mods folder. `Docs/SPEC.md` (local-only,
-untracked) holds this mod's design and the decompile-verified API surface it is built on.
+sidecar by driving this probe in the deployed Mods folder. `Docs/SPEC.md` holds this
+mod's design and the decompile-verified API surface it is built on.
 
 ## Development
 

@@ -53,5 +53,5 @@ desktop.ini
 # Logs
 *.log
 
-# Research documentation (decompile dumps etc; kept locally, not tracked)
-Docs/
+# Docs/ IS tracked: SPEC.md is the design authority every source file cites.
+# Decompile dumps and other research scratch belong outside the repo.
