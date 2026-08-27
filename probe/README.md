@@ -20,6 +20,12 @@ switch language and the active one is irrelevant.
 Output defaults to this mod's own `Output/<packageId>.json` (in the *deployed* mod folder). A
 per-mod path override writes straight into a mod's source repo instead.
 
+A startup-triggered run (`-l10nprobe` or the probe-on-boot setting) also writes
+`Output/log-messages.json`: the game's in-memory log (`Verse.Log.Messages` — type, text,
+repeats, stack trace per message) as of the end of the boot. The family's startup smoke gate
+(`../smoke/startup_smoke.py`) reads message LEVELS from it, because a RimWorld 1.6 Player.log
+carries no stack traces and so no level for a plain `Log.Error`. See `Source/1.6/Probe/LogDump.cs`.
+
 ## Consumers
 
 The dumps are consumed by the `Scripts/check-translations.py` checker every sidecar-bearing

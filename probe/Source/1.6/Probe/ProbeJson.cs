@@ -119,7 +119,7 @@ internal static class ProbeJson
 
     // Emits a JSON string literal (or the null token). Non-ASCII passes through raw — the
     // file is written as UTF-8, and unescaped text diffs better than \u sequences.
-    private static void AppendString(StringBuilder sb, string s)
+    internal static void AppendString(StringBuilder sb, string s)
     {
         if (s == null)
         {

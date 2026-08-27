@@ -66,7 +66,9 @@ The repo lives outside the Mods folder; every local build redeploys.
 ## Architecture
 
 - **C#:** root namespace `L10nProbe`, sources under `Source/1.6/` mirroring the family's csproj
-  layout. Startup work goes in `Core/L10nProbe_Startup.cs` (`[StaticConstructorOnStartup]`,
+  layout. `Probe/LogDump.cs` writes the boot log dump (SPEC.md §3a) from the startup delegate,
+  after the probe run and before the shutdown line — keep that order, the smoke engine relies
+  on it. Startup work goes in `Core/L10nProbe_Startup.cs` (`[StaticConstructorOnStartup]`,
   post-def-load), never in the `Mod` constructor — that runs before any def exists.
 - **No Harmony, no patches, no defs.** Everything is public API called at startup. A probe that
   altered game behaviour would compromise the dumps it exists to produce, so this is a rule and

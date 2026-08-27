@@ -36,12 +36,18 @@ public static class L10nProbe_Startup
             // try/finally, not sequence: ProbeRunner catches per-mod, but an automated run
             // must shut the game down even if the runner itself somehow throws — a release
             // script waiting on the process must never hang at the main menu.
+            string trigger = fromCommandLine ? "-" + ProbeArg : "probe-on-boot setting";
             try
             {
-                ProbeRunner.RunAll(fromCommandLine ? "-" + ProbeArg : "probe-on-boot setting");
+                ProbeRunner.RunAll(trigger);
             }
             finally
             {
+                // The boot log dump (LogDump.cs) goes AFTER the probe run, so the runner's own
+                // FAILED lines are in it, and BEFORE the shutdown marker, so the smoke gate can
+                // treat "marker present, dump line absent" as a probe build that predates the
+                // dump. Its own failure is logged and swallowed: it must never block shutdown.
+                WriteLogDump(trigger);
                 if (fromCommandLine)
                 {
                     Log.Message($"{L10nProbeMod.LogPrefix} -{ProbeArg} run complete; shutting down.");
@@ -49,5 +55,20 @@ public static class L10nProbe_Startup
                 }
             }
         });
+    }
+
+    private static void WriteLogDump(string trigger)
+    {
+        try
+        {
+            string path = LogDump.Write(LogDump.DefaultPath, trigger);
+            // The smoke engine greps for this exact line; keep it in sync with
+            // startup_smoke.py's LOG_DUMP_MARKER.
+            Log.Message($"{L10nProbeMod.LogPrefix} wrote log dump {path}");
+        }
+        catch (System.Exception e)
+        {
+            Log.Error($"{L10nProbeMod.LogPrefix} FAILED writing log dump: {e}");
+        }
     }
 }
