@@ -195,3 +195,33 @@ per-language files here where generic, and in those repos' own skills where
 tied to their def types. One pointer worth keeping visible: Core ships
 curated word corpora under `Strings/Words/` — check them before coining a
 name-grammar noun for any mod that adds name generation.
+
+## Tooling lessons (cross-mod, not language-specific)
+
+- **A RimWorld 1.6 Player.log carries no stack traces, so a `Log.Error` is
+  just its message lines.** On 1.6.4871 (Unity 2022.3.35f1, Windows player)
+  a full boot log has zero `Verse.Log` frames, zero `StackTraceUtility`
+  frames, zero `(Filename: ...)` locators — and no blank line between
+  messages either, since that separator came after the trace. Nothing in
+  `Assembly-CSharp` calls `SetStackTraceLogType`; it is the player build's
+  setting, not a pref. Any tool that infers a log level from frames (the
+  family's startup smoke gate did) reads every plain error as info and
+  passes a broken XML patch silently — XenogermTraderStock shipped a
+  `PatchOperationAdd` against the non-existent `Orbital_ExoticGoods` for its
+  whole life while the gate reported a clean boot (found 2026-08-27, fixed
+  2026-08-28). The level IS in memory: `Verse.Log.Messages` keeps every
+  message as a `LogMessage` with its `LogMessageType`, `repeats` and a
+  RimWorld-captured stack trace, and L10nProbe now dumps that queue to
+  `Output/log-messages.json` at the end of a `-l10nprobe` boot for the
+  smoke engine to read. Player.log is a fallback with message-shape
+  heuristics only; a raw unhandled exception Unity logs itself is the one
+  thing only Player.log has.
+- **RimWorld attributes patch and def failures to a mod by its About.xml
+  display name, not its packageId or assembly**:
+  `Verse.PatchOperation.Complete(runningMod.Name)` logs
+  `[Xenogerm Trader Stock] Patch operation ... failed`, with the file path
+  on a second `file:` line. A smoke shim's `OWN_PATTERNS` therefore needs
+  `"[<display name>]"`; the engine now derives it from
+  `REPO_ROOT/About/About.xml` (BTG and XTS already listed it; UMW, UWU and
+  PWU did not), so the derivation is the safety net and an explicit entry is
+  documentation.

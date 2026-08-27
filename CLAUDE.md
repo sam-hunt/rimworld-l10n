@@ -12,9 +12,9 @@ ArchotechAndroidHardware, ArchotechThumb, BionicThumbGuild). Every consuming
 mod repo pins this repo as its `l10n/` git submodule. See README.md for the
 full layout; in short: `process.md` (workflow authority), `lessons.md`,
 `workshop.md`, `languages/<Language>.md` (per-language mechanics and
-vanilla-grounded vocabulary), `checker/` and `refresh/` (script engines
-consumed via per-repo `Scripts/*.py` config shims), `probe/` (the L10nProbe
-dev mod), `tools/` (release tagging and consumer pin management).
+vanilla-grounded vocabulary), `checker/`, `refresh/` and `smoke/` (script
+engines consumed via per-repo `Scripts/*.py` config shims), `probe/` (the
+L10nProbe dev mod), `tools/` (release tagging and consumer pin management).
 
 ## The content contract
 
@@ -80,9 +80,10 @@ read-only copy and the change would be lost on the next bump.
 
 ## Script engines
 
-`checker/check_translations.py` and `refresh/refresh_expectations.py` hold
-all logic; each consuming repo's `Scripts/check-translations.py` and
-`Scripts/refresh-translation-expectations.py` are thin shims that import the
+`checker/check_translations.py`, `refresh/refresh_expectations.py` and
+`smoke/startup_smoke.py` hold all logic; each consuming repo's
+`Scripts/check-translations.py`, `Scripts/refresh-translation-expectations.py`
+and `Scripts/integration-smoke-test.py` are thin shims that import the
 engine and assign config by module attribute (see the `SHIM_TEMPLATE.py`
 beside each engine, and any consuming repo's shims for real examples with
 per-repo rationale). Behavioral changes belong in the engine; per-repo values
@@ -90,15 +91,37 @@ and their rationale comments belong in the shims. The engines were extracted
 byte-identical from the repos' original scripts — keep CLI flags and output
 format stable, since consumers' CI release gates run the checker.
 
+A consumer's shim imports the engine from ITS pinned `l10n/` submodule, so
+running a consumer's shim never exercises this working tree; to test an
+engine change against real artifacts, write a scratch shim that puts this
+checkout's engine directory on `sys.path` (or rescan with `--no-launch`).
+
+### Tests
+
+```bash
+python3 -m unittest discover -s smoke -p 'test_*.py'   # smoke engine classification
+```
+
+Run from the repo root before committing an engine change. The smoke tests
+are pure classification over fixture log shapes (1.6 frame-less, legacy
+frame-bearing, the probe's log dump); nothing launches the game.
+
 ## The probe
 
 `probe/` is L10nProbe, a local-only dev mod that dumps a mod's expected
-DefInjected key set (see `probe/README.md` and `probe/CLAUDE.md` for design
-and build). **Only this canonical checkout deploys it**: the csproj's deploy
-target checks whether the repo root's `.git` is a real directory and no-ops
-in submodule/worktree checkouts, so a consumer's pinned copy can never
-overwrite the deployed probe with a stale version. Never upload it to the
-Steam Workshop.
+DefInjected key set and, at the end of a `-l10nprobe` boot, the game's
+in-memory log (`Verse.Log.Messages` → `Output/log-messages.json`, the smoke
+engine's authoritative source of log levels — a 1.6 Player.log has no stack
+traces, see `lessons.md`'s tooling section). See `probe/README.md` and
+`probe/CLAUDE.md` for design and build. **Only this canonical checkout
+deploys it**: the csproj's deploy target checks whether the repo root's
+`.git` is a real directory and no-ops in submodule/worktree checkouts, so a
+consumer's pinned copy can never overwrite the deployed probe with a stale
+version. A probe change is live for every consumer's smoke run only once
+`dotnet build probe/L10nProbe.sln -c Release` has been run HERE — the smoke
+engine falls back to Player.log heuristics (and fails under `--strict`)
+when the deployed probe predates the dump. Never upload it to the Steam
+Workshop.
 
 ## Policy
 

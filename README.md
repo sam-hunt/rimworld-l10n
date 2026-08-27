@@ -18,6 +18,7 @@ consumes this repo as a git submodule (conventionally at `l10n/`).
 | `workshop.md` | Steam Workshop description/title localization conventions |
 | `checker/` | The `check-translations` engine. Each repo's `Scripts/check-translations.py` is a thin config shim importing it |
 | `refresh/` | The `refresh-translation-expectations` engine (drives the probe), consumed the same way |
+| `smoke/` | The `integration-smoke-test` engine: boots the game on a pinned mod list and gates on the errors it logged, levelled from the probe's `log-messages.json` dump. Consumed the same way; tests in `smoke/test_startup_smoke.py` |
 | `probe/` | L10nProbe, the local-only dev mod that dumps a mod's expected DefInjected key set to the sidecar JSON. See `probe/README.md` |
 | `tools/` | `tag.sh` cuts a `vX.Y.Z` release tag; `consumer-status.sh` lists every sibling's pin against it; `bump-consumer.sh` moves one consumer's pin to a tag |
 
