@@ -19,6 +19,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "l10n" / "smoke"))
 import startup_smoke as engine  # noqa: E402
 
+# Load-bearing, not cosmetic: the engine derives "[<About.xml display name>]"
+# from REPO_ROOT/About/About.xml and appends it to OWN_PATTERNS, because
+# RimWorld reports XML patch/def failures under the display name.
 engine.REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # This mod's own packageId, from About/About.xml.
@@ -38,8 +41,11 @@ engine.SMOKE_ACTIVE_MODS = [
     "shunter.l10nprobe",
 ]
 
-# Substrings attributing a Player.log entry to THIS mod: assembly/namespace,
-# bracketed log prefix, def/key prefix.
+# Substrings attributing a log entry to THIS mod: assembly/namespace, the
+# bracketed About.xml display name (RimWorld's own attribution for patch/def
+# failures: "[Placeholder Mod] Patch operation ... failed" - the engine
+# derives it from About.xml too, listing it here is self-documenting), the
+# C# log prefix if it differs, def/key prefix.
 engine.OWN_PATTERNS = ["Placeholder", "[Placeholder Mod]", "PLC_"]
 
 # Integration display name -> substrings (the other mod's namespaces and log
