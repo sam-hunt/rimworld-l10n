@@ -62,18 +62,30 @@ throughout (`le [attack_noun]` renders "l'assaut", `dégâts de {1}` renders
   injected value's first letter is unknown, at the cost of the quote marks
   themselves.
 
-**Resolved timing conflict: `PostProcessed` runs at load, before argument
-substitution — elision never fires across an injected placeholder.**
-`de {0}` / `de [settlement_label]` sees a literal `{`/`[`, not a vowel, and
-ships unelided; vanilla fr's own `TradeRequest.questNameRules` is the tell,
-picking only prepositions that never need contracting (`pour`, `avec`, `à
-[X]`). **This is BTG's 2026-08-10 finding, re-verified directly against the
-assembly, and it reverses UWU's and PWU's earlier 2026-07-29 claim** that
-`PostProcessed` runs *after* substitution and that writing `de {0}` /
-`la {0}` "self-repairs" at runtime (e.g. "de or" → "d'or"). Per the
-latest-wins rule, treat elision as **load-time-only**: restructure a sentence
-so no elidable particle sits directly before an injected symbol or
-placeholder, rather than relying on the worker to fix it after the fact.
+**Where `PostProcessed` actually runs (decompile-verified on 1.6.4871,
+Shipcracker Warcasket's 2026-09-26 pass; this supersedes the two earlier,
+contradictory timing notes).** The assembly has exactly one call site for
+`LanguageWorker.PostProcessed` outside the article helpers:
+`GrammarResolverSimple.Formatted`, which calls it on the *resolved* string
+after `TryResolveInner` has substituted the arguments. There is no load-time
+call: `DefInjectionPackage.ProcessedTranslation` only turns `\n` into a
+newline, and a bare `"key".Translate()` returns the stored value untouched.
+Two consequences:
+
+- **DefInjected def fields are never elided by the worker.** A `label`,
+  `description` or comp string is shown to the player exactly as written,
+  so write the elided forms by hand (`l'armure`, `d'un`, `qu'il`), as vanilla
+  does: Core + Odyssey fr `ThingDef` descriptions carry 918 hand-elided forms
+  and zero uncontracted `de/le/que/ne/se/la + vowel` sequences. Hand-elided
+  text is also safe wherever the worker does run, since its regexes match
+  only the uncontracted forms.
+- **Keyed strings are post-processed only through `.Formatted(args)` /
+  `.Translate(args)`, and then *after* substitution.** The earlier "runs at
+  load, before substitution" note is contradicted by the call site; the
+  older "self-repairs across `{0}`" note is what the code says. Still prefer
+  restructuring so no elidable particle sits directly before a placeholder:
+  `de "{0}"` (quoted) never elides, an injected label may be capitalised or
+  h-initial, and a no-arg `.Translate()` skips the worker entirely.
 
 `WithDefiniteArticle`/`WithIndefiniteArticle` are **overridden**, handling
 `l'` before a vowel and `le`/`la`/`un`/`une` by gender directly — so the Keyed

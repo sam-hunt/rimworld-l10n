@@ -184,6 +184,14 @@ the originating passes.
   (2026-08-26, UWU's zh-Hant `TraitCostRuleDef` rules matching UMW's shipped
   trait labels — UMW's glossary now lists the 21 labels UWU depends on).
 
+- **`LanguageWorker.PostProcessed` runs in exactly one place:
+  `GrammarResolverSimple.Formatted`, after argument substitution**
+  (decompile-verified on 1.6.4871). Nothing post-processes DefInjected def
+  fields or a no-argument `.Translate()`; `DefInjectionPackage` only
+  converts `\n`. So every worker rewrite a language relies on (French
+  elision, any `PostProcessed` override) applies to formatted Keyed output
+  only, and a def label or description must be written in its final form by
+  hand. Check `languages/French.md` for the worked case.
 - **Free prose is where generated text leaks English syntax; mirrored
   strings do not.** The family's first native-player complaint (Russian,
   LocalMineralScanner, 2026-09-19) called the text rigid and machine-like.
