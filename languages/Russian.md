@@ -143,6 +143,22 @@ strings unless noted):
   TargetA`), and that the noun-phrase convention belongs to a different
   string type — *inspect* strings. The decompile-verified finding wins; both
   conventions are kept above under their correct labels.
+- **Calque tells in free prose (the family's first native-player complaint,
+  LocalMineralScanner's Workshop page, 2026-09-19).** A Russian player called
+  the mod's text rigid and machine-like. Every in-game string mirrored from a
+  vanilla analog was clean; the complaint traced entirely to the mod's own
+  sentences (Workshop blurb and FAQ, the building description), where the
+  English skeleton survived under Russian words: stacked reflexive passives
+  and participial phrases (`жилу, размещённую генерацией карты`),
+  genitive/instrumental noun chains carrying an English subject-verb-object
+  order (`трудозатраты на находку совпадают с`), and abstract nouns where
+  Russian reaches for a verb (`Весь код проверяется и тестируется вручную`).
+  The native rewrites use finite active verbs and the ordinary spoken clause
+  order (`жилу, уже существующую на карте`; `требует столько же труда,
+  сколько`; `благодаря двум пультам сканировать могут сразу два оператора`;
+  `Я вручную проверяю и тестирую весь код`). Before committing, read every
+  description and Workshop sentence for this on its own, separately from the
+  vocabulary check; grounding catches words, not syntax.
 - Russian is one of the heavy-inflection languages (alongside Polish,
   Turkish, Czech, German) worth decompiling `LanguageWorker_<Language>` for
   before generating, since its authoring requirements (case/numeral

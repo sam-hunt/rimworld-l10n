@@ -184,6 +184,22 @@ the originating passes.
   (2026-08-26, UWU's zh-Hant `TraitCostRuleDef` rules matching UMW's shipped
   trait labels — UMW's glossary now lists the 21 labels UWU depends on).
 
+- **Free prose is where generated text leaks English syntax; mirrored
+  strings do not.** The family's first native-player complaint (Russian,
+  LocalMineralScanner, 2026-09-19) called the text rigid and machine-like.
+  On review, every in-game string mirrored from a vanilla analog was clean,
+  and the complaint traced entirely to the sentences that have no vanilla
+  analog to mirror (descriptions, Workshop blurb and FAQ): native words on an
+  English skeleton, in Russian's case stacked passives, participial phrases
+  and noun chains where a native writer uses a finite active verb and their
+  own clause order. Terminology grounding catches vocabulary, never syntax,
+  so treat register as a separate gate: after generating, re-read every
+  free-prose sentence on its own and ask whether a native writer would have
+  built it that way; rewrite with the meaning unchanged. Labels and verbatim
+  vanilla reuse are exempt; descriptions, Workshop text and any FAQ or letter
+  prose are the slots to check. Each language file records that language's
+  own tells as they are found (Russian's are in `languages/Russian.md`).
+
 RulePackDef-specific lessons — which part of speech a
 `traitAdjectives`/`namerLabels`-style field needs per language, the several
 techniques for solving name-grammar gender (German's inline markers, Spanish's
