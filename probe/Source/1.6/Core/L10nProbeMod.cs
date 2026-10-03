@@ -4,9 +4,14 @@ using Verse;
 
 namespace L10nProbe;
 
-// Mod entry point. Wires up settings; nothing else happens here — the Mod constructor runs
-// while mod assemblies are still loading, before any def exists, so all probe work is
-// deferred to L10nProbe_Startup (post-def-load).
+// Mod entry point. Wires up settings and QUEUES the startup probe run; no probe work happens
+// here — the Mod constructor runs while mod assemblies are still loading, before any def
+// exists. The queueing has to happen from here, though: a delegate queued from a Mod
+// constructor is the only way to run after the def graph is complete but before any mod's
+// static constructor (see L10nProbe_Startup.cs's file comment for the slot order and why
+// that timing is load-bearing). Only StartupProbe may be touched from here — never
+// L10nProbe_Startup, whose static constructor would fire on first access instead of at
+// StaticConstructorOnStartup time (same file, same comment).
 //
 // No Harmony: the probe patches nothing (see the csproj comment for why that is a rule
 // rather than an accident).
@@ -39,6 +44,7 @@ public class L10nProbeMod : Mod
     {
         ContentPack = content;
         Settings = GetSettings<L10nProbeSettings>();
+        StartupProbe.QueueFromModConstructor();
     }
 
     public override void DoSettingsWindowContents(Rect inRect)
@@ -63,8 +69,13 @@ public class L10nProbeMod : Mod
 
         if (listing.ButtonText("Probe now"))
         {
-            lastRunSummary = ProbeRunner.RunAll("manual");
+            // A manual run walks the def graph AFTER every mod's static constructor, so it can
+            // carry values other mods assigned at runtime that no translation could ever
+            // target; the dump says so in meta.collectedAfterStartup and the refresh engine
+            // refuses it. Fine for eyeballing, not for a sidecar.
+            lastRunSummary = ProbeRunner.RunAll("manual", atStartup: false);
         }
+        listing.SubLabel("Manual dumps are taken after startup and flagged; sidecars come from a -l10nprobe boot.", 1f);
         string summaryToShow = lastRunSummary ?? ProbeRunner.LastRunSummary;
         if (!summaryToShow.NullOrEmpty())
         {

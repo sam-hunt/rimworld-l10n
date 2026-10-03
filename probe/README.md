@@ -14,11 +14,16 @@ switch language and the active one is irrelevant.
 ## Usage
 
 - **Manual:** tick the mods to probe in the mod's settings window and press "Probe now".
-- **Automated:** launch the game with `-l10nprobe` — it probes once defs are loaded and quits,
-  no user input. This is the hook the family repos' release flows drive.
+- **Automated:** launch the game with `-l10nprobe` — it probes the moment the def graph is
+  complete and translation-injected, before any mod's static constructor runs, then quits once
+  startup is over, no user input. This is the hook the family repos' release flows drive.
+  (A "Probe now" dump is taken after startup instead and says so in its metadata; the refresh
+  engine refuses it, since other mods' runtime writes may be in it.)
 
 Output defaults to this mod's own `Output/<packageId>.json` (in the *deployed* mod folder). A
-per-mod path override writes straight into a mod's source repo instead.
+per-mod path override writes straight into a mod's source repo instead. Each dump records the
+active DLCs and the full active mod list it was taken under; consumers refuse a dump from any
+boot other than their pinned one.
 
 A startup-triggered run (`-l10nprobe` or the probe-on-boot setting) also writes
 `Output/log-messages.json`: the game's in-memory log (`Verse.Log.Messages` — type, text,

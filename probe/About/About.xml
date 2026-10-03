@@ -5,7 +5,7 @@
   <packageId>shunter.l10nprobe</packageId>
   <modVersion>0.1.0</modVersion>
   <description>Dumps the complete expected DefInjected key set, with current English values, for selected loaded mods to machine-readable JSON. It calls the game's own def-injection walker over the live DefDatabase, filtered to one mod at a time, so vanilla-inherited fields and C# field defaults are included and vanilla's own missing translations are not.
-Probe from this mod's settings window, or launch the game with -l10nprobe to dump and quit without touching the UI. Output defaults to this mod's own Output/ folder; a per-mod path override writes straight into a mod's source repo instead.
+Launch the game with -l10nprobe to dump and quit without touching the UI: the dump is taken once the def graph is complete and translations are injected, before any mod's static constructor runs, and records the active mod list. The settings window's "Probe now" dumps after startup instead and is flagged as such. Output defaults to this mod's own Output/ folder; a per-mod path override writes straight into a mod's source repo instead.
 Expected keys are language-independent, so no language switching is needed and the active language is irrelevant.
 Load this LAST: it can only see defs that are loaded.</description>
   <supportedVersions>

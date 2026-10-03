@@ -66,6 +66,27 @@ FieldInfo fieldInfo, Def def)`.
   writes `TranslationReport.txt` to a fixed location, and diffs against the
   active language (which the probe deliberately does not: expected keys are
   language-independent; per-language diffing stays in each repo's checker).
+- **When the walk runs** (verified 2026-10-03, 1.6.4871):
+  `PlayDataLoader.DoPlayLoad` runs inside an asynchronous long event, and
+  `LongEventHandler.ExecuteWhenFinished` delegates queued during it run on
+  the main thread, in queue order, once it ends (each in its own try/catch).
+  `Mod` constructors (`LoadedModManager.CreateModClasses`, early in
+  `DoPlayLoad`) queue first; `DoPlayLoad` itself then queues
+  `SolidBioDatabase.LoadAllBios`, `LoadedLanguage.InjectIntoData_AfterImpliedDefs`,
+  `StaticConstructorOnStartupUtility.CallAll`, atlas baking and GC.
+  `InjectIntoData_BeforeImpliedDefs` (non-generated defs) ran synchronously
+  inside `DoPlayLoad`, before `ResolveReferences`. The probe queues its dump
+  pass from its `Mod` constructor, so it walks the complete, resolved,
+  injected def graph **before any mod's static constructor**; it queues the
+  log dump and shutdown from a `[StaticConstructorOnStartup]` type, so those
+  run **after them all**. A value another mod assigns to a probed def from its
+  static constructor (Vanilla Expanded Framework's
+  `ResearchProjectUtility.AutoAssignRules` filling every research project's
+  null `generalRules` with its 75-line schematic grammar) is therefore absent
+  from the dump — correctly, since the game's injection passes are over by
+  then and no translation of such a key could load. The in-game report walks
+  late and lists it; this timing is the one deliberate divergence from the
+  report. See `Core/L10nProbe_Startup.cs`.
 
 ## Behavior
 
@@ -74,13 +95,18 @@ FieldInfo fieldInfo, Def def)`.
    missing-injection verdict per entry (`required`), and write one output
    file per mod.
 2. **Triggers:**
-   - A **"Probe now"** button in the mod settings window (primary manual path).
+   - A **"Probe now"** button in the mod settings window (manual path, for
+     eyeballing). It walks after startup, so its dumps carry
+     `meta.collectedAfterStartup: true` and the refresh engine refuses them.
    - **Command-line automation:** when the game is launched with
      `-l10nprobe` (check arg readability via `Verse.GenCommandLine`), run the
-     probe automatically once defs are loaded (queue via `LongEventHandler`
-     after `StaticConstructorOnStartup` time) and then **quit the game**
-     (`Root.Shutdown()`). This is the hook release scripts drive.
-   - Optional settings toggle: probe on every boot (no quit).
+     dump pass from the delegate the `Mod` constructor queued (complete def
+     graph, before any static constructor — see the API section), then, from
+     a delegate queued at `StaticConstructorOnStartup` time, write the boot
+     log dump and **quit the game** (`Root.Shutdown()`). This is the hook
+     release scripts drive.
+   - Optional settings toggle: probe on every boot (no quit); same timing as
+     the command-line path.
    - Both startup triggers ALSO write the **boot log dump** (§3a) after the
      probe run and before the shutdown line, so the log includes the probe's
      own FAILED lines and a reader can tell "run complete, no dump" apart
@@ -94,6 +120,7 @@ FieldInfo fieldInfo, Def def)`.
     "activeDlcs": ["Core", "Royalty", "Odyssey", "..."],
     "modPackageId": "...",
     "modName": "...",
+    "activeMods": ["brrainz.harmony", "ludeon.rimworld", "...", "shunter.l10nprobe"],
     "generated": "2026-07-30T00:00:00Z"
   },
   "defInjections": {
@@ -144,7 +171,15 @@ element count unless `fullListAllowed` is set. `activeDlcs` uses
 order. It matters because `MayRequire`-gated defs (e.g. UMW's Axe/Warhammer
 uniques need Royalty) only exist — and only emit keys — when their DLC is
 active; consumer scripts must be able to detect a probe run with the wrong
-DLC set.
+DLC set. `activeMods` is every running mod's packageId in load order
+(lowercase, the `_steam` postfix the game appends when a local copy of the
+same mod is also installed stripped; Core and DLCs included, the probe
+itself last): the boot configuration the dump reflects. A mod that is
+loaded can patch or assign into the probed mod's defs, so the refresh engine
+compares this list to the consuming repo's pinned one and refuses a dump
+from any other boot (a sibling repo's refresh, a smoke test).
+`collectedAfterStartup: true` is emitted only by a post-startup walk (the
+settings button); consumers refuse it too.
 
 4. **Settings UI** (standard `Mod`/`ModSettings` subclass):
 
@@ -244,3 +279,9 @@ which needs levels a 1.6 Player.log no longer records.
    externally-sourced keys beyond what their own def XML shows.
 4. Repeated runs on an unchanged game+mod set produce byte-identical output
    (stable ordering, no timestamps beyond `meta.generated`).
+5. A value another mod assigns to a probed def from a
+   `[StaticConstructorOnStartup]` constructor is absent from a `-l10nprobe`
+   dump: with Vanilla Expanded Framework active, PWU's
+   `PWU_BladelinkCustomization.generalRules.rulesStrings` (VEF's
+   `AutoAssignRules`) does not appear, where the in-game report lists it
+   (verified 2026-10-03).

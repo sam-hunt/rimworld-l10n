@@ -23,7 +23,10 @@ public static class ProbeRunner
 
     // Runs the probe for every configured target and returns a one-line summary (also logged
     // and kept in LastRunSummary). `reason` says which trigger fired, purely for the log.
-    public static string RunAll(string reason)
+    // `atStartup` is true only for the slot-1 boot run (L10nProbe_Startup.QueueStartupProbe),
+    // the one timing at which the walk sees exactly what the game's translation injection
+    // saw; a later run (the settings button) is recorded as such in every dump it writes.
+    public static string RunAll(string reason, bool atStartup)
     {
         System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
         L10nProbeSettings settings = L10nProbeMod.Settings;
@@ -47,7 +50,7 @@ public static class ProbeRunner
                 // not a skip.
                 ModMetaData mod = ModLister.GetActiveModWithIdentifier(packageId)
                     ?? throw new InvalidOperationException("mod is not in the active mod list");
-                WriteDump(mod, outPath);
+                WriteDump(mod, outPath, collectedAfterStartup: !atStartup);
                 written++;
                 Log.Message($"{L10nProbeMod.LogPrefix} wrote {outPath}");
             }
@@ -72,10 +75,10 @@ public static class ProbeRunner
         return LastRunSummary = summary;
     }
 
-    private static void WriteDump(ModMetaData mod, string outPath)
+    private static void WriteDump(ModMetaData mod, string outPath, bool collectedAfterStartup)
     {
         SortedDictionary<string, SortedDictionary<string, InjectionEntry>> byDefType = InjectionCollector.Collect(mod);
-        string json = ProbeJson.WriteDocument(mod, byDefType);
+        string json = ProbeJson.WriteDocument(mod, byDefType, collectedAfterStartup);
 
         // Plain System.IO throughout: per SPEC.md this must also work when the path override
         // points at a WSL UNC path (\\wsl.localhost\...); if that ever proves flaky the

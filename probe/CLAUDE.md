@@ -68,8 +68,17 @@ The repo lives outside the Mods folder; every local build redeploys.
 - **C#:** root namespace `L10nProbe`, sources under `Source/1.6/` mirroring the family's csproj
   layout. `Probe/LogDump.cs` writes the boot log dump (SPEC.md §3a) from the startup delegate,
   after the probe run and before the shutdown line — keep that order, the smoke engine relies
-  on it. Startup work goes in `Core/L10nProbe_Startup.cs` (`[StaticConstructorOnStartup]`,
-  post-def-load), never in the `Mod` constructor — that runs before any def exists.
+  on it. Startup work lives in `Core/L10nProbe_Startup.cs` and runs in two
+  `LongEventHandler.ExecuteWhenFinished` slots: the dump pass is QUEUED from the `Mod`
+  constructor (`L10nProbeMod` → `StartupProbe.QueueFromModConstructor`), which is the only
+  way to run after the def graph is complete but before any mod's static constructor; the log
+  dump + shutdown are queued from the `[StaticConstructorOnStartup]` type `L10nProbe_Startup`,
+  after them all. Never do probe work directly in the `Mod` constructor (no def exists yet),
+  never move the dump pass into the static-constructor slot (it would see other mods' runtime
+  writes again), and never reference `L10nProbe_Startup` from the `Mod` constructor: touching
+  a static member of a type with an explicit static constructor runs it right there, and the
+  attribute only adds a later call. The file comment in `L10nProbe_Startup.cs` has the slot
+  order, the VEF case that forced it, and the early-cctor incident.
 - **No Harmony, no patches, no defs.** Everything is public API called at startup. A probe that
   altered game behaviour would compromise the dumps it exists to produce, so this is a rule and
   not just a fact about the current code. It also keeps the mod DLC-agnostic — none of the
@@ -87,8 +96,14 @@ The repo lives outside the Mods folder; every local build redeploys.
 - **Reuse the game's filters verbatim; never re-implement them.** Which entries count as
   "must translate", and which def types are in scope, come from the same code
   `LanguageReportGenerator.AppendMissingDefInjections` uses — via reflection if a member is
-  internal. Divergence from the in-game report is a bug, and the whole point of the probe is
-  that it sees what the game sees.
+  internal. Divergence from the in-game report in WHAT is filtered is a bug, and the whole
+  point of the probe is that it sees what the game sees.
+- **Walk before static constructors; the report's late timing is the one divergence we
+  keep.** "What the game sees" means what its translation injection saw: the probe walks at
+  the first post-load slot, before `StaticConstructorOnStartupUtility.CallAll`, so a string
+  another mod assigns to a probed def at startup (VEF's `AutoAssignRules` handing its
+  schematic grammar to every research project) never becomes an expectation nobody could
+  satisfy. The in-game report walks late and does list such values.
 - **Emit `suggestedPath`, not a reconstructed path.** The walker already applies
   `TranslationHandleUtility` list handles (`tools.handle.label`, not `tools.0.label`) and
   `TKeySystem` remapping; that string is what a translation file must use.
@@ -99,9 +114,11 @@ The repo lives outside the Mods folder; every local build redeploys.
 - **Fail loudly, never partially.** Any per-mod exception logs with the `[L10nProbe]` prefix and
   leaves no valid output file: write to a temp name and rename on success. A release script must
   never mistake a truncated dump for a complete one.
-- **`meta.activeDlcs` is load-bearing.** `MayRequire`-gated defs only exist — and only emit
-  keys — when their DLC is active, so a dump taken with the wrong DLC set is silently short.
-  Consumers reject on it; always record it.
+- **`meta.activeDlcs` and `meta.activeMods` are load-bearing.** `MayRequire`-gated defs only
+  exist — and only emit keys — when their DLC is active, so a dump taken with the wrong DLC
+  set is silently short; and any loaded mod can patch or assign into a probed mod's defs, so a
+  dump from the wrong mod list is silently wrong. Consumers reject on both; always record
+  them, as what actually loaded (never a label the caller asked for).
 
 ## Debugging
 

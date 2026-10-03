@@ -18,12 +18,21 @@ namespace L10nProbe;
 //   - meta.activeDlcs uses ExpansionDef.defName ("Core", "Royalty", ...) in DefDatabase
 //     order — defNames are language-independent where labels are not, and database order is
 //     the canonical release order rather than an alphabetical resort;
+//   - meta.activeMods is every running mod's packageId (lowercase, Steam "_steam" postfix
+//     stripped, Core and DLCs included, the probe itself last) in load order — the boot
+//     configuration the dump reflects. The refresh engine compares it to the consuming
+//     repo's pinned list and refuses a dump from any other boot (a sibling repo's refresh,
+//     a smoke test), since a mod that is loaded but not pinned can patch or assign into the
+//     probed mod's defs and leak into its expectations;
+//   - meta.collectedAfterStartup is emitted only when true: the walk ran after the mods'
+//     static constructors (the settings window's "Probe now"), so values other mods assign
+//     at runtime may be present. Consumers refuse such a dump; see L10nProbe_Startup;
 //   - flag fields ("isCollection", "fullListAllowed", "required") are emitted only when
 //     true and "normalized" only when it differs from the entry's key — absent means
 //     false/same. See InjectionEntry for what each one carries.
 internal static class ProbeJson
 {
-    public static string WriteDocument(ModMetaData mod, SortedDictionary<string, SortedDictionary<string, InjectionEntry>> byDefType)
+    public static string WriteDocument(ModMetaData mod, SortedDictionary<string, SortedDictionary<string, InjectionEntry>> byDefType, bool collectedAfterStartup)
     {
         StringBuilder sb = new StringBuilder();
         sb.Append("{\n");
@@ -50,6 +59,25 @@ internal static class ProbeJson
         sb.Append("    \"modName\": ");
         AppendString(sb, mod.Name);
         sb.Append(",\n");
+        // After modName and before generated: the refresh engine strips generated and keeps
+        // the rest in this order, so a regenerated sidecar stays byte-identical to the ones
+        // written when the engine appended activeMods itself.
+        sb.Append("    \"activeMods\": [");
+        bool firstMod = true;
+        foreach (ModContentPack pack in LoadedModManager.RunningModsListForReading)
+        {
+            if (!firstMod)
+            {
+                sb.Append(", ");
+            }
+            AppendString(sb, NonUniquePackageId(pack.PackageId));
+            firstMod = false;
+        }
+        sb.Append("],\n");
+        if (collectedAfterStartup)
+        {
+            sb.Append("    \"collectedAfterStartup\": true,\n");
+        }
         sb.Append("    \"generated\": ");
         AppendString(sb, DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture));
         sb.Append("\n  },\n");
@@ -115,6 +143,17 @@ internal static class ProbeJson
             AppendString(sb, entry.Normalized);
         }
         sb.Append(" }");
+    }
+
+    // ModContentPack.PackageId is already lowercase but carries ModMetaData.SteamModPostfix
+    // ("_steam") when a local copy of the same mod is also installed; the pinned lists are
+    // written without it, and which copy loaded is not what the comparison is about.
+    private static string NonUniquePackageId(string packageId)
+    {
+        string postfix = ModMetaData.SteamModPostfix;
+        return packageId.EndsWith(postfix, StringComparison.Ordinal)
+            ? packageId.Substring(0, packageId.Length - postfix.Length)
+            : packageId;
     }
 
     // Emits a JSON string literal (or the null token). Non-ASCII passes through raw — the
