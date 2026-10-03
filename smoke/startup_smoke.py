@@ -20,13 +20,16 @@
 # Mechanics reused from the refresh engine (refresh_expectations.py, imported
 # below): RimWorld path detection, ModsConfig pin/restore, running-game
 # check. The boot rides the L10nProbe's -l10nprobe flag: the probe dumps
-# whatever its settings say, then, from an ExecuteWhenFinished delegate -
-# i.e. AFTER every mod's static ctor, def write, and (for BTG-style deferred
-# passes) post-defs patch application has run and logged - writes the game's
-# own in-memory log (Verse.Log.Messages) to Output/log-messages.json and
-# shuts the game down. Probe dump failures are expected here (the smoke list
+# whatever its settings say (from the first post-load slot, before any mod's
+# static ctor), then, from a later ExecuteWhenFinished delegate - i.e. AFTER
+# every mod's static ctor, def write, and (for BTG-style deferred passes)
+# post-defs patch application has run and logged - writes the game's own
+# in-memory log (Verse.Log.Messages) to Output/log-messages.json and shuts
+# the game down. Probe dump failures are expected here (the smoke list
 # rarely matches the probe's ticked targets) and are classified as tooling
-# noise, never gated on.
+# noise, never gated on. The dumps a smoke boot DOES write record this
+# list in meta.activeMods, so a later refresh --no-launch refuses them
+# rather than leaking the integration mods into a sidecar.
 #
 # WHERE LEVELS COME FROM (the 2026-08-28 blindness fix): RimWorld 1.6 on
 # Unity 2022.3 writes NO stack trace under Debug.LogError/LogWarning - a
@@ -107,6 +110,12 @@ REPO_ROOT = None
 TOOLING_PATTERN = "[L10nProbe]"
 BOOT_COMPLETE_MARKER = "-l10nprobe run complete; shutting down"
 LOG_DUMP_MARKER = "[L10nProbe] wrote log dump"
+# ProbeRunner.RunAll's summary line. The probe writes the log dump AFTER its
+# dump pass by design, so a dump without this line was taken too early to
+# hold the boot (a probe build whose startup ordering regressed: the first
+# cut of the pre-static-ctor timing queued the log dump at slot 0 and a
+# three-message dump read as a clean boot, 2026-10-03).
+PROBE_SUMMARY_MARKER = "[L10nProbe] probe ("
 LOG_DUMP_RELPATH = Path("Mods") / "L10nProbe" / "Output" / "log-messages.json"
 LOG_DUMP_SCHEMA = 1
 # LogMessageType names as the probe serialises them; Message maps to no level.
@@ -324,6 +333,12 @@ def load_log_dump(path, log_text):
                    for m in data.get("messages") or []]
     except (AttributeError, TypeError, ValueError) as e:
         return None, f"{path} is not shaped like a log dump: {e!r}"
+    if not any(e.text.startswith(PROBE_SUMMARY_MARKER) for e in entries):
+        return None, (f"{path} holds no '{PROBE_SUMMARY_MARKER}...' summary "
+                      f"line, which the probe logs before writing the dump - "
+                      f"the dump was taken too early to hold the boot "
+                      f"(rebuild the probe from the canonical rimworld-l10n "
+                      f"checkout)")
     capacity = meta.get("queueCapacity")
     truncated = capacity is not None and len(entries) >= capacity
     return entries, truncated

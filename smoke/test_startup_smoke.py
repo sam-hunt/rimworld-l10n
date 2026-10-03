@@ -36,6 +36,11 @@ PROBE_FAILED = (
     "  at L10nProbe.ProbeRunner.RunAll (System.String reason) [0x0009f] "
     "in <cb4e2c301930487fbc8b7de913d65219>:0 ")
 
+# ProbeRunner.RunAll's summary, logged before the log dump is written; a dump
+# without it was taken too early (see load_log_dump).
+PROBE_SUMMARY = ("[L10nProbe] probe (-l10nprobe): 3/13 dump(s) written in 0.2s; "
+                 "FAILED: shunter.bettertradersguild — see log.")
+
 # A mod's own Log.Warning: in the 1.6 file this is just a line of text.
 FRAMELESS_WARNING = "[Xenogerm Trader Stock] no xenogerm stock generator matched Orbital_Exotic"
 
@@ -241,6 +246,7 @@ class LogDump(unittest.TestCase):
         {"type": "Error", "repeats": 1, "text": XTS_PATCH_FAILURE, "stackTrace": "Verse.Log:Error(String)\nVerse.PatchOperation:Complete(String)"},
         {"type": "Warning", "repeats": 3, "text": FRAMELESS_WARNING, "stackTrace": "Verse.Log:Warning(String)"},
         {"type": "Error", "repeats": 1, "text": PROBE_FAILED, "stackTrace": "Verse.Log:Error(String)"},
+        {"type": "Message", "repeats": 1, "text": PROBE_SUMMARY, "stackTrace": "No stack trace."},
     ]
     LOG_WITH_MARKER = "boot...\n[L10nProbe] wrote log dump C:\\x\\log-messages.json\n"
 
@@ -249,7 +255,7 @@ class LogDump(unittest.TestCase):
             path = self.write_dump(d, self.MESSAGES)
             entries, truncated = engine.load_log_dump(path, self.LOG_WITH_MARKER)
         self.assertFalse(truncated)
-        self.assertEqual([e.level for e in entries], [None, "error", "warning", "error"])
+        self.assertEqual([e.level for e in entries], [None, "error", "warning", "error", None])
         self.assertEqual(entries[2].count, 3)
         self.assertEqual(entries[1].stack, "Verse.Log:Error(String)\nVerse.PatchOperation:Complete(String)")
 
@@ -275,12 +281,21 @@ class LogDump(unittest.TestCase):
             self.assertIsNone(entries)
             self.assertIn("schema", reason)
 
+    def test_dump_without_probe_summary_is_too_early_to_trust(self):
+        # The probe logs its run summary before writing the log dump; a dump
+        # that lacks it was taken before the boot it claims to describe.
+        with tempfile.TemporaryDirectory() as d:
+            path = self.write_dump(d, self.MESSAGES[:-1])
+            entries, reason = engine.load_log_dump(path, self.LOG_WITH_MARKER)
+        self.assertIsNone(entries)
+        self.assertIn("too early", reason)
+
     def test_dump_at_queue_capacity_is_flagged_truncated(self):
         with tempfile.TemporaryDirectory() as d:
-            path = self.write_dump(d, self.MESSAGES, capacity=4)
+            path = self.write_dump(d, self.MESSAGES, capacity=5)
             entries, truncated = engine.load_log_dump(path, self.LOG_WITH_MARKER)
         self.assertTrue(truncated)
-        self.assertEqual(len(entries), 4)
+        self.assertEqual(len(entries), 5)
 
     def test_player_log_exceptions_merge_without_duplicates(self):
         dump = [engine.Entry("error", "System.NullReferenceException: x\n  at A.B () [0x0] in <a>:0 ", "trace", 1)]
