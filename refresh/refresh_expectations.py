@@ -25,9 +25,17 @@
 # Verse.DefInjectionUtility.ForEachPossibleDefInjection.
 #
 # Flow: launch the game with -l10nprobe (graphical boot, ~1-2 min; the probe
-# runs once defs are loaded, writes one JSON per configured mod, then quits
-# the game), fetch this mod's dump from the probe's Output folder, rewrite the
-# sidecar, print a key-level diff summary.
+# walks the def graph the moment it is complete and the game has injected
+# its translations into it, BEFORE any mod's static constructor runs, writes
+# one JSON per configured mod, then quits the game once startup is over),
+# fetch this mod's dump from the probe's Output folder, verify it came from
+# the pinned boot, rewrite the sidecar, print a key-level diff summary. The
+# walk timing is load-bearing: a value another mod assigns to our def from
+# its static constructor (VEF's ResearchProjectUtility.AutoAssignRules hands
+# its 75-line schematic grammar to every research project with a null
+# generalRules) comes after the game's injection passes, so no translation
+# of it could ever load; the probe leaves it out, where a late walk charged
+# it to the def's owner (PersonaWeaponsUnbound, 2026-10-03).
 #
 # The probe boots with a PINNED mod list (CANONICAL_ACTIVE_MODS), not
 # whatever the user last played with: ModsConfig.xml is swapped for the run
@@ -46,12 +54,23 @@
 #   * hard third-party mod dependencies, and THEIR OWN transitive hard deps
 #     (a dependency that itself fails to load properly changes the def graph
 #     the probe walks);
-#   * this mod, plus family siblings when their CANONICAL_ACTIVE_MODS lists
-#     are deliberately kept identical on purpose (so one probe boot refreshes
-#     every sidecar in the family and each repo's own --no-launch run can
-#     reuse the shared dump — this is a convenience, not a correctness rule:
-#     each sidecar is only ever validated against ITS OWN mod's content);
-#   * a third-party mod ONLY if this mod's own content MayRequire's it.
+#   * this mod, plus family siblings as a convenience: the probe writes one
+#     dump per ticked target in a single boot, so while two repos' lists are
+#     identical, one launched refresh leaves the other a dump its --no-launch
+#     run can consume without a second boot. Each sidecar is only ever
+#     validated against ITS OWN mod's content, and a sibling whose list has
+#     diverged (UMW pins VEF + VFE Pirates for its warcasket uniques) simply
+#     boots its own refresh — load_dump() refuses a dump whose recorded
+#     activeMods differ from this list, so the shortcut fails loudly instead
+#     of leaking the other boot's mods into this sidecar;
+#   * a third-party mod ONLY if this mod's own content gates on it: a
+#     MayRequire attribute, or a LoadFolders IfModActive compat root
+#     (1.6/Mods/<Mod Name>/ with its own Defs and DefInjected). Gated defs
+#     load only with the gate active, so their keys reach the sidecar only
+#     if the gate is pinned — one list that includes every gate covers every
+#     branch, as long as a branch ADDS defs rather than rewriting the text of
+#     a shared key (the game cannot model that either: two DefInjected
+#     entries for one key are a duplicate-key error).
 # Nothing else. The probe filters each dump by packageId, so an extra mod
 # adds no keys of its own — but its patches to OUR defs leak straight into
 # the expectations (see incident note below).
@@ -83,11 +102,24 @@
 #     regenerates to a byte-identical file and "git diff is empty" means
 #     "nothing changed". meta.gameBuild is kept — a diff in it explains why
 #     keys moved when no local def changed (vanilla update).
+#   * meta.activeMods is written by the probe (every running mod's packageId
+#     in load order, lowercase, Steam postfix stripped) and must equal
+#     CANONICAL_ACTIVE_MODS exactly, order included, or load_dump() refuses
+#     the dump. On a launched run a mismatch means the pin did not take (an
+#     id misspelled or not installed; the game drops unknown ids). With
+#     --no-launch it means the dump in Output/ came from some OTHER boot that
+#     also had this mod ticked — a sibling repo's refresh on a different list,
+#     or a startup smoke test, which deliberately loads integration mods —
+#     and reusing it would leak that boot's mods into this sidecar.
+#     meta.collectedAfterStartup marks a dump from the probe's settings-window
+#     button, taken after the mods' static constructors; refused for the same
+#     reason the probe's startup timing exists (see Flow above).
 #
 # Usage:
 #   python3 Scripts/refresh-translation-expectations.py            # launch + refresh
 #   python3 Scripts/refresh-translation-expectations.py --no-launch  # reuse the
-#     dump already in the probe's Output folder (debugging / probe just ran)
+#     dump already in the probe's Output folder (debugging / probe just ran);
+#     refused unless that dump records exactly this repo's pinned mod list
 
 import argparse
 import json
@@ -226,14 +258,50 @@ def load_dump(dump_path):
                  f"IS the failure marker; check Player.log for a "
                  f"'[L10nProbe] FAILED probing' line")
     dump = json.loads(dump_path.read_text(encoding="utf-8"))
-    if dump.get("meta", {}).get("modPackageId") != PACKAGE_ID:
+    meta = dump.get("meta", {})
+    if meta.get("modPackageId") != PACKAGE_ID:
         sys.exit(f"{dump_path} is not a {PACKAGE_ID} dump")
-    dump["meta"].pop("generated", None)
-    # Record the boot's mod list so the checker can resolve def-level
-    # MayRequire gates against what was actually active during the probe
-    # (the probe itself only records DLCs).
-    dump["meta"]["activeMods"] = CANONICAL_ACTIVE_MODS
+    verify_boot(meta, dump_path)
+    meta.pop("generated", None)
     return dump
+
+
+def verify_boot(meta, dump_path):
+    # The dump must describe THIS repo's pinned boot — see the header's
+    # operational facts for what each mismatch means. The checker also reads
+    # meta.activeMods to resolve def-level MayRequire gates against what was
+    # active, so the list has to be the real one, not a label we stamp on.
+    if meta.get("collectedAfterStartup"):
+        sys.exit(f"{dump_path} was taken by the probe's settings-window "
+                 f"'Probe now' button, after every mod's static constructor; "
+                 f"it may carry values other mods assigned at runtime that no "
+                 f"translation could target. Sidecars come from a -l10nprobe "
+                 f"boot: rerun this script without --no-launch.")
+    recorded = meta.get("activeMods")
+    if recorded is None:
+        sys.exit(f"{dump_path} records no meta.activeMods — the deployed "
+                 f"L10nProbe predates it. Rebuild and deploy the probe from "
+                 f"the canonical rimworld-l10n checkout "
+                 f"(dotnet build probe/L10nProbe.sln -c Release), then rerun.")
+    if recorded == CANONICAL_ACTIVE_MODS:
+        return
+    extra = [m for m in recorded if m not in CANONICAL_ACTIVE_MODS]
+    missing = [m for m in CANONICAL_ACTIVE_MODS if m not in recorded]
+    lines = [f"{dump_path} was not produced by this repo's pinned boot."]
+    if extra:
+        lines.append(f"  loaded but not pinned: {', '.join(extra)}")
+    if missing:
+        lines.append(f"  pinned but not loaded: {', '.join(missing)}")
+    if not extra and not missing:
+        lines.append(f"  same mods, different load order: {recorded}")
+    lines.append("  With --no-launch: the dump in Output/ came from another "
+                 "boot that also dumps this mod (a sibling repo's refresh on "
+                 "its own pinned list, or a startup smoke test); rerun "
+                 "without --no-launch to boot this repo's list.")
+    lines.append("  On a launched run: the pin did not take — check each id "
+                 "against About.xml (lowercase; the game silently drops ids "
+                 "it cannot resolve) and that the mod is installed.")
+    sys.exit("\n".join(lines))
 
 
 def key_set(dump):
