@@ -581,7 +581,27 @@ def check_engine_pin_freshness(report, strict):
               f"translation pass).")
 
 
-def check_sidecar_freshness(defs, sidecar, report):
+def compat_root_gates(root):
+    # LoadFolders.xml's IfModActive gates, keyed by the load root they gate
+    # (resolved path -> lowercased "a,b" attribute as written). The game loads
+    # a gated root only while one of the listed packages is active, so a def
+    # declared under one exists in the probe boot only if its gate is pinned.
+    path = root / "LoadFolders.xml"
+    if not path.is_file():
+        return {}
+    try:
+        tree = ET.parse(path).getroot()
+    except ET.ParseError:
+        return {}
+    gates = {}
+    for li in tree.iter("li"):
+        gate = li.get("IfModActive")
+        if gate and li.text and li.text.strip():
+            gates[(root / li.text.strip()).resolve()] = gate.strip().lower()
+    return gates
+
+
+def check_sidecar_freshness(defs, sidecar, report, def_roots, gates):
     # The rule that makes stale expectations loud: every def carrying a
     # label/description in XML must appear in the sidecar, so new or edited
     # translatable content forces a regen, and the regen sees everything the
@@ -589,9 +609,28 @@ def check_sidecar_freshness(defs, sidecar, report):
     # injection point, so defs with NO translatable text in XML (most
     # DutyDefs, PrefabDefs, ...) are legitimately absent and tolerated —
     # whether or not their def type has other entries.
+    #
+    # A def missing from the sidecar because it lives under a LoadFolders-
+    # gated compat root whose gate was not in the probe boot is the same
+    # staleness with a different fix: the gate belongs in the refresh shim's
+    # CANONICAL_ACTIVE_MODS (one pinned list that includes every gate loads
+    # every branch), so say so instead of sending the reader to a regen that
+    # would come back identical.
     label = "[Scripts/expected-injections.json]"
     stale = (f"expectations stale — rerun "
              f"Scripts/refresh-translation-expectations.py")
+
+    def why_absent(def_type, def_name):
+        owner = def_roots.get(def_type, {}).get(def_name)
+        gate = gates.get(owner.resolve()) if owner is not None else None
+        if gate and not {g.strip() for g in gate.split(",")} & sidecar.active_packages:
+            return (f"it is declared under the compat root {owner}, gated "
+                    f"on {gate}, which was not active during the probe boot "
+                    f"— add the gate to CANONICAL_ACTIVE_MODS in "
+                    f"Scripts/refresh-translation-expectations.py, then "
+                    f"rerun it")
+        return stale
+
     for def_type, by_name in sorted(defs.items()):
         if def_type not in sidecar.def_types:
             for def_name, elem in sorted(by_name.items()):
@@ -599,7 +638,8 @@ def check_sidecar_freshness(defs, sidecar, report):
                         or elem.find("description") is not None:
                     report.error(label, f"{def_type} {def_name} has a label/"
                                         f"description but its def type has no "
-                                        f"sidecar entries; {stale}")
+                                        f"sidecar entries; "
+                                        f"{why_absent(def_type, def_name)}")
             continue
         # English drift: a label/description added or edited in XML without a
         # regen. (Literal-\n unescaping lives in norm().)
@@ -612,7 +652,7 @@ def check_sidecar_freshness(defs, sidecar, report):
                 if entry is None:
                     report.error(label, f"{def_type} {def_name}.{field} is in "
                                         f"the def XML but not the sidecar; "
-                                        f"{stale}")
+                                        f"{why_absent(def_type, def_name)}")
                 elif norm(entry["english"]) != norm(node.text):
                     report.error(label, f"{def_type} {def_name}.{field} "
                                         f"English differs between def XML and "
@@ -986,7 +1026,8 @@ def main():
     if sidecar is None:
         return 2
     defs, def_roots = collect_defs(defs_dirs, sidecar.active_packages)
-    check_sidecar_freshness(defs, sidecar, report)
+    check_sidecar_freshness(defs, sidecar, report, def_roots,
+                            compat_root_gates(args.root))
 
     # A language is the union of its dirs across every root, not one dir per
     # root — see check_language. English already worked this way; the rest now
