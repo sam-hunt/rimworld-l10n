@@ -240,6 +240,26 @@ name-grammar noun for any mod that adds name generation.
   smoke engine to read. Player.log is a fallback with message-shape
   heuristics only; a raw unhandled exception Unity logs itself is the one
   thing only Player.log has.
+- **A translation expectation is only real if the game's injection could
+  reach it, so walk the def graph before static constructors and refuse a
+  dump from a boot you did not pin.** Vanilla Expanded Framework's
+  `ResearchProjectUtility.AutoAssignRules` (a `[StaticConstructorOnStartup]`
+  pass) hands its 75-line schematic grammar to every non-Anomaly research
+  project whose `generalRules` is null; the game's walker charges a field to
+  the def's owner, so a late walk made PWU's `PWU_BladelinkCustomization`
+  owe 75 `[MustTranslate]` rule strings in eight languages that no
+  translation file could ever fill (DefInjected injection is over before
+  `CallAll` runs). The dump only reached PWU through `--no-launch` reusing
+  a dump from another boot that had VEF active (UMW's refresh pins VEF for
+  its warcasket uniques; PWU's own smoke test boots VEF too) while the
+  engine stamped PWU's own pinned list onto it. Since 2026-10-03 the probe
+  walks from a delegate its `Mod` constructor queues (complete graph, before
+  any static constructor), records the real `meta.activeMods`, and the
+  refresh engine refuses a dump whose list differs from the repo's pin.
+  General rule: one pinned list per repo that includes every gate its content
+  loads under (MayRequire, LoadFolders IfModActive) covers every branch;
+  branches must ADD defs, never rewrite a shared key's text, because two
+  DefInjected entries for one key are a duplicate-key error in the game too.
 - **RimWorld attributes patch and def failures to a mod by its About.xml
   display name, not its packageId or assembly**:
   `Verse.PatchOperation.Complete(runningMod.Name)` logs
