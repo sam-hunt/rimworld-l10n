@@ -11,6 +11,8 @@
 #   PACKAGE_ID            str        this mod's own packageId (About.xml)
 #   CANONICAL_ACTIVE_MODS list[str]  pinned probe-boot mod list, load order,
 #                                    probe's own packageId last
+#   or WORLDS             dict[str, list[str]]  several pinned boots, see below
+# Exactly one of CANONICAL_ACTIVE_MODS and WORLDS is set.
 #
 # The probe source lives beside this engine, at ../probe relative to this
 # file (i.e. the rimworld-l10n checkout's probe/ directory) — see
@@ -70,7 +72,8 @@
 #     if the gate is pinned — one list that includes every gate covers every
 #     branch, as long as a branch ADDS defs rather than rewriting the text of
 #     a shared key (the game cannot model that either: two DefInjected
-#     entries for one key are a duplicate-key error).
+#     entries for one key are a duplicate-key error) or adding a field to a
+#     def that loads without the gate (see WORLDS).
 # Nothing else. The probe filters each dump by packageId, so an extra mod
 # adds no keys of its own — but its patches to OUR defs leak straight into
 # the expectations (see incident note below).
@@ -104,8 +107,9 @@
 #     keys moved when no local def changed (vanilla update).
 #   * meta.activeMods is written by the probe (every running mod's packageId
 #     in load order, lowercase, Steam postfix stripped) and must equal
-#     CANONICAL_ACTIVE_MODS exactly, order included, or load_dump() refuses
-#     the dump. On a launched run a mismatch means the pin did not take (an
+#     CANONICAL_ACTIVE_MODS (or its world's WORLDS list) exactly, order
+#     included, or load_dump() refuses the dump. On a launched run a
+#     mismatch means the pin did not take (an
 #     id misspelled or not installed; the game drops unknown ids). With
 #     --no-launch it means the dump in Output/ came from some OTHER boot that
 #     also had this mod ticked — a sibling repo's refresh on a different list,
@@ -120,10 +124,30 @@
 #   python3 Scripts/refresh-translation-expectations.py --no-launch  # reuse the
 #     dump already in the probe's Output folder (debugging / probe just ran);
 #     refused unless that dump records exactly this repo's pinned mod list
+#
+# WORLDS: one pinned boot cannot describe a key that exists only in SOME
+# configurations — a LoadFolders-gated compat root whose Patches/ add a
+# [MustTranslate] field to a main-tree def (the key appears under the
+# main-tree def, but only while the gate is active), or a gate that rewrites a
+# main-tree field's English. Its translation must live in a root active in
+# exactly the configurations where the key exists, which the checker can only
+# verify if the sidecar records them. A shim then sets WORLDS instead of
+# CANONICAL_ACTIVE_MODS: an ordered {world name: pinned list}, the first entry
+# the base world (normally the list CANONICAL_ACTIVE_MODS would hold, without
+# the gate), each later one adding or removing gates. Every world follows the
+# membership rule above. The engine boots once per world, keeps each verified
+# dump as Output/<packageId>.<world>.json (what --no-launch then consumes),
+# and merges them (merge_dumps): an entry carries "worlds" only when some
+# world lacks it, and "variants" {world: {english/required}} only for worlds
+# whose text or required flag differs from the first world that has it;
+# meta.worlds records each world's activeMods/activeDlcs. A single-world
+# refresh writes exactly the dump, as it always has.
 
 import argparse
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -136,6 +160,7 @@ from pathlib import Path
 # at startup if the shim forgot to set one.
 PACKAGE_ID = None
 CANONICAL_ACTIVE_MODS = None
+WORLDS = None
 
 # The consuming repo's root. Shims set this from their own file location
 # (Path(__file__).resolve().parent.parent), which keeps the historical
@@ -179,13 +204,13 @@ def modsconfig_path():
     return configs[-1]
 
 
-def pinned_modsconfig(original_text):
+def pinned_modsconfig(original_text, mods):
     # Rebuild only <activeMods>; version and knownExpansions pass through.
     root = ET.fromstring(original_text)
     active = root.find("activeMods")
     for li in list(active):
         active.remove(li)
-    for pid in CANONICAL_ACTIVE_MODS:
+    for pid in mods:
         ET.SubElement(active, "li").text = pid
     ET.indent(root, space="  ")
     return ET.tostring(root, encoding="unicode", xml_declaration=True) + "\n"
@@ -206,10 +231,10 @@ def game_is_running():
     return "RimWorldWin64.exe" in out
 
 
-def warn_unpinned_probe_targets():
+def warn_unpinned_probe_targets(worlds):
     # Ticking a mod in L10nProbe's settings is the memorable onboarding step;
     # adding it to CANONICAL_ACTIVE_MODS above is the forgettable one. Catch
-    # the gap before the boot: a ticked mod absent from the pinned list is
+    # the gap before the boot: a ticked mod absent from every pinned list is
     # simply not loaded during the run, so its dump is guaranteed to fail.
     cfg = modsconfig_path().parent / "Mod_L10nProbe_L10nProbeMod.xml"
     if not cfg.is_file():
@@ -218,29 +243,30 @@ def warn_unpinned_probe_targets():
         node = ET.parse(cfg).getroot().find(".//targetPackageIds")
     except ET.ParseError:
         return
-    pinned = set(CANONICAL_ACTIVE_MODS)
+    pinned = {pid for mods in worlds.values() for pid in mods}
+    where = "CANONICAL_ACTIVE_MODS" if WORLDS is None else "any WORLDS list"
     for li in node if node is not None else []:
         pid = (li.text or "").strip().lower()
         if pid and pid not in pinned:
             print(f"warning: {pid} is ticked for probing in L10nProbe's "
-                  f"settings but is not in CANONICAL_ACTIVE_MODS — it will "
+                  f"settings but is not in {where} — it will "
                   f"not be loaded during this boot and its dump WILL fail",
                   file=sys.stderr)
 
 
-def launch_probe(rw, dump_path):
+def launch_probe(rw, dump_path, mods, world=None):
     if game_is_running():
         sys.exit("RimWorld is already running — the probe needs an exclusive "
                  "boot (mod-list swap + -l10nprobe). Close the client, then "
                  "rerun this script.")
-    warn_unpinned_probe_targets()
     dump_path.unlink(missing_ok=True)
     mc = modsconfig_path()
     original = mc.read_bytes()
-    mc.write_text(pinned_modsconfig(original.decode("utf-8-sig")),
+    mc.write_text(pinned_modsconfig(original.decode("utf-8-sig"), mods),
                   encoding="utf-8")
     print("Launching RimWorld with -l10nprobe on the pinned mod list "
-          "(graphical boot, ~1-2 min)...")
+          + (f"of world {world} " if world else "")
+          + "(graphical boot, ~1-2 min)...")
     try:
         # WSL interop blocks until the Windows process exits; the probe
         # quits the game itself after writing its dumps.
@@ -252,7 +278,7 @@ def launch_probe(rw, dump_path):
         print(f"Restored {mc}")
 
 
-def load_dump(dump_path):
+def load_dump(dump_path, mods, world=None):
     if not dump_path.is_file():
         sys.exit(f"Probe wrote no dump at {dump_path} — absence of the file "
                  f"IS the failure marker; check Player.log for a "
@@ -261,12 +287,25 @@ def load_dump(dump_path):
     meta = dump.get("meta", {})
     if meta.get("modPackageId") != PACKAGE_ID:
         sys.exit(f"{dump_path} is not a {PACKAGE_ID} dump")
-    verify_boot(meta, dump_path)
+    verify_boot(meta, dump_path, mods, world)
     meta.pop("generated", None)
     return dump
 
 
-def verify_boot(meta, dump_path):
+def load_world_dumps(out_dir, worlds):
+    # {world: dump} from the per-world files a launched WORLDS run keeps,
+    # each re-verified against its own world's list.
+    dumps = {}
+    for name, mods in worlds.items():
+        path = world_dump_path(out_dir, name)
+        if not path.is_file():
+            sys.exit(f"No dump for world {name} at {path} — rerun without "
+                     f"--no-launch to boot every world")
+        dumps[name] = load_dump(path, mods, name)
+    return dumps
+
+
+def verify_boot(meta, dump_path, mods, world=None):
     # The dump must describe THIS repo's pinned boot — see the header's
     # operational facts for what each mismatch means. The checker also reads
     # meta.activeMods to resolve def-level MayRequire gates against what was
@@ -283,11 +322,12 @@ def verify_boot(meta, dump_path):
                  f"L10nProbe predates it. Rebuild and deploy the probe from "
                  f"the canonical rimworld-l10n checkout "
                  f"(dotnet build probe/L10nProbe.sln -c Release), then rerun.")
-    if recorded == CANONICAL_ACTIVE_MODS:
+    if recorded == mods:
         return
-    extra = [m for m in recorded if m not in CANONICAL_ACTIVE_MODS]
-    missing = [m for m in CANONICAL_ACTIVE_MODS if m not in recorded]
-    lines = [f"{dump_path} was not produced by this repo's pinned boot."]
+    extra = [m for m in recorded if m not in mods]
+    missing = [m for m in mods if m not in recorded]
+    lines = [f"{dump_path} was not produced by this repo's pinned boot"
+             + (f" of world {world}." if world else ".")]
     if extra:
         lines.append(f"  loaded but not pinned: {', '.join(extra)}")
     if missing:
@@ -304,8 +344,100 @@ def verify_boot(meta, dump_path):
     sys.exit("\n".join(lines))
 
 
+# Per-entry fields a later world may override (merge_dumps' "variants"),
+# with the value the probe's omission of the field means.
+VARIANT_FIELDS = (("english", None), ("required", False))
+WORLD_NAME_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
+def configured_worlds():
+    # {world name: pinned list}, base world first. A CANONICAL_ACTIVE_MODS
+    # shim is the single world "canonical" (the name a world-less sidecar
+    # carries on the checker side too).
+    if WORLDS is None:
+        return {"canonical": CANONICAL_ACTIVE_MODS}
+    return dict(WORLDS)
+
+
+def world_dump_path(out_dir, world):
+    return out_dir / f"{PACKAGE_ID}.{world}.json"
+
+
+def merge_dumps(dumps):
+    # dumps: {world name: loaded dump}, base world first. One world is the
+    # sidecar as it always was: the dump itself, byte for byte. Several
+    # merge per (defType, key): the first world holding the key supplies the
+    # entry as dumped, "worlds" lists the worlds holding it only when some
+    # world lacks it, and "variants" holds, per later world, only the
+    # VARIANT_FIELDS whose value differs from that base. Both levels stay
+    # ordinally sorted like the probe's own output.
+    names = list(dumps)
+    if len(names) == 1:
+        return dumps[names[0]]
+    builds = {w: d["meta"].get("gameBuild") for w, d in dumps.items()}
+    if len(set(builds.values())) > 1:
+        sys.exit(f"World dumps come from different game builds: {builds} — "
+                 f"rerun without --no-launch so every world boots the same "
+                 f"install")
+    meta = dict(dumps[names[0]]["meta"])
+    meta["worlds"] = {w: {"activeMods": d["meta"].get("activeMods", []),
+                          "activeDlcs": d["meta"].get("activeDlcs", [])}
+                      for w, d in dumps.items()}
+    merged = {}
+    def_types = sorted({dt for d in dumps.values() for dt in d["defInjections"]})
+    for dt in def_types:
+        per_world = {w: d["defInjections"].get(dt, {}) for w, d in dumps.items()}
+        out = merged[dt] = {}
+        for key in sorted({k for entries in per_world.values() for k in entries}):
+            present = [w for w in names if key in per_world[w]]
+            entry = dict(per_world[present[0]][key])
+            if len(present) < len(names):
+                entry["worlds"] = present
+            variants = {}
+            for w in present[1:]:
+                other = per_world[w][key]
+                diff = {f: other.get(f, default) for f, default in VARIANT_FIELDS
+                        if other.get(f, default) != entry.get(f, default)}
+                if diff:
+                    variants[w] = diff
+            if variants:
+                entry["variants"] = variants
+            out[key] = entry
+    return {"meta": meta, "defInjections": merged}
+
+
 def key_set(dump):
     return {(dt, k) for dt, keys in dump["defInjections"].items() for k in keys}
+
+
+def membership(dump, dt, k):
+    worlds = dump["defInjections"][dt][k].get("worlds")
+    return ", ".join(worlds) if worlds else "all"
+
+
+def summarize_worlds(old, new, old_keys, new_keys):
+    # World-membership deltas, printed only when either side records worlds:
+    # the configured worlds themselves, each added key that exists in only
+    # some worlds, and each kept key whose membership moved.
+    old_worlds = old["meta"].get("worlds")
+    new_worlds = new["meta"].get("worlds")
+    if not old_worlds and not new_worlds:
+        return
+    old_names = list(old_worlds or ["canonical"])
+    new_names = list(new_worlds or ["canonical"])
+    if old_names != new_names:
+        print(f"worlds: {', '.join(old_names)} -> {', '.join(new_names)}")
+    for name in new_names:
+        if old_worlds and new_worlds and name in old_worlds \
+                and old_worlds[name] != new_worlds[name]:
+            print(f"worlds: {name}'s mod/DLC list changed")
+    for dt, k in sorted(new_keys):
+        now = membership(new, dt, k)
+        if (dt, k) not in old_keys:
+            if now != "all":
+                print(f"  worlds: {dt}/{k}: only {now}")
+        elif membership(old, dt, k) != now:
+            print(f"  worlds: {dt}/{k}: {membership(old, dt, k)} -> {now}")
 
 
 def summarize(old, new):
@@ -329,6 +461,7 @@ def summarize(old, new):
                if old["defInjections"][dt][k] != new["defInjections"][dt][k]]
     for dt, k in changed:
         print(f"  changed: {dt}/{k}")
+    summarize_worlds(old, new, old_keys, new_keys)
     if old == new:
         print("No changes — sidecar is byte-identical.")
     else:
@@ -338,12 +471,32 @@ def summarize(old, new):
               f"passes.")
 
 
-def main():
-    if PACKAGE_ID is None or CANONICAL_ACTIVE_MODS is None:
+def check_config():
+    if PACKAGE_ID is None or (CANONICAL_ACTIVE_MODS is None and WORLDS is None):
         sys.exit("refresh_expectations engine misconfigured: PACKAGE_ID "
                  "and/or CANONICAL_ACTIVE_MODS is None — the consuming "
                  "repo's Scripts/refresh-translation-expectations.py shim "
-                 "must assign both after importing this engine")
+                 "must assign both after importing this engine (or WORLDS "
+                 "in place of CANONICAL_ACTIVE_MODS)")
+    if CANONICAL_ACTIVE_MODS is not None and WORLDS is not None:
+        sys.exit("refresh_expectations engine misconfigured: both "
+                 "CANONICAL_ACTIVE_MODS and WORLDS are set — a shim pins "
+                 "one boot (CANONICAL_ACTIVE_MODS) or several (WORLDS, whose "
+                 "first entry is the base world), never both")
+    if WORLDS is not None:
+        if not WORLDS:
+            sys.exit("refresh_expectations engine misconfigured: WORLDS is "
+                     "empty")
+        for name, mods in WORLDS.items():
+            if not WORLD_NAME_RE.match(name) or not mods:
+                sys.exit(f"refresh_expectations engine misconfigured: WORLDS "
+                         f"entry {name!r} needs a name of letters, digits, "
+                         f"'-' or '_' (it names a dump file) and a non-empty "
+                         f"mod list")
+
+
+def main():
+    check_config()
 
     global ROOT, SIDECAR
     ROOT = REPO_ROOT or Path.cwd()
@@ -356,10 +509,28 @@ def main():
     args = ap.parse_args()
 
     rw = rimworld_path()
-    dump_path = rw / "Mods" / "L10nProbe" / "Output" / f"{PACKAGE_ID}.json"
-    if not args.no_launch:
-        launch_probe(rw, dump_path)
-    new = load_dump(dump_path)
+    out_dir = rw / "Mods" / "L10nProbe" / "Output"
+    dump_path = out_dir / f"{PACKAGE_ID}.json"
+    worlds = configured_worlds()
+    if WORLDS is None:
+        if not args.no_launch:
+            warn_unpinned_probe_targets(worlds)
+            launch_probe(rw, dump_path, CANONICAL_ACTIVE_MODS)
+        new = load_dump(dump_path, CANONICAL_ACTIVE_MODS)
+    else:
+        if not args.no_launch:
+            # One boot per world. Each dump is verified against its own
+            # world's list before it is kept under the world's name, and the
+            # previous run's world files go first, so a run that fails
+            # midway never leaves a mix for --no-launch to merge.
+            warn_unpinned_probe_targets(worlds)
+            for name in worlds:
+                world_dump_path(out_dir, name).unlink(missing_ok=True)
+            for name, mods in worlds.items():
+                launch_probe(rw, dump_path, mods, name)
+                load_dump(dump_path, mods, name)
+                shutil.copyfile(dump_path, world_dump_path(out_dir, name))
+        new = merge_dumps(load_world_dumps(out_dir, worlds))
 
     old = json.loads(SIDECAR.read_text(encoding="utf-8")) \
         if SIDECAR.is_file() else None

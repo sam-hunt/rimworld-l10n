@@ -17,7 +17,8 @@
 # Usage from the mod repo root (unchanged from before the extraction):
 #   python3 Scripts/refresh-translation-expectations.py            # launch + refresh
 #   python3 Scripts/refresh-translation-expectations.py --no-launch  # reuse the
-#     dump already in the probe's Output folder (debugging / probe just ran)
+#     dump already in the probe's Output folder (debugging / probe just ran;
+#     with WORLDS, the per-world <packageId>.<world>.json dumps)
 
 import sys
 from pathlib import Path
@@ -48,5 +49,35 @@ engine.CANONICAL_ACTIVE_MODS = [
     "shunter.placeholder",
     "shunter.l10nprobe",
 ]
+
+# ALTERNATIVE, in place of CANONICAL_ACTIVE_MODS (never both): WORLDS, when
+# some key exists only in some configurations. The case that needs it: a
+# LoadFolders-gated compat root whose Patches/ add a [MustTranslate] field
+# to a main-tree def (that key appears under the main-tree def, but only
+# while the gate is active), or a gate that rewrites a main-tree field's
+# English. One pinned list with the gate would record the key as if it
+# always existed, and the checker would demand its translation in the main
+# tree, a startup error on every install without the gate. WORLDS boots
+# once per entry and records which worlds hold each key, so the checker can
+# demand the translation in the root active in exactly those worlds. Order
+# matters: the first world is the base (normally the list above, without
+# any optional gate); each later world follows the same membership rule.
+# Names are file-name safe (letters, digits, '-', '_').
+# RATIONALE: <which gate creates world-dependent keys, via which Patch>
+# engine.WORLDS = {
+#     "base": [
+#         "brrainz.harmony",
+#         "ludeon.rimworld",
+#         "shunter.placeholder",
+#         "shunter.l10nprobe",
+#     ],
+#     "gate": [
+#         "brrainz.harmony",
+#         "ludeon.rimworld",
+#         "author.gatemod",
+#         "shunter.placeholder",
+#         "shunter.l10nprobe",
+#     ],
+# }
 
 raise SystemExit(engine.main())

@@ -99,12 +99,20 @@ checkout's engine directory on `sys.path` (or rescan with `--no-launch`).
 ### Tests
 
 ```bash
-python3 -m unittest discover -s smoke -p 'test_*.py'   # smoke engine classification
+python3 -m unittest discover -s . -p 'test_*.py'   # checker, refresh and smoke engines
 ```
 
-Run from the repo root before committing an engine change. The smoke tests
-are pure classification over fixture log shapes (1.6 frame-less, legacy
-frame-bearing, the probe's log dump); nothing launches the game.
+Run from the repo root before committing an engine change; nothing launches
+the game. The smoke tests are pure classification over fixture log shapes
+(1.6 frame-less, legacy frame-bearing, the probe's log dump); the checker
+tests build fixture repos in temp dirs (LoadFolders gating, per-world sidecar
+views); the refresh tests merge fixture dumps and replay `--no-launch`.
+
+A checker change must also leave every sibling consumer's output unchanged
+unless it means to change it: run HEAD's engine and the working tree's
+against each `~/dev/*/Scripts/check-translations.py` (the shim's
+`sys.path.insert` line redirected, `L10N_SKIP_PIN_CHECK=1`) and diff stdout
+and exit codes.
 
 ## The probe
 

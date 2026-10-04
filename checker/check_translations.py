@@ -28,6 +28,17 @@
 # defName in Defs/ the sidecar has never seen fails this script until the
 # sidecar is regenerated, and the regen sees everything the game sees.
 #
+# Worlds: a sidecar may record several boot configurations (meta.worlds,
+# written when the refresh shim sets WORLDS), each entry naming the worlds it
+# exists in ("worlds", omitted when it exists in all) and any per-world
+# English ("variants"). The game gates a DefInjected entry by the load root
+# that CONTAINS it and errors on a key injected twice, so every check below
+# runs once per world against that world's view of the sidecar, over exactly
+# the load roots LoadFolders.xml activates in it; a finding raised in only
+# some worlds prints once, suffixed "[worlds: a, b]". A sidecar without
+# meta.worlds is a single world named "canonical" and checks as it always
+# has.
+#
 # Checks per non-English language:
 #   Keyed:       missing/extra keys, argument-placeholder mismatches, stale EN
 #                comments (grammar constructs like {PAWN_gender ? a : b : c} are
@@ -47,6 +58,7 @@
 #   Sidecar:     generated with the right DLC set (MayRequire-gated defs
 #                vanish from a dump made without their DLC), fresh against
 #                Defs/ (defNames and label/description English text)
+#   LoadFolders: every Defs/ or Languages/ root sits in a listed load folder
 #   Engine pin:  this engine checkout's HEAD (the l10n/ submodule in a
 #                consuming repo) is compared to upstream rimworld-l10n's
 #                release tags (vMAJOR.MINOR.PATCH, read via git ls-remote —
@@ -77,6 +89,7 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from types import SimpleNamespace
 
 PLACEHOLDER_RE = re.compile(r"\{[^{}]*\}")
 EN_COMMENT_RE = re.compile(r"^\s*EN:\s?(.*)$", re.DOTALL)
@@ -122,7 +135,8 @@ NUM_CASE_RE = re.compile(r"\{([^{}?]*?)_numCase\s*\?[^{}]*\}")
 # The sidecar's fullListAllowed flag could eventually subsume this.
 PARITY_EXEMPT_FIELDS = set()
 
-# DLCs the sidecar must have been generated with. None is not a legitimate
+# DLCs the sidecar must have been generated with (each active in at least one
+# of its worlds). None is not a legitimate
 # configured value (an empty set is: "this mod requires no DLC") — it means
 # the shim forgot to configure this engine, so load_sidecar() below fails
 # loudly at startup rather than silently skipping the DLC-freshness check.
@@ -287,6 +301,30 @@ class Report:
     def warn(self, path, msg):
         self.warnings.append(f"{path}: {msg}")
 
+    def merge_worlds(self, reports):
+        # reports: [(world name, Report)] in world order, one per world for
+        # the same check phase. A line every world produced is printed once,
+        # unchanged; a line only some worlds produced is printed once with
+        # the worlds that raised it. Lines compare by text and occurrence
+        # (the Nth copy of a line in one world matches the Nth in another),
+        # and keep first-seen order, so a single world merges to exactly its
+        # own report.
+        for attr in ("errors", "warnings"):
+            order, where = [], {}
+            for world, rep in reports:
+                counts = {}
+                for line in getattr(rep, attr):
+                    n = counts[line] = counts.get(line, 0) + 1
+                    if (line, n) not in where:
+                        where[(line, n)] = []
+                        order.append((line, n))
+                    where[(line, n)].append(world)
+            for line, n in order:
+                worlds = where[(line, n)]
+                if len(worlds) != len(reports):
+                    line = f"{line} [worlds: {', '.join(worlds)}]"
+                getattr(self, attr).append(line)
+
 
 def check_hygiene(path, report):
     raw = path.read_bytes()
@@ -401,6 +439,19 @@ def check_entry_root(def_roots, def_type, canonical, entry_root, path, report):
     return True
 
 
+def world_packages(meta):
+    # Lowercased packageIds active during one probe boot: Core plus each
+    # active DLC (ludeon.rimworld.<dlc>), plus activeMods when the refresh
+    # script recorded it (older sidecars predate that field). meta is the
+    # sidecar's own meta or one of its meta.worlds entries.
+    pkgs = {"ludeon.rimworld"}
+    for dlc in meta.get("activeDlcs", []):
+        if dlc != "Core":
+            pkgs.add(f"ludeon.rimworld.{dlc.lower()}")
+    pkgs.update(m.lower() for m in meta.get("activeMods", []))
+    return pkgs
+
+
 class Sidecar:
     # Scripts/expected-injections.json, indexed for lookups. Every entry is a
     # legal injection point; entries with required=true are what the in-game
@@ -411,9 +462,17 @@ class Sidecar:
     # entry at its path carrying all English elements; languages may
     # translate it as a full <li> list at that path or element-wise at
     # path.N.
+    #
+    # A multi-world sidecar is never checked directly: view(world) yields a
+    # Sidecar of the same shape holding only that world's keys with its
+    # variants applied, so every check reads one configuration exactly as
+    # the game would load it. parent/world/hint_roots are set on views only.
     def __init__(self, data):
         self.meta = data.get("meta", {})
         self.entries = data["defInjections"]  # def_type -> key -> entry
+        self.parent = None
+        self.world = None
+        self.hint_roots = {}  # frozenset(world names) -> [load roots]
         self.canon = {}       # def_type -> spelling -> canonical key
         self.def_names = {}   # def_type -> set of defNames seen
         for dt, entries in self.entries.items():
@@ -431,15 +490,73 @@ class Sidecar:
 
     @property
     def active_packages(self):
-        # Lowercased packageIds active during the probe boot: Core plus each
-        # active DLC (ludeon.rimworld.<dlc>), plus meta.activeMods when the
-        # refresh script recorded it (older sidecars predate that field).
-        pkgs = {"ludeon.rimworld"}
-        for dlc in self.meta.get("activeDlcs", []):
-            if dlc != "Core":
-                pkgs.add(f"ludeon.rimworld.{dlc.lower()}")
-        pkgs.update(m.lower() for m in self.meta.get("activeMods", []))
-        return pkgs
+        return world_packages(self.meta)
+
+    @property
+    def worlds(self):
+        # name -> {"activeMods", "activeDlcs"}, base world first. A sidecar
+        # without meta.worlds is the single pinned boot its meta describes.
+        if "worlds" in self.meta:
+            return self.meta["worlds"]
+        return {"canonical": {"activeMods": self.meta.get("activeMods", []),
+                              "activeDlcs": self.meta.get("activeDlcs", [])}}
+
+    def view(self, world):
+        data = {"meta": dict(self.worlds[world]), "defInjections": {}}
+        for def_type, entries in self.entries.items():
+            kept = {}
+            for key, entry in entries.items():
+                if world not in entry.get("worlds", [world]):
+                    continue
+                kept[key] = {**entry, **entry.get("variants", {}).get(world, {})}
+            if kept or not entries:
+                data["defInjections"][def_type] = kept
+        view = Sidecar(data)
+        view.parent, view.world = self, world
+        return view
+
+    def conditional(self, def_type, key):
+        # True for a key whose existence or English depends on the world.
+        # Such a key's translation legitimately lives in a gated root other
+        # than its def's (a compat-root Patch adding a field to a main-tree
+        # def), so the per-world checks, not def ownership, place it.
+        entry = (self.parent or self).entries.get(def_type, {}).get(key, {})
+        return "worlds" in entry or "variants" in entry
+
+    def worlds_of(self, def_type, key):
+        # The worlds a key (any legal spelling) exists in, or None when it
+        # is no injection point in any world.
+        source = self.parent or self
+        hit = source.lookup(def_type, key)
+        if hit is None:
+            return None
+        return source.entries[def_type][hit[0]].get("worlds", list(source.worlds))
+
+    def where_hint(self, worlds, lang):
+        # " — belongs under ..." for a key that exists in only some worlds:
+        # the load root(s) active in exactly those worlds, else the package
+        # ids that tell those worlds apart (a root to gate on them is
+        # missing). Empty when the key exists everywhere.
+        source = self.parent or self
+        if worlds is None or set(worlds) >= set(source.worlds):
+            return ""
+        roots = self.hint_roots.get(frozenset(worlds))
+        if roots:
+            return " — belongs under " + " or ".join(
+                str(r / "Languages" / lang) for r in roots)
+        pkgs = {w: world_packages(m) for w, m in source.worlds.items()}
+        inside = [pkgs[w] for w in worlds]
+        outside = [p for w, p in pkgs.items() if w not in worlds]
+        only_in = set.intersection(*inside) - set.union(*outside)
+        only_out = set.intersection(*outside) - set.union(*inside)
+        gates = ([f"IfModActive=\"{','.join(sorted(only_in))}\""] if only_in
+                 else []) + ([f"IfModNotActive=\"{','.join(sorted(only_out))}\""]
+                             if only_out else [])
+        if not gates:
+            return ""
+        return (f" — no load root is active in exactly worlds "
+                f"{', '.join(worlds)}; it belongs in a compat root gated "
+                f"{' or '.join(gates)}")
 
     def lookup(self, def_type, key):
         # Resolve a translated key to (canonical_key, element_index):
@@ -470,7 +587,8 @@ def load_sidecar(root, report):
               f"Scripts/refresh-translation-expectations.py", file=sys.stderr)
         return None
     sidecar = Sidecar(json.loads(path.read_text(encoding="utf-8")))
-    missing_dlcs = REQUIRED_DLCS - set(sidecar.meta.get("activeDlcs", []))
+    missing_dlcs = REQUIRED_DLCS - {dlc for world in sidecar.worlds.values()
+                                    for dlc in world.get("activeDlcs", [])}
     if missing_dlcs:
         report.error(path, f"sidecar was generated without "
                            f"{sorted(missing_dlcs)} active — MayRequire-gated "
@@ -581,24 +699,63 @@ def check_engine_pin_freshness(report, strict):
               f"translation pass).")
 
 
-def compat_root_gates(root):
-    # LoadFolders.xml's IfModActive gates, keyed by the load root they gate
-    # (resolved path -> lowercased "a,b" attribute as written). The game loads
-    # a gated root only while one of the listed packages is active, so a def
-    # declared under one exists in the probe boot only if its gate is pinned.
+# LoadFolders.xml <li> attributes, as the game evaluates them
+# (decompile-verified, Verse.LoadFolder.ShouldLoad): IfModActive = ANY listed
+# package active, IfModActiveAll = ALL active, IfModNotActive = NONE active.
+# Ids compare lowercase with the "_steam" postfix stripped; a bare <li>
+# always loads.
+LOAD_FOLDER_ATTRS = (("IfModActive", "any"), ("IfModActiveAll", "all"),
+                     ("IfModNotActive", "not"))
+
+
+def package_ids(text):
+    return {p.strip().lower().removesuffix("_steam")
+            for p in text.split(",") if p.strip()}
+
+
+def load_folders(root):
+    # LoadFolders.xml as {resolved load root: [condition, ...]}, one
+    # condition per <li> listing the root under any version node (a root
+    # listed twice loads if either entry passes). A condition is
+    # {"any"|"all"|"not": set of ids, "raw": [(attribute, lowercased value
+    # as written)]}. None when the mod has no (readable) LoadFolders.xml:
+    # every root then loads.
     path = root / "LoadFolders.xml"
     if not path.is_file():
-        return {}
+        return None
     try:
         tree = ET.parse(path).getroot()
     except ET.ParseError:
-        return {}
-    gates = {}
-    for li in tree.iter("li"):
-        gate = li.get("IfModActive")
-        if gate and li.text and li.text.strip():
-            gates[(root / li.text.strip()).resolve()] = gate.strip().lower()
-    return gates
+        return None
+    folders = {}
+    for version in tree:
+        for li in version.findall("li"):
+            text = (li.text or "").strip().strip("/")
+            cond = {"raw": []}
+            for attr, kind in LOAD_FOLDER_ATTRS:
+                value = li.get(attr)
+                if value is not None:
+                    cond[kind] = package_ids(value)
+                    cond["raw"].append((attr, value.strip().lower()))
+            folders.setdefault((root / text).resolve(), []).append(cond)
+    return folders
+
+
+def condition_holds(cond, packages):
+    return (not cond.get("any") or bool(cond["any"] & packages)) \
+        and (not cond.get("all") or cond["all"] <= packages) \
+        and not cond.get("not", set()) & packages
+
+
+def describe_gate(conds):
+    # The gate as a reader would grep LoadFolders.xml for it: a plain
+    # IfModActive gate reads as its id list, anything else as attributes.
+    raws = [c["raw"] for c in conds if c["raw"]]
+    if not raws:
+        return None
+    if all(len(r) == 1 and r[0][0] == "IfModActive" for r in raws):
+        return " / ".join(r[0][1] for r in raws)
+    return " / ".join(" ".join(f'{a}="{v}"' for a, v in r) for r in raws)
 
 
 def check_sidecar_freshness(defs, sidecar, report, def_roots, gates):
@@ -611,22 +768,26 @@ def check_sidecar_freshness(defs, sidecar, report, def_roots, gates):
     # whether or not their def type has other entries.
     #
     # A def missing from the sidecar because it lives under a LoadFolders-
-    # gated compat root whose gate was not in the probe boot is the same
+    # gated compat root whose gate no probe boot activated is the same
     # staleness with a different fix: the gate belongs in the refresh shim's
-    # CANONICAL_ACTIVE_MODS (one pinned list that includes every gate loads
-    # every branch), so say so instead of sending the reader to a regen that
-    # would come back identical.
+    # boot list (CANONICAL_ACTIVE_MODS, or a WORLDS entry when the sidecar
+    # records worlds), so say so instead of sending the reader to a regen
+    # that would come back identical. gates maps each load root inactive in
+    # this world to its gate; main() checks a root no world activates in
+    # every world, which is the only way such a def reaches this check.
     label = "[Scripts/expected-injections.json]"
     stale = (f"expectations stale — rerun "
              f"Scripts/refresh-translation-expectations.py")
+    boot_list = "a WORLDS entry" if "worlds" in (sidecar.parent or sidecar).meta \
+        else "CANONICAL_ACTIVE_MODS"
 
     def why_absent(def_type, def_name):
         owner = def_roots.get(def_type, {}).get(def_name)
         gate = gates.get(owner.resolve()) if owner is not None else None
-        if gate and not {g.strip() for g in gate.split(",")} & sidecar.active_packages:
+        if gate:
             return (f"it is declared under the compat root {owner}, gated "
                     f"on {gate}, which was not active during the probe boot "
-                    f"— add the gate to CANONICAL_ACTIVE_MODS in "
+                    f"— add the gate to {boot_list} in "
                     f"Scripts/refresh-translation-expectations.py, then "
                     f"rerun it")
         return stale
@@ -642,7 +803,9 @@ def check_sidecar_freshness(defs, sidecar, report, def_roots, gates):
                                         f"{why_absent(def_type, def_name)}")
             continue
         # English drift: a label/description added or edited in XML without a
-        # regen. (Literal-\n unescaping lives in norm().)
+        # regen. (Literal-\n unescaping lives in norm().) A world whose
+        # variant rewrote the English got it from a gated Patch this scan
+        # does not apply, so only the unvaried worlds compare against XML.
         for def_name, elem in sorted(by_name.items()):
             for field in ("label", "description"):
                 node = elem.find(field)
@@ -653,6 +816,8 @@ def check_sidecar_freshness(defs, sidecar, report, def_roots, gates):
                     report.error(label, f"{def_type} {def_name}.{field} is in "
                                         f"the def XML but not the sidecar; "
                                         f"{why_absent(def_type, def_name)}")
+                elif "english" in entry.get("variants", {}).get(sidecar.world, {}):
+                    continue
                 elif norm(entry["english"]) != norm(node.text):
                     report.error(label, f"{def_type} {def_name}.{field} "
                                         f"English differs between def XML and "
@@ -689,12 +854,15 @@ def check_english_definjected(lang_dir, sidecar, def_roots, seen, report):
                 by_key[key] = path
                 hit = sidecar.lookup(def_type, key)
                 if hit is None:
-                    report.error(path, f"unknown key <{key}> (not a legal "
-                                       f"injection point per the sidecar)")
+                    report.error(path, elsewhere_note(sidecar, def_type, key,
+                                                      "English")
+                                 or f"unknown key <{key}> (not a legal "
+                                    f"injection point per the sidecar)")
                     continue
                 canonical, idx = hit
-                check_entry_root(def_roots, def_type, canonical,
-                                 lang_dir.parent.parent, path, report)
+                if not sidecar.conditional(def_type, canonical):
+                    check_entry_root(def_roots, def_type, canonical,
+                                     lang_dir.parent.parent, path, report)
                 entry = sidecar.entries[def_type][canonical]
                 text = flatten_entry(elem)
                 if idx is not None:
@@ -728,7 +896,21 @@ def check_english_definjected(lang_dir, sidecar, def_roots, seen, report):
                                        f"refresh script or fix the entry")
 
 
-def check_language(lang_dirs, english_keyed, sidecar, def_roots, report):
+def elsewhere_note(sidecar, def_type, key, lang):
+    # For a key that is no injection point in this world's view but is one
+    # in another world: say which worlds it lives in and where it belongs,
+    # since "typo or stale" would send the reader to a pointless regen.
+    worlds = sidecar.worlds_of(def_type, key) if sidecar.parent else None
+    if not worlds:
+        return None
+    hint = sidecar.where_hint(worlds, lang) or (
+        " — translate it in a load root active in exactly those worlds")
+    return (f"<{key}>: not an injection point in this configuration (the "
+            f"key exists only in worlds {', '.join(worlds)}){hint}")
+
+
+def check_language(lang_dirs, english_keyed, sidecar, def_roots, report,
+                   lang=None):
     # Returns {def_type: set(canonical keys/elements)} actually translated in
     # this language, for the cross-language parity check in main(). Element
     # translations are recorded as "<canonical collection key>.<index>".
@@ -740,7 +922,9 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report):
     # is ignored on DefInjected, so the LoadFolders gate has to be the folder),
     # yet the sidecar marks them required — checking that root standalone would
     # demand the whole Keyed set and every other def's injections from it.
-    lang = lang_dirs[0].name
+    # With worlds, lang_dirs is the roots active in the view's world, and may
+    # be empty (lang then names the language).
+    lang = lang or lang_dirs[0].name
 
     # --- Cross-root file-path collisions ---
     # The game dedups language files per ModContentPack by their path relative
@@ -830,15 +1014,18 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report):
                 by_key[key] = path
                 resolved = sidecar.lookup(def_type, key)
                 if resolved is None:
-                    report.error(path, f"<{key}>: not a legal injection point "
-                                       f"per the sidecar (typo, or "
-                                       f"expectations stale — rerun "
-                                       f"Scripts/refresh-translation-"
-                                       f"expectations.py)")
+                    report.error(path, elsewhere_note(sidecar, def_type, key,
+                                                      lang)
+                                 or f"<{key}>: not a legal injection point "
+                                    f"per the sidecar (typo, or "
+                                    f"expectations stale — rerun "
+                                    f"Scripts/refresh-translation-"
+                                    f"expectations.py)")
                     continue
                 canonical, idx = resolved
-                check_entry_root(def_roots, def_type, canonical,
-                                 entry_root, path, report)
+                if not sidecar.conditional(def_type, canonical):
+                    check_entry_root(def_roots, def_type, canonical,
+                                     entry_root, path, report)
                 entry = sidecar.entries[def_type][canonical]
                 text = flatten_entry(elem)
                 if idx is not None:
@@ -884,10 +1071,13 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report):
             # Defs declared in a gated compat root take their translations
             # there too — say so, or the obvious fix for the error (add the
             # key to the main tree) ships a wrong-root bug the game catches
-            # only when the gate is inactive.
+            # only when the gate is inactive. A key that exists in only some
+            # worlds on a main-tree def (a compat-root Patch added the field)
+            # takes the root active in exactly those worlds instead.
             owner = def_roots.get(def_type, {}).get(key.split(".")[0])
             where = f" — belongs under {owner / 'Languages' / lang}" \
-                if owner is not None and owner.parent.name == "Mods" else ""
+                if owner is not None and owner.parent.name == "Mods" \
+                else sidecar.where_hint(entry.get("worlds"), lang)
             if not entry.get("isCollection"):
                 if key not in got:
                     report.error(f"[{lang}/DefInjected/{def_type}]",
@@ -1025,9 +1215,83 @@ def main():
     sidecar = load_sidecar(args.root, report)
     if sidecar is None:
         return 2
-    defs, def_roots = collect_defs(defs_dirs, sidecar.active_packages)
-    check_sidecar_freshness(defs, sidecar, report, def_roots,
-                            compat_root_gates(args.root))
+
+    # Which load roots each world loads. A Defs/ or Languages/ root sitting
+    # in no listed load folder never loads in any configuration: report it
+    # and leave it out. A listed root whose gate no world activates is
+    # checked in EVERY world instead, as it was before worlds existed: it
+    # loads for players who have the gate, so leaving it unchecked would
+    # hide its content, and check_sidecar_freshness names the missing gate.
+    folders = load_folders(args.root)
+    worlds = list(sidecar.worlds)
+    packages = {w: world_packages(sidecar.worlds[w]) for w in worlds}
+
+    def gate_active(load_root, world):
+        conds = folders.get(load_root.resolve(), []) if folders is not None else None
+        return conds is None or any(condition_holds(c, packages[world]) for c in conds)
+
+    load_roots = {}  # load root -> [worlds that load it], discovery order
+    for content_dir in lang_roots + defs_dirs:
+        load_root = content_dir.parent
+        if load_root in load_roots:
+            continue
+        if folders is not None and load_root.resolve() not in folders:
+            report.error("[LoadFolders.xml]",
+                         f"{load_root} holds {content_dir.name}/ but is "
+                         f"listed in no <li>, so the game never loads it — "
+                         f"list it (gated if it is compat content) or "
+                         f"remove it")
+            load_roots[load_root] = []
+            continue
+        load_roots[load_root] = [w for w in worlds if gate_active(load_root, w)] \
+            or list(worlds)
+
+    # Hint table for keys that exist in only some worlds: the listed load
+    # roots (the Languages/ a translator would create may not exist yet)
+    # grouped by the exact set of worlds each is active in. Within a group
+    # only the likeliest home is named: roots already holding a Languages/,
+    # else those holding Defs/ or Patches/ (the version-specific compat
+    # root, not its art-only sibling), else all of them.
+    def tier(load_root):
+        if (load_root / "Languages").is_dir():
+            return 0
+        return 1 if (load_root / "Defs").is_dir() \
+            or (load_root / "Patches").is_dir() else 2
+    hint_roots = {}
+    for load_root, conds in sorted((folders or {}).items()):
+        active = frozenset(w for w in worlds
+                           if any(condition_holds(c, packages[w]) for c in conds))
+        hint_roots.setdefault(active, []).append(load_root)
+    for active, roots in hint_roots.items():
+        best = min(tier(r) for r in roots)
+        hint_roots[active] = [r for r in roots if tier(r) == best]
+
+    ctx = {}  # world name -> what every check in that world reads
+    for name in worlds:
+        view = sidecar.view(name) if "worlds" in sidecar.meta else sidecar
+        view.hint_roots = hint_roots
+        w = ctx[name] = SimpleNamespace(
+            view=view,
+            loads=lambda load_root, name=name: name in load_roots[load_root],
+            # Gates of the roots this world does not activate, for
+            # check_sidecar_freshness's "add the gate" message.
+            gates={r: describe_gate(c) for r, c in (folders or {}).items()
+                   if describe_gate(c) and not any(
+                       condition_holds(x, packages[name]) for x in c)})
+        w.defs, w.def_roots = collect_defs(
+            [d for d in defs_dirs if w.loads(d.parent)], view.active_packages)
+
+    def phase(check):
+        # Runs one check per world and merges the findings (Report.merge_worlds).
+        reports = []
+        for name in worlds:
+            world_report = Report()
+            check(ctx[name], world_report)
+            reports.append((name, world_report))
+        report.merge_worlds(reports)
+
+    phase(lambda w, r: check_sidecar_freshness(w.defs, w.view, r, w.def_roots,
+                                               w.gates))
 
     # A language is the union of its dirs across every root, not one dir per
     # root — see check_language. English already worked this way; the rest now
@@ -1035,16 +1299,26 @@ def main():
     # there without being mistaken for a half-empty language of its own.
     english_dirs = []
     languages = {}   # language name -> [dirs], in load order
-    english_injected_seen = {}
     for lang_root in lang_roots:
+        if not load_roots[lang_root.parent]:
+            continue
         for lang_dir in sorted(p for p in lang_root.iterdir() if p.is_dir()):
             if lang_dir.name == "English":
                 english_dirs.append(lang_dir)
-                check_english_definjected(lang_dir, sidecar, def_roots,
-                                          english_injected_seen, report)
             else:
                 languages.setdefault(lang_dir.name, []).append(lang_dir)
-    english_keyed = collect_keyed(english_dirs, report)
+
+    def check_english(w, r):
+        seen = {}
+        dirs = [d for d in english_dirs if w.loads(d.parent.parent)]
+        for lang_dir in dirs:
+            check_english_definjected(lang_dir, w.view, w.def_roots, seen, r)
+        w.english_keyed = collect_keyed(dirs, r)
+    phase(check_english)
+    english_keyed = {}
+    for name in worlds:
+        for key, value in ctx[name].english_keyed.items():
+            english_keyed.setdefault(key, value)
 
     if not english_keyed:
         if ALLOW_NO_KEYED_SURFACE:
@@ -1056,26 +1330,34 @@ def main():
 
     found_by_lang = {}
     for lang, lang_dirs in sorted(languages.items()):
-        found_by_lang[lang] = check_language(
-            lang_dirs, english_keyed, sidecar, def_roots, report)
+        found = found_by_lang[lang] = {}
+
+        def check_one(w, r, lang=lang, lang_dirs=lang_dirs, found=found):
+            got = check_language([d for d in lang_dirs if w.loads(d.parent.parent)],
+                                 w.english_keyed, w.view, w.def_roots, r, lang)
+            for def_type, keys in got.items():
+                found.setdefault(def_type, set()).update(keys)
+        phase(check_one)
 
     # Cross-language parity: any DefInjected key one language translates
     # beyond the required set (secondary fields, extra collection elements)
     # must exist in every language — a key added in one pass and forgotten in
     # the others is exactly the drift this catches. Keys compare in
     # canonical (sidecar) spelling, so index-form and handle-form
-    # translations of the same field cannot false-positive.
+    # translations of the same field cannot false-positive. Runs once over
+    # every world: found and demanded are unions across them.
     union = {}
     for found in found_by_lang.values():
         for def_type, keys in found.items():
             union.setdefault(def_type, set()).update(keys)
     demanded = {}  # def_type -> required keys expanded to element form
-    for def_type in sidecar.def_types:
-        dem = demanded.setdefault(def_type, set())
-        for key, entry in sidecar.required(def_type).items():
-            dem.add(key)
-            if entry.get("isCollection"):
-                dem.update(f"{key}.{i}" for i in range(len(entry["english"])))
+    for view in (ctx[name].view for name in worlds):
+        for def_type in view.def_types:
+            dem = demanded.setdefault(def_type, set())
+            for key, entry in view.required(def_type).items():
+                dem.add(key)
+                if entry.get("isCollection"):
+                    dem.update(f"{key}.{i}" for i in range(len(entry["english"])))
     for lang, found in sorted(found_by_lang.items()):
         for def_type, keys in sorted(union.items()):
             extra = keys - found.get(def_type, set()) \

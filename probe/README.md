@@ -23,7 +23,9 @@ switch language and the active one is irrelevant.
 Output defaults to this mod's own `Output/<packageId>.json` (in the *deployed* mod folder). A
 per-mod path override writes straight into a mod's source repo instead. Each dump records the
 active DLCs and the full active mod list it was taken under; consumers refuse a dump from any
-boot other than their pinned one.
+boot other than their pinned one. A consumer whose keys depend on an optional mod pins several
+boots ("worlds"), and the refresh engine keeps each one's dump as `Output/<packageId>.<world>.json`
+before merging them into one sidecar.
 
 A startup-triggered run (`-l10nprobe` or the probe-on-boot setting) also writes
 `Output/log-messages.json`: the game's in-memory log (`Verse.Log.Messages` — type, text,

@@ -36,7 +36,9 @@ consumes this repo as a git submodule (conventionally at `l10n/`).
 - **Scripts**: the per-repo `Scripts/check-translations.py` and
   `Scripts/refresh-translation-expectations.py` keep their repo's config
   (required DLCs, parity exemptions, pinned probe mod list) and rationale
-  comments, and import the engines from `l10n/`.
+  comments, and import the engines from `l10n/`. The sidecar normally
+  records one pinned boot; a repo whose keys depend on an optional mod pins
+  several (`WORLDS`) and the checker evaluates each (see `process.md`).
 - **CI**: `actions/checkout` with `submodules: true`; the checker then runs
   exactly as it does locally.
 

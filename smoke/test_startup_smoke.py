@@ -3,7 +3,7 @@
 # part that went blind on RimWorld 1.6 (2026-08-28): Player.log stopped
 # carrying stack frames, so every plain Log.Error read as level None. Run
 # from the repo root:
-#   python3 -m unittest discover -s smoke -p 'test_*.py'
+#   python3 -m unittest discover -s . -p 'test_*.py'
 # Pure classification - nothing here launches the game or reads a real log.
 
 import contextlib

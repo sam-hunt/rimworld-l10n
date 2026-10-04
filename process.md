@@ -85,6 +85,18 @@ English is always the source of truth; every other language derives from it.
   is not LoadFolders order — a same-named file shadows one side wholesale
   with no error anywhere. Suffix compat-root file names with the gate
   (`WeaponTraits_Royalty.xml`); the checker errors on any collision.
+- **Keys that exist only in some configurations need worlds.** A compat
+  root whose Patches add a translatable field to a main-tree def, or any
+  other key whose existence or English depends on an optional mod, is not a
+  fact about one boot. The refresh shim then sets `WORLDS` (one pinned boot
+  per configuration, base first) instead of `CANONICAL_ACTIVE_MODS`; the
+  sidecar records which worlds hold each key and any per-world English, and
+  the checker runs every language once per world over the load roots
+  LoadFolders.xml activates in it. Each key's translation must live in a
+  root active in exactly the configurations where the key exists. Because a
+  key injected from two roots that load together is a duplicate-key error,
+  gate-variant English on a main-tree field splits across an
+  `IfModActive`/`IfModNotActive` root pair, never main tree plus gated root.
 - **EN comment convention (required):** every translated entry carries the
   current English source directly above it:
   `<!-- EN: Reset to defaults -->` — this is how the checker detects

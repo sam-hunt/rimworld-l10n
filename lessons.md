@@ -256,10 +256,29 @@ name-grammar noun for any mod that adds name generation.
   walks from a delegate its `Mod` constructor queues (complete graph, before
   any static constructor), records the real `meta.activeMods`, and the
   refresh engine refuses a dump whose list differs from the repo's pin.
-  General rule: one pinned list per repo that includes every gate its content
-  loads under (MayRequire, LoadFolders IfModActive) covers every branch;
-  branches must ADD defs, never rewrite a shared key's text, because two
-  DefInjected entries for one key are a duplicate-key error in the game too.
+  General rule: every gate a repo's content loads under (MayRequire,
+  LoadFolders IfModActive) must be in a pinned boot. Gates that only ADD defs
+  can share one list; a gate that adds a field to, or rewrites the text of,
+  a def that also loads without it needs a world of its own (next two
+  lessons).
+- **A compat-root Patch that adds a `[MustTranslate]` field to a main-tree
+  def creates a key that exists only behind the gate.** The key sits under
+  the main-tree def (ShipcrackerWarcasket's VGE root adds an oxygen comp
+  whose `chargeNoun` lands on the main-tree helmet), so def ownership places
+  it in the main tree, where it would be a "found no def" startup error on
+  every install without the gate. The probe sees the key only in a boot
+  with the gate active, and its translation belongs in the gate's own root.
+  A refresh shim models this with `WORLDS` (one boot per configuration);
+  the checker then demands the key in the root active in exactly the worlds
+  that have it.
+- **A DefInjected key may be translated in only one load root per
+  configuration.** Two roots that load together and carry the same key are
+  a logged duplicate, last file wins in an unstable order. So a main-tree
+  field whose English differs behind a gate cannot simply get a second
+  translation in the gate's root: either the gated text moves to a separate
+  field the code selects at runtime, or a replace patch rewrites it and the
+  translations split across an `IfModActive`/`IfModNotActive` root pair,
+  exactly one of which loads in any configuration.
 - **RimWorld attributes patch and def failures to a mod by its About.xml
   display name, not its packageId or assembly**:
   `Verse.PatchOperation.Complete(runningMod.Name)` logs

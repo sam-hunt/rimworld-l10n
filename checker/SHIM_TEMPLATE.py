@@ -34,10 +34,17 @@ engine.REPO_ROOT = Path(__file__).resolve().parent.parent
 # RATIONALE: <why this mod's fields are/aren't exempt — name the fields>
 engine.PARITY_EXEMPT_FIELDS = set()
 
-# DLCs the sidecar must have been generated with. None is NOT a legal value
+# DLCs the sidecar must have been generated with (in at least one of its
+# worlds, when the refresh shim sets WORLDS). None is NOT a legal value
 # here — an empty set() is the correct way to say "no DLC required". Getting
 # this right matters: a DLC omitted here lets a sidecar generated without it
 # silently pass, even though MayRequire-gated defs are then absent from it.
+#
+# Worlds need no setting here: when the refresh shim sets WORLDS instead of
+# CANONICAL_ACTIVE_MODS (a gated compat root's Patch adds a translatable
+# field to a main-tree def, so the key exists only with the gate), the
+# sidecar records them and this checker evaluates every language once per
+# world, over the load roots LoadFolders.xml activates in it.
 # RATIONALE: <which DLCs are hard dependencies vs. MayRequire-gated, and by
 # which defs — name them>
 engine.REQUIRED_DLCS = {"PLACEHOLDER_DLC"}
