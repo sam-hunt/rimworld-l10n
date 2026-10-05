@@ -103,8 +103,10 @@ python3 -m unittest discover -s . -p 'test_*.py'   # checker, refresh and smoke 
 ```
 
 Run from the repo root before committing an engine change; nothing launches
-the game. The smoke tests are pure classification over fixture log shapes
-(1.6 frame-less, legacy frame-bearing, the probe's log dump); the checker
+the game. The smoke tests classify fixture log shapes (1.6 frame-less,
+legacy frame-bearing, the probe's log dump) and drive `launch()` with the
+refresh engine's helpers and `subprocess.run` stubbed, since that is the
+engine's one call into another engine (`pinned_modsconfig`); the checker
 tests build fixture repos in temp dirs (LoadFolders gating, per-world sidecar
 views); the refresh tests merge fixture dumps and replay `--no-launch`.
 

@@ -4,7 +4,9 @@
 # carrying stack frames, so every plain Log.Error read as level None. Run
 # from the repo root:
 #   python3 -m unittest discover -s . -p 'test_*.py'
-# Pure classification - nothing here launches the game or reads a real log.
+# Nothing here launches the game or reads a real log: the classification
+# tests run over fixture log shapes, and the Launch tests drive launch()
+# with the refresh engine's helpers and subprocess.run stubbed.
 
 import contextlib
 import io
@@ -12,7 +14,9 @@ import json
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import startup_smoke as engine  # noqa: E402
@@ -345,6 +349,108 @@ class Report(unittest.TestCase):
         hard, gated, out = self.run_report(entries)
         self.assertEqual((hard, gated), ([], []))
         self.assertIn("8 error(s), 0 warning(s) in the boot log (8 tooling error(s) excluded from the gate).", out)
+
+
+
+class Launch(unittest.TestCase):
+    # launch() is the one path the fixture tests cannot reach, and the one
+    # that broke: it pins the mod list through the refresh engine's helpers,
+    # so a signature change there has a caller outside refresh/. These stub
+    # the game and check what reached ModsConfig.xml and what was restored.
+
+    ORIGINAL = (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        "<ModsConfigData>\n"
+        "  <version>1.6.4871 rev591</version>\n"
+        "  <activeMods>\n"
+        "    <li>ludeon.rimworld</li>\n"
+        "    <li>some.personal.mod</li>\n"
+        "  </activeMods>\n"
+        "  <knownExpansions>\n"
+        "    <li>ludeon.rimworld.odyssey</li>\n"
+        "  </knownExpansions>\n"
+        "</ModsConfigData>\n")
+    SMOKE_LIST = ["brrainz.harmony", "ludeon.rimworld",
+                  "shunter.xenogermtraderstock", "shunter.l10nprobe"]
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        d = Path(self.tmp.name)
+        self.rw = d / "rw"
+        (self.rw / "Mods" / "L10nProbe" / "Output").mkdir(parents=True)
+        self.dump = engine.log_dump_path(self.rw)
+        self.dump.write_text("stale dump", encoding="utf-8")
+        user = d / "user"
+        (user / "Config").mkdir(parents=True)
+        self.mc = user / "Config" / "ModsConfig.xml"
+        self.mc.write_text(self.ORIGINAL, encoding="utf-8")
+        self.log = user / "Player.log"
+        self.log.write_text("stale log", encoding="utf-8")
+        engine.SMOKE_ACTIVE_MODS = list(self.SMOKE_LIST)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def run_launch(self, fake_run):
+        with mock.patch.object(engine.refresh, "game_is_running", lambda: False), \
+                mock.patch.object(engine.refresh, "modsconfig_path", lambda: self.mc), \
+                mock.patch.object(engine.subprocess, "run", fake_run), \
+                contextlib.redirect_stdout(io.StringIO()):
+            engine.launch(self.rw, self.log)
+
+    def test_launch_pins_the_smoke_list_and_restores_the_original(self):
+        seen = {}
+
+        def fake_run(cmd, cwd=None, check=False):
+            seen["cmd"], seen["cwd"] = cmd, cwd
+            seen["pinned"] = self.mc.read_text(encoding="utf-8")
+            seen["stale_log_gone"] = not self.log.exists()
+            seen["stale_dump_gone"] = not self.dump.exists()
+
+        self.run_launch(fake_run)
+        root = ET.fromstring(seen["pinned"])
+        self.assertEqual([li.text for li in root.find("activeMods")], self.SMOKE_LIST)
+        self.assertEqual(root.find("version").text, "1.6.4871 rev591")
+        self.assertEqual([li.text for li in root.find("knownExpansions")],
+                         ["ludeon.rimworld.odyssey"])
+        self.assertEqual(seen["cmd"], ["./RimWorldWin64.exe", "-l10nprobe"])
+        self.assertEqual(seen["cwd"], self.rw)
+        self.assertTrue(seen["stale_log_gone"])
+        self.assertTrue(seen["stale_dump_gone"])
+        self.assertEqual(self.mc.read_bytes(), self.ORIGINAL.encode("utf-8"))
+
+    def test_launch_restores_the_original_when_the_game_fails_to_start(self):
+        def fake_run(cmd, cwd=None, check=False):
+            raise OSError("WSL interop unavailable")
+
+        with self.assertRaises(OSError):
+            self.run_launch(fake_run)
+        self.assertEqual(self.mc.read_bytes(), self.ORIGINAL.encode("utf-8"))
+
+    def test_player_log_path_does_not_need_the_file_to_exist(self):
+        self.log.unlink()
+        with mock.patch.object(engine.refresh, "modsconfig_path", lambda: self.mc):
+            self.assertEqual(engine.player_log_path(), self.log)
+
+    def test_launched_run_that_wrote_no_log_is_a_failed_boot(self):
+        configure()
+
+        def fake_launch(rw, log):
+            log.unlink(missing_ok=True)
+
+        out = io.StringIO()
+        with mock.patch.object(engine, "PACKAGE_ID", "shunter.xenogermtraderstock"), \
+                mock.patch.object(engine, "REPO_ROOT", None), \
+                mock.patch.object(engine.refresh, "rimworld_path", lambda: self.rw), \
+                mock.patch.object(engine.refresh, "modsconfig_path", lambda: self.mc), \
+                mock.patch.object(engine, "launch", fake_launch), \
+                mock.patch.object(sys, "argv", ["smoke"]), \
+                contextlib.redirect_stdout(out), \
+                self.assertRaises(SystemExit) as cm:
+            engine.main()
+        self.assertIn("Boot did not complete", str(cm.exception))
+        self.assertIn("never written", str(cm.exception))
+        self.assertFalse(self.log.exists())
 
 
 if __name__ == "__main__":

@@ -91,6 +91,7 @@
 import argparse
 import json
 import re
+import subprocess
 import sys
 from collections import namedtuple
 from pathlib import Path
@@ -225,36 +226,34 @@ CONTINUATION_LINE = re.compile(
 
 
 def player_log_path():
-    logs = sorted(Path("/mnt/c/Users").glob(
-        "*/AppData/LocalLow/Ludeon Studios/RimWorld by Ludeon Studios"
-        "/Player.log"))
-    if not logs:
-        sys.exit("No Player.log found under /mnt/c/Users - has the game "
-                 "ever run on this machine?")
-    return logs[-1]
+    # Player.log sits in the same user folder as Config/ModsConfig.xml,
+    # which the refresh engine already locates, so derive it rather than
+    # glob for the file: launch() deletes the log before booting, and a
+    # lookup that needs the file to exist would refuse to run after any
+    # failure between that unlink and the game writing a fresh one.
+    return refresh.modsconfig_path().parent.parent / "Player.log"
 
 
 def log_dump_path(rw):
     return Path(rw) / LOG_DUMP_RELPATH
 
 
-def launch(rw):
+def launch(rw, log):
     if refresh.game_is_running():
         sys.exit("RimWorld is already running - the smoke boot needs an "
                  "exclusive launch (mod-list swap). Close the client, then "
                  "rerun this script.")
-    log = player_log_path()
     # A stale log or dump must never read as a fresh run.
     log.unlink(missing_ok=True)
     log_dump_path(rw).unlink(missing_ok=True)
     mc = refresh.modsconfig_path()
     original = mc.read_bytes()
-    mc.write_text(refresh.pinned_modsconfig(original.decode("utf-8-sig")),
+    mc.write_text(refresh.pinned_modsconfig(original.decode("utf-8-sig"),
+                                            SMOKE_ACTIVE_MODS),
                   encoding="utf-8")
     print("Launching RimWorld on the pinned smoke mod list "
           "(graphical boot, ~1-2 min; the probe quits the game itself)...")
     try:
-        import subprocess
         subprocess.run(["./RimWorldWin64.exe", "-l10nprobe"], cwd=rw,
                        check=False)
     finally:
@@ -442,10 +441,6 @@ def main():
         sys.exit("startup_smoke engine misconfigured: the shim must assign "
                  "PACKAGE_ID, SMOKE_ACTIVE_MODS, OWN_PATTERNS and "
                  "INTEGRATION_PATTERNS after importing this engine")
-    # The refresh engine's pin/restore helpers read its own module globals.
-    refresh.PACKAGE_ID = PACKAGE_ID
-    refresh.CANONICAL_ACTIVE_MODS = SMOKE_ACTIVE_MODS
-
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--no-launch", action="store_true",
                     help="skip launching the game; rescan the existing "
@@ -466,10 +461,13 @@ def main():
               "this mod if OWN_PATTERNS lists it")
 
     rw = refresh.rimworld_path()
-    if not args.no_launch:
-        launch(rw)
-
     log = player_log_path()
+    if not args.no_launch:
+        launch(rw, log)
+
+    if not log.is_file():
+        sys.exit(f"Boot did not complete: {log} was never written - the "
+                 f"game did not start. Treat this as a FAILED smoke test.")
     text = log.read_text(encoding="utf-8", errors="replace")
     if BOOT_COMPLETE_MARKER not in text:
         sys.exit(f"Boot did not complete: no '{BOOT_COMPLETE_MARKER}' line "

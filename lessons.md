@@ -288,3 +288,14 @@ name-grammar noun for any mod that adds name generation.
   `REPO_ROOT/About/About.xml` (BTG and XTS already listed it; UMW, UWU and
   PWU did not), so the derivation is the safety net and an explicit entry is
   documentation.
+- **The smoke engine imports the refresh engine's pin helpers, so a refresh
+  signature has a caller outside `refresh/`.** v1.3.0 gave
+  `pinned_modsconfig` a `mods` argument and updated every caller in
+  `refresh/` but not `smoke/startup_smoke.py`'s `launch()`; on that tag
+  every consumer's `integration-smoke-test.py` crashed with a `TypeError`
+  after it had already deleted Player.log, and the log lookup, which
+  globbed for the file itself, then refused to run until the game had
+  written a new one. The suites did not catch it because nothing drove
+  `launch()`. Grep all three engine directories for a changed name, and
+  keep every cross-engine entry point under a test (the smoke suite's
+  `Launch` class drives `launch()` with the game stubbed).
