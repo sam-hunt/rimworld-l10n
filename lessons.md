@@ -240,6 +240,25 @@ name-grammar noun for any mod that adds name generation.
   smoke engine to read. Player.log is a fallback with message-shape
   heuristics only; a raw unhandled exception Unity logs itself is the one
   thing only Player.log has.
+- **The game's `Translation data for language X has N errors` warning
+  names nothing; the N errors and their files have to be dumped from
+  memory.** `LoadedLanguage.InjectIntoData_AfterImpliedDefs` (1.6.4871)
+  sums the language's `loadErrors` and every `DefInjectionPackage`'s and
+  logs the count alone, pointing at the in-game translation report; the
+  underlying strings quote at most a bare file name (`fileSource` is
+  `VirtualFile.Name`), never the mod. On ShipcrackerWarcasket's smoke list
+  the four behind the warning were Save Our Ship 2's English DefInjected
+  entries for `VacskinGland` in its Odyssey expansion-patch root, whose defs
+  carry a Royalty `MayRequire` the boot did not satisfy, and the gate could
+  only report "4 errors, third-party, probably" (2026-10-05). The probe now
+  writes the lists as `translationLoadErrors` in the log dump and attributes
+  each to the mod file(s) of that name under the active language (narrowed
+  by the named key when several mods share a file name); the smoke engine
+  reports each as an error entry of its own, gated by the usual origin
+  patterns.
+  That is the right level, not the game's Warning: an own-attributed one is
+  exactly the unconditional-folder mistake for a gated def, red in every
+  player's log.
 - **A translation expectation is only real if the game's injection could
   reach it, so walk the def graph before static constructors and refuse a
   dump from a boot you did not pin.** Vanilla Expanded Framework's

@@ -223,6 +223,16 @@ which needs levels a 1.6 Player.log no longer records.
     "queueCapacity": 1000,
     "generated": "2026-08-28T00:00:00Z"
   },
+  "translationLoadErrors": {
+    "language": "English",
+    "count": 1,
+    "errors": [
+      {"scope": "defInjected", "defType": "ThingDef",
+       "text": "Found no Verse.ThingDef named VacskinGland to match VacskinGland.label (VacskinGlandThing.xml)",
+       "sources": [{"packageId": "kentington.saveourship2", "modName": "Save Our Ship 2",
+                    "path": "1.6/ExpansionPatches/Odyssey/Languages/English/DefInjected/ThingDef/VacskinGlandThing.xml"}]}
+    ]
+  },
   "messages": [
     {"type": "Error", "repeats": 1, "text": "...", "stackTrace": "..."}
   ]
@@ -236,6 +246,24 @@ which needs levels a 1.6 Player.log no longer records.
   at 99.
 - Messages that never pass through `Verse.Log` (a raw exception Unity logs
   itself) are not in the queue; the reader merges those from Player.log.
+- `translationLoadErrors` names what is behind the game's one-line
+  `Translation data for language X has N errors` warning
+  (`LoadedLanguage.InjectIntoData_AfterImpliedDefs`, decompile-verified
+  1.6.4871): the active language's `loadErrors` (`scope: "language"`,
+  `defType` null) and each `DefInjectionPackage.loadErrors` (`scope:
+  "defInjected"`, `defType` the package's type name), in that order, so
+  `count` is the warning's N. Each `text` is the game's string verbatim; it
+  quotes at most a bare file name (`DefInjection.fileSource` is
+  `VirtualFile.Name`), so `sources` is the probe's attribution: the language
+  files the same directory walk as `LoadData` sees (`LoadedLanguage.
+  AllDirectories`, per-mod first-load-folder-wins) whose name the text
+  quotes, narrowed to the files carrying the named key when several mods
+  ship that file name. Several sources means the key did not decide it;
+  none means the walk saw no such file. `packageId` is the non-Steam form;
+  `path` is relative to the mod root with forward slashes. The whole section
+  is `null` when collection failed (a `[L10nProbe] FAILED collecting
+  translation load errors` error precedes it in `messages`) or no language
+  is active. Added without a schema bump: an optional field.
 - Same write contract as the def dumps: temp file + rename, stale file
   deleted first, failure logged as `[L10nProbe] FAILED writing log dump` and
   never allowed to block the shutdown. Success logs

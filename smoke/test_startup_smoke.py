@@ -48,6 +48,31 @@ PROBE_SUMMARY = ("[L10nProbe] probe (-l10nprobe): 3/13 dump(s) written in 0.2s; 
 # A mod's own Log.Warning: in the 1.6 file this is just a line of text.
 FRAMELESS_WARNING = "[Xenogerm Trader Stock] no xenogerm stock generator matched Orbital_Exotic"
 
+# The game's one-line translation warning (LoadedLanguage.InjectIntoData_
+# AfterImpliedDefs) and the dump section that names what is behind it
+# (TranslationLoadErrors.cs). First entry: the real SOS2 shape on the
+# Shipcracker smoke list; second: the same mistake in XTS's own tree; third:
+# a language-scope error the walk could not match to a file.
+TRANSLATION_WARNING = ("Translation data for language English has 3 errors. "
+                       "Generate translation report for more info.")
+TRANSLATION_SECTION = {
+    "language": "English",
+    "count": 3,
+    "errors": [
+        {"scope": "defInjected", "defType": "ThingDef",
+         "text": "Found no Verse.ThingDef named VacskinGland to match VacskinGland.label (VacskinGlandThing.xml)",
+         "sources": [{"packageId": "kentington.saveourship2", "modName": "Save Our Ship 2",
+                      "path": "1.6/ExpansionPatches/Odyssey/Languages/English/DefInjected/ThingDef/VacskinGlandThing.xml"}]},
+        {"scope": "defInjected", "defType": "TraderKindDef",
+         "text": "Found no RimWorld.TraderKindDef named XTS_Orbital_Xenogerms to match XTS_Orbital_Xenogerms.label (Traders.xml)",
+         "sources": [{"packageId": "shunter.xenogermtraderstock", "modName": "Xenogerm Trader Stock",
+                      "path": "1.6/Languages/English/DefInjected/TraderKindDef/Traders.xml"}]},
+        {"scope": "language", "defType": None,
+         "text": "Duplicate keyed translation key: SomeKey in language English",
+         "sources": []},
+    ],
+}
+
 # A raw unhandled exception Unity logged itself (never enters Verse.Log).
 RAW_EXCEPTION = (
     "NullReferenceException: Object reference not set to an instance of an object\n"
@@ -236,13 +261,16 @@ class ClassifyOrigin(unittest.TestCase):
 
 class LogDump(unittest.TestCase):
 
-    def write_dump(self, d, messages, capacity=1000, schema=1):
+    def write_dump(self, d, messages, capacity=1000, schema=1, translation=None):
         path = Path(d) / "log-messages.json"
-        path.write_text(json.dumps({
+        dump = {
             "meta": {"schema": schema, "gameBuild": "1.6.4871 rev591",
                      "trigger": "-l10nprobe", "messageCount": len(messages),
                      "queueCapacity": capacity, "generated": "2026-08-28T00:00:00Z"},
-            "messages": messages}), encoding="utf-8")
+            "messages": messages}
+        if translation is not None:
+            dump["translationLoadErrors"] = translation
+        path.write_text(json.dumps(dump), encoding="utf-8")
         return path
 
     MESSAGES = [
@@ -301,6 +329,46 @@ class LogDump(unittest.TestCase):
         self.assertTrue(truncated)
         self.assertEqual(len(entries), 5)
 
+    def test_translation_load_errors_become_attributed_error_entries(self):
+        messages = self.MESSAGES + [
+            {"type": "Warning", "repeats": 1, "text": TRANSLATION_WARNING, "stackTrace": "Verse.Log:Warning(String)"}]
+        with tempfile.TemporaryDirectory() as d:
+            path = self.write_dump(d, messages, translation=TRANSLATION_SECTION)
+            entries, truncated = engine.load_log_dump(path, self.LOG_WITH_MARKER)
+        self.assertFalse(truncated)
+        # The queue's own warning is still there; the three synthesised errors follow it.
+        self.assertEqual([e.level for e in entries[-4:]], ["warning", "error", "error", "error"])
+        sos2, xts, keyed = entries[-3:]
+        self.assertEqual(sos2.text.split("\n"), [
+            "Translation load error (English, DefInjected/ThingDef): Found no Verse.ThingDef "
+            "named VacskinGland to match VacskinGland.label (VacskinGlandThing.xml)",
+            "  file: 1.6/ExpansionPatches/Odyssey/Languages/English/DefInjected/ThingDef/VacskinGlandThing.xml "
+            "(Save Our Ship 2, kentington.saveourship2)"])
+        self.assertTrue(xts.text.startswith("Translation load error (English, DefInjected/TraderKindDef): "))
+        self.assertEqual(keyed.text.split("\n"), [
+            "Translation load error (English, Keyed/Strings): Duplicate keyed translation key: "
+            "SomeKey in language English",
+            "  file: not matched to any active mod's language files"])
+        self.assertEqual((keyed.stack, keyed.count), ("", 1))
+
+    def test_translation_section_is_optional_and_does_not_count_toward_capacity(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = self.write_dump(d, self.MESSAGES)              # older probe: no section
+            entries, _ = engine.load_log_dump(path, self.LOG_WITH_MARKER)
+            self.assertEqual(len(entries), len(self.MESSAGES))
+            path = self.write_dump(d, self.MESSAGES, translation=None)
+            (Path(d) / "null.json").write_text(
+                path.read_text(encoding="utf-8").replace('"messages"', '"translationLoadErrors": null, "messages"'),
+                encoding="utf-8")
+            entries, _ = engine.load_log_dump(Path(d) / "null.json", self.LOG_WITH_MARKER)
+            self.assertEqual(len(entries), len(self.MESSAGES))    # probe failed to collect: null
+            # Five messages at a capacity of six: not truncated, however many
+            # translation errors ride along.
+            path = self.write_dump(d, self.MESSAGES, capacity=6, translation=TRANSLATION_SECTION)
+            entries, truncated = engine.load_log_dump(path, self.LOG_WITH_MARKER)
+        self.assertFalse(truncated)
+        self.assertEqual(len(entries), len(self.MESSAGES) + 3)
+
     def test_player_log_exceptions_merge_without_duplicates(self):
         dump = [engine.Entry("error", "System.NullReferenceException: x\n  at A.B () [0x0] in <a>:0 ", "trace", 1)]
         player_log = engine.entries_from_player_log("\n".join([
@@ -342,6 +410,29 @@ class Report(unittest.TestCase):
         self.assertIn("[own]\n" + XTS_PATCH_FAILURE, out)
         self.assertIn("[other x2]", out)
         self.assertIn("[own x3] " + FRAMELESS_WARNING, out)
+
+    def test_translation_load_errors_gate_by_their_attributed_source(self):
+        # The SOS2 entry is third-party (reported, not gated); the XTS one is
+        # own (its def prefix is in the text, and so are its mod name and
+        # packageId) and gates; the unmatched keyed one is other.
+        configure(own=["XenogermTraderStock", "[Xenogerm Trader Stock]", "XTS_"])
+        entries = [engine.Entry("warning", TRANSLATION_WARNING, "", 1)]
+        entries += engine.translation_error_entries(TRANSLATION_SECTION)
+        hard, gated, out = self.run_report(entries)
+        self.assertEqual([f[1] for f in hard], ["own"])
+        self.assertEqual([f[1] for f in gated], ["other", "own", "other"])
+        self.assertIn("3 error(s), 1 warning(s) in the boot log", out)
+        self.assertIn("3 of the errors are the translation load errors behind the game's", out)
+        self.assertIn("[own]\nTranslation load error (English, DefInjected/TraderKindDef)", out)
+        self.assertIn("  file: 1.6/Languages/English/DefInjected/TraderKindDef/Traders.xml "
+                      "(Xenogerm Trader Stock, shunter.xenogermtraderstock)", out)
+        self.assertIn("[other] " + TRANSLATION_WARNING, out)
+
+    def test_integration_mod_translation_error_gates_through_its_name(self):
+        configure(own=["XenogermTraderStock", "XTS_"],
+                  integration={"SOS2": ["SaveOurShip2", "kentington.saveourship2"]})
+        hard, gated, out = self.run_report(engine.translation_error_entries(TRANSLATION_SECTION)[:1])
+        self.assertEqual([f[1] for f in hard], ["integration:SOS2"])
 
     def test_clean_boot_with_only_tooling_errors_passes(self):
         configure()

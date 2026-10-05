@@ -31,7 +31,9 @@ A startup-triggered run (`-l10nprobe` or the probe-on-boot setting) also writes
 `Output/log-messages.json`: the game's in-memory log (`Verse.Log.Messages` — type, text,
 repeats, stack trace per message) as of the end of the boot. The family's startup smoke gate
 (`../smoke/startup_smoke.py`) reads message LEVELS from it, because a RimWorld 1.6 Player.log
-carries no stack traces and so no level for a plain `Log.Error`. See `Source/1.6/Probe/LogDump.cs`.
+carries no stack traces and so no level for a plain `Log.Error`. The same file names the errors
+behind the game's one-line "Translation data for language X has N errors" warning, each with the
+mod file it came from. See `Source/1.6/Probe/LogDump.cs` and `TranslationLoadErrors.cs`.
 
 ## Consumers
 

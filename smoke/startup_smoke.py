@@ -71,6 +71,20 @@
 #   REPO_ROOT            Path       consuming repo's root; without it the
 #                                   display-name pattern cannot be derived
 #
+# TRANSLATION LOAD ERRORS: the game folds every broken translation file
+# into one Warning, "Translation data for language English has N errors.
+# Generate translation report for more info.", naming neither the errors
+# nor their files. The dump's `translationLoadErrors` section (probe's
+# TranslationLoadErrors.cs) carries the N entries behind it, each with the
+# mod file(s) it came from, and this engine reports each as an ERROR entry
+# in its own right: an own-attributed one ("Found no ThingDef named X_Foo",
+# i.e. a DefInjected entry for a def that is not loaded) is a real startup
+# error in every player's log, the classic unconditional-folder mistake for
+# a MayRequire-gated def, and must gate. The attribution text (mod name and
+# packageId, file path) is part of the entry, so OWN_PATTERNS and
+# INTEGRATION_PATTERNS match it the same way they match any other message.
+# A dump from a probe build without the section simply has none.
+#
 # Gate: exit 1 when any ERROR entry is attributed to this mod or an
 # integration seam; --strict widens the gate to every non-tooling error.
 # Warnings are reported, never gated. Success requires the boot to actually
@@ -121,6 +135,9 @@ LOG_DUMP_RELPATH = Path("Mods") / "L10nProbe" / "Output" / "log-messages.json"
 LOG_DUMP_SCHEMA = 1
 # LogMessageType names as the probe serialises them; Message maps to no level.
 LOG_DUMP_LEVELS = {"Error": "error", "Warning": "warning"}
+# Head of every entry synthesised from the dump's translationLoadErrors
+# section (see header); the game's own one-line warning stays listed too.
+TRANSLATION_ERROR_HEAD = "Translation load error"
 
 # One levelled log message from either source. `stack` is the probe-captured
 # trace (dump) or "" (Player.log); `count` is the dump's `repeats` (a floor
@@ -305,11 +322,41 @@ def entries_from_player_log(text):
     return [Entry(classify_level(e), e, "", 1) for e in split_entries(text)]
 
 
+def translation_error_entries(section):
+    # One error Entry per entry of the dump's translationLoadErrors section
+    # (None or absent on an older probe build): the game's text, prefixed
+    # with the language and def type, then one "file:" line per source the
+    # probe attributed it to (several when more than one mod ships a file
+    # of that name and the key did not decide it; none when the walk saw
+    # no such file).
+    if not section:
+        return []
+    language = section.get("language") or "unknown language"
+    entries = []
+    for error in section.get("errors") or []:
+        scope = error.get("defType")
+        scope = (f"DefInjected/{scope}" if scope
+                 else "Keyed/Strings" if error.get("scope") == "language"
+                 else "DefInjected")
+        lines = [f"{TRANSLATION_ERROR_HEAD} ({language}, {scope}): "
+                 f"{error.get('text') or ''}"]
+        sources = error.get("sources") or []
+        for source in sources:
+            lines.append(f"  file: {source.get('path')} "
+                         f"({source.get('modName')}, {source.get('packageId')})")
+        if not sources:
+            lines.append("  file: not matched to any active mod's language files")
+        entries.append(Entry("error", "\n".join(lines), "", 1))
+    return entries
+
+
 def load_log_dump(path, log_text):
     # Returns (entries, truncated) from the probe's log dump, or (None,
     # reason) when it cannot be used. The dump is trusted only when THIS
     # Player.log says the probe wrote it: both files are per-launch, so the
-    # marker line ties the dump on disk to the log being read.
+    # marker line ties the dump on disk to the log being read. `entries` is
+    # the message queue followed by the translation load errors (see
+    # translation_error_entries); `truncated` judges the queue alone.
     if LOG_DUMP_MARKER not in log_text:
         return None, (f"Player.log has no '{LOG_DUMP_MARKER}' line - the "
                       f"deployed L10nProbe predates the log dump (rebuild it "
@@ -330,6 +377,7 @@ def load_log_dump(path, log_text):
         entries = [Entry(LOG_DUMP_LEVELS.get(m.get("type")), m.get("text") or "",
                          m.get("stackTrace") or "", int(m.get("repeats") or 1))
                    for m in data.get("messages") or []]
+        translation = translation_error_entries(data.get("translationLoadErrors"))
     except (AttributeError, TypeError, ValueError) as e:
         return None, f"{path} is not shaped like a log dump: {e!r}"
     if not any(e.text.startswith(PROBE_SUMMARY_MARKER) for e in entries):
@@ -340,7 +388,7 @@ def load_log_dump(path, log_text):
                       f"checkout)")
     capacity = meta.get("queueCapacity")
     truncated = capacity is not None and len(entries) >= capacity
-    return entries, truncated
+    return entries + translation, truncated
 
 
 def merge_player_log_exceptions(dump_entries, player_log_entries):
@@ -416,6 +464,12 @@ def report(entries):
     print(f"\n{total(errors)} error(s), {total(warnings)} warning(s) in the "
           f"boot log ({total([f for f in errors if f[1] == 'tooling'])} "
           f"tooling error(s) excluded from the gate).")
+    translation = [f for f in errors
+                   if f[2].text.startswith(TRANSLATION_ERROR_HEAD)]
+    if translation:
+        print(f"{len(translation)} of the errors are the translation load "
+              f"errors behind the game's 'Translation data for language ... "
+              f"has N errors' warning, listed with their source files.")
 
     if gated:
         print("\n=== ERRORS ===")
@@ -494,9 +548,13 @@ def main():
                      f"pinned list is far too noisy to gate. Treat this as "
                      f"a FAILED smoke test. Full log: {log}")
         entries = merge_player_log_exceptions(dump_entries, player_log_entries)
-        print(f"\nLevels from the probe's log dump ({len(dump_entries)} "
-              f"messages) plus {len(entries) - len(dump_entries)} raw "
-              f"exception block(s) from Player.log.")
+        translation = sum(1 for e in dump_entries
+                          if e.text.startswith(TRANSLATION_ERROR_HEAD))
+        print(f"\nLevels from the probe's log dump "
+              f"({len(dump_entries) - translation} messages, {translation} "
+              f"translation load error(s)) plus "
+              f"{len(entries) - len(dump_entries)} raw exception block(s) "
+              f"from Player.log.")
 
     hard, gated = report(entries)
 

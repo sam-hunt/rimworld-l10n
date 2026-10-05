@@ -31,6 +31,12 @@ namespace L10nProbe;
 // Messages that never pass through Verse.Log — a raw unhandled exception Unity logs itself —
 // are NOT in this queue; the reader still needs Player.log for those.
 //
+// `translationLoadErrors` (TranslationLoadErrors.cs) names the errors behind the game's
+// "Translation data for language X has N errors" warning, which the message queue only
+// holds as that one line. It is collected BEFORE the queue snapshot so that, should the
+// collection itself fail, its [L10nProbe] error line is in the dump as tooling noise rather
+// than lost in Player.log; the section is then null and the dump is otherwise complete.
+//
 // Same failure contract as the def-injection dumps: write to a temp name and rename on
 // success, and delete any stale file first, so a reader never mistakes an old dump for a
 // fresh one. Any exception is logged with the [L10nProbe] prefix and swallowed by the caller
@@ -66,6 +72,17 @@ internal static class LogDump
 
     private static string Build(string trigger)
     {
+        StringBuilder translationErrors = new StringBuilder();
+        try
+        {
+            TranslationLoadErrors.AppendJson(translationErrors);
+        }
+        catch (Exception e)
+        {
+            Log.Error($"{L10nProbeMod.LogPrefix} FAILED collecting translation load errors for the log dump: {e}");
+            translationErrors.Clear().Append("null");
+        }
+
         // Snapshot under Log.LockMessages(): NOT a mutex — it bumps Log.logDisablers so every
         // Verse.Log call is a no-op while held (decompile-verified), which is how the game's own
         // log window enumerates the live queue without a concurrent Enqueue invalidating the
@@ -92,6 +109,8 @@ internal static class LogDump
         sb.Append("    \"generated\": ");
         ProbeJson.AppendString(sb, DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture));
         sb.Append("\n  },\n");
+
+        sb.Append("  \"translationLoadErrors\": ").Append(translationErrors).Append(",\n");
 
         sb.Append("  \"messages\": [");
         bool first = true;

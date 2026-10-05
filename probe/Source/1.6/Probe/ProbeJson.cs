@@ -148,7 +148,7 @@ internal static class ProbeJson
     // ModContentPack.PackageId is already lowercase but carries ModMetaData.SteamModPostfix
     // ("_steam") when a local copy of the same mod is also installed; the pinned lists are
     // written without it, and which copy loaded is not what the comparison is about.
-    private static string NonUniquePackageId(string packageId)
+    internal static string NonUniquePackageId(string packageId)
     {
         string postfix = ModMetaData.SteamModPostfix;
         return packageId.EndsWith(postfix, StringComparison.Ordinal)
