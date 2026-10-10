@@ -23,7 +23,8 @@ across; it needs its own grounding pass.
 authoring requirement** — no `PostProcessed` override (unlike German), no
 particle system (unlike Korean). It overrides only `WithIndefiniteArticle`
 (un/una/unos/unas), `WithDefiniteArticle` (el/la/los/las), `OrdinalNumber`
-(renders `N.º`) and `Pluralize` (full rules plus a `plural.txt` lookup); it
+(renders `N.º`) and `Pluralize` (a `plural` table lookup, which a mod's own
+`WordInfo/plural.txt` feeds too, then full rules); it
 returns names unchanged. So unlike German/Korean there is no silent
 string-rewrite to trip over — but also no runtime agreement help. Spanish's
 difficulty is gender, not case, and it shows up in two independent places:

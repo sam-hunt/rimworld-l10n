@@ -91,8 +91,12 @@ Two consequences:
 `l'` before a vowel and `le`/`la`/`un`/`une` by gender directly — so the Keyed
 `DefiniteForm`/`IndefiniteForm` templates are dead code in French, and
 `[X_definite]`/`[X_indefinite]` are otherwise reliable even in a plain Keyed
-string. `Pluralize` knows `-al`→`-aux`, `-au`/`-eu`→`+x`, and leaves
-`s`/`x`/`z` alone. `OrdinalNumber` gives `1er`, `2e`. There is **no
+string. `Pluralize` knows `-al`→`-aux`, `-au`/`-eu`→`+x`, leaves
+`s`/`x`/`z` alone and otherwise appends `s` to the whole string; it never
+consults the `plural` lookup table (decompile-verified 2026-10-11), so a
+mod-shipped `WordInfo/plural.txt` is dead in French and a multi-word noun in
+a `{X_plural}` slot (a `chargeNoun`) pluralizes on its last word: give such
+a slot a single word. `OrdinalNumber` gives `1er`, `2e`. There is **no
 `TryLookUp` override**, and French ships only `WordInfo/Gender` data — no
 `decline.txt`/`Case.txt` — so the `{lookup: …}` function that German and
 Russian rely on has nothing to read here and is simply unusable.

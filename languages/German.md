@@ -92,6 +92,19 @@ the substring after the last space or hyphen. This is a generic vanilla
 mechanic (not tied to any mod's own defs) — relevant whenever a mod's
 `ThingDef` label might surface as a relic name. Note **Waffe is not on the
 list**; Schwert, Hammer, Klinge, Messer, Speer, Keule, Axt and Stab are.
+**`Pluralize` is the English worker's, with the `plural` lookup first**
+(decompile-verified 2026-10-11): `LanguageWorker_German.Pluralize` delegates
+to `LanguageWorker_English.Pluralize`, which tries `TryLookupPluralForm`
+against the active language's `plural` table (Core's `WordInfo/plural.txt`,
+auto-generated from Core labels and thin: no `Sprung`, no `Einheit`) and
+otherwise appends `s`. A coined compound in a `{X_plural}` slot therefore
+ships as `…s` unless the mod supplies the line itself in
+`Languages/German/WordInfo/plural.txt` (`Treibstoffeinheit;Treibstoffeinheiten`);
+the table is assembled from every mod's language folder, lowercase file
+name (see `lessons.md`). The `plural_decline` lookup that
+`CommandReload_NoCharges` applies to that plural misses harmlessly, as
+above, so the dative plural reads as the nominative plural, identical for
+an `-en` plural.
 
 ## Style and corpus findings
 

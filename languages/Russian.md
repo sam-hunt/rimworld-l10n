@@ -55,6 +55,18 @@ mechanism for each.
   it is a genuine cross-language difference: German's base `TryLookUp`
   returns the caller's `keyName` untouched on a miss (capitalization
   intact), so don't assume the same fallback shape applies outside Russian.
+- **`Pluralize` reads the `plural` table first, then an ending-based
+  fallback on the last character, and a mod can ship both tables**
+  (decompile-verified 2026-10-11). A multi-word coined noun in a
+  `{X_plural}` slot (a `chargeNoun` such as `единица топлива`) gets the
+  fallback applied to the whole string and its `{lookup: ...; Case; 1}`
+  misses, so the mod ships `Languages/Russian/WordInfo/plural.txt`
+  (`единица топлива;единицы топлива`) and `case.txt` rows for both numbers
+  (six forms, nominative key); the tables are assembled from every mod's
+  language folder with lowercased keys. Name the files lowercase: the
+  loader asks for `plural.txt`/`case.txt`, and Core's capitalised
+  `Plural.txt`/`Case.txt` resolve only through the tar's case-insensitive
+  lookup.
 
 ## Style and corpus findings
 

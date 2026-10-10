@@ -59,7 +59,11 @@ present in the language's gender word lists — decompile-verified against
 (amazona, baronesa, cabra, condessa, duquesa, égua, galinha, ovelha, bode
 íbex, carneiro, garanhão, touro, …) — not a single common noun. Larger files
 like `Singular.txt`/`Plural.txt`/`new_words.txt` exist but are never read for
-gender. `ResolveGender`'s `defaultGender` is **Male**, so `{0_gender ? … : …}`
+gender (`Plural.txt` is read by `Pluralize`: `LanguageWorker_Portuguese`
+overrides only the article helpers, so the base `Pluralize` runs, a `plural`
+table lookup and otherwise the word *unchanged*; a mod ships its own
+`WordInfo/plural.txt` line for a coined noun in a `{X_plural}` slot, see
+`lessons.md`, 2026-10-11). `ResolveGender`'s `defaultGender` is **Male**, so `{0_gender ? … : …}`
 and `{0_definite}` against essentially any mod-injected noun (arma, bancada,
 espada, assentamento, caravana, …) is a silent coin flip, not a resolved
 value. (Vanilla itself uses the resolver freely for *pawn* gender, which is a

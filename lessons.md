@@ -207,6 +207,34 @@ the originating passes.
   vanilla reuse are exempt; descriptions, Workshop text and any FAQ or letter
   prose are the slots to check. Each language file records that language's
   own tells as they are found (Russian's are in `languages/Russian.md`).
+- **A `{X_plural}` slot resolves through `LanguageWorker.Pluralize`, and
+  whether a mod can repair a bad plural depends on whether that worker
+  consults the `plural` lookup table** (decompile-verified 2026-10-11 on
+  1.6.4871, from a charge-noun relabel in Shipcracker Warcasket).
+  `LanguageWordInfo.RegisterLut` assembles each lookup table (`plural`,
+  `case`, `decline`, ...) from `WordInfo/<table>.txt` in *every* directory
+  of the active language, a mod's own `Languages/<Language>/` folder
+  included, keys lowercased, first definition wins; so a mod can ship
+  `WordInfo/plural.txt` lines (`singular;plural`) or `case.txt` rows for a
+  noun it coined. The loader asks for the lowercased table name plus
+  `.txt`, so name the files lowercase (`plural.txt`, `case.txt`): Core's
+  Russian `Plural.txt`/`Case.txt` resolve through the tar's case-insensitive
+  lookup, which a mod's on-disk file on a case-sensitive filesystem does
+  not get. Which workers read the table: English, Spanish and Russian look
+  it up before their rules; German delegates to the English worker (lookup,
+  else `+s`, so a coined compound like `Treibstoffeinheit` ships as
+  `Treibstoffeinheits` without a line, and Core's German `plural.txt` is
+  thin, not even `Sprung`); Portuguese overrides no `Pluralize`, so the base
+  one runs (lookup, else the word *unchanged*); **French never reads the
+  table** (rule-only: `-al`→`-aux`, `-au`/`-eu`→`+x`, s/x/z unchanged, else
+  `+s` on the whole string), so a multi-word French noun pluralizes on its
+  last word and the only fix is a single-word noun; Japanese, Korean and
+  Chinese fall to the base `Pluralize` (lookup, else unchanged), so one
+  noun serves every slot. The canonical surface is a reloadable comp's
+  `chargeNoun`, which vanilla shows only through `{CHARGENOUN_plural}` and
+  `{lookup: ...}` slots in five Keyed strings, where a word-for-word
+  "unit of fuel" is the trap. The checker cannot see any of this; the
+  glossary row of the noun names the lookup file it relies on.
 
 RulePackDef-specific lessons — which part of speech a
 `traitAdjectives`/`namerLabels`-style field needs per language, the several
