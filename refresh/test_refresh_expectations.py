@@ -10,10 +10,12 @@ import contextlib
 import copy
 import io
 import json
+import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -120,6 +122,87 @@ class MergeTest(ConfigMixin, unittest.TestCase):
                 "base": dump(BASE_MODS, BASE, generated=False),
                 "vge": dump(VGE_MODS, BASE, build="1.6.other", generated=False)})
         self.assertIn("different game builds", str(cm.exception))
+
+
+class LayoutTest(unittest.TestCase):
+    # The install layout (1.7 Waylith vs 1.6 Unity) is told by the game exe
+    # present, and everything that launches, polls or locates the log reads
+    # it from there.
+
+    def test_layout_is_told_by_the_exe(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rw = Path(tmp)
+            self.assertIsNone(engine.game_layout(rw))
+            (rw / "RimWorldWin64.exe").touch()
+            unity = engine.game_layout(rw)
+            self.assertEqual((unity.name, unity.exe, unity.log_relpath),
+                             ("unity", "RimWorldWin64.exe", Path("Player.log")))
+            # A 1.7 install beside 1.6 leftovers (an empty RimWorldWin64_Data/
+            # stays behind after the branch switch; the old exe does not, but
+            # the probe order must not depend on that).
+            (rw / "RimWorld.exe").touch()
+            waylith = engine.game_layout(rw)
+            self.assertEqual((waylith.name, waylith.exe, waylith.log_relpath),
+                             ("waylith", "RimWorld.exe", Path("Logs") / "Player.log"))
+
+    def test_rimworld_path_needs_a_game_exe_and_the_probe(self):
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.dict(os.environ, {"RIMWORLD_PATH": tmp}):
+            with self.assertRaises(SystemExit) as cm:
+                engine.rimworld_path()
+            self.assertIn("RimWorld.exe (1.7) or RimWorldWin64.exe (1.6)",
+                          str(cm.exception))
+            (Path(tmp) / "RimWorld.exe").touch()
+            with self.assertRaises(SystemExit) as cm:
+                engine.rimworld_path()
+            self.assertIn("L10nProbe is not deployed", str(cm.exception))
+            (Path(tmp) / "Mods" / "L10nProbe" / "About").mkdir(parents=True)
+            self.assertEqual(engine.rimworld_path(), Path(tmp))
+
+    def test_game_is_running_polls_both_exes(self):
+        calls = []
+
+        def fake_run(cmd, capture_output, text, timeout):
+            calls.append(cmd[-1])
+            running = "RimWorldWin64.exe" in cmd[-1]
+            return SimpleNamespace(
+                stdout="RimWorldWin64.exe   1234 Console" if running
+                else "INFO: No tasks are running which match the specified criteria.")
+
+        with mock.patch.object(engine.subprocess, "run", fake_run):
+            self.assertTrue(engine.game_is_running())
+        self.assertEqual(calls, ["IMAGENAME eq RimWorld.exe",
+                                 "IMAGENAME eq RimWorldWin64.exe"])
+        with mock.patch.object(engine.subprocess, "run",
+                               lambda *a, **k: SimpleNamespace(stdout="INFO: No tasks")):
+            self.assertFalse(engine.game_is_running())
+
+    def test_launch_probe_runs_the_installed_exe(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rw = Path(tmp) / "rw"
+            rw.mkdir()
+            (rw / "RimWorld.exe").touch()
+            mc = Path(tmp) / "ModsConfig.xml"
+            original = ('<?xml version="1.0" encoding="utf-8"?>\n<ModsConfigData>\n'
+                        "  <version>1.7.4976 rev1043</version>\n  <activeMods>\n"
+                        "    <li>ludeon.rimworld</li>\n  </activeMods>\n"
+                        "</ModsConfigData>\n")
+            mc.write_text(original, encoding="utf-8")
+            seen = {}
+
+            def fake_run(cmd, cwd=None, check=False):
+                seen["cmd"], seen["cwd"] = cmd, cwd
+                seen["pinned"] = mc.read_text(encoding="utf-8")
+
+            with mock.patch.object(engine, "game_is_running", lambda: False), \
+                    mock.patch.object(engine, "modsconfig_path", lambda: mc), \
+                    mock.patch.object(engine.subprocess, "run", fake_run), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                engine.launch_probe(rw, rw / "dump.json", BASE_MODS)
+            self.assertEqual(seen["cmd"], ["./RimWorld.exe", "-l10nprobe"])
+            self.assertEqual(seen["cwd"], rw)
+            self.assertIn("<li>shunter.l10nprobe</li>", seen["pinned"])
+            self.assertEqual(mc.read_text(encoding="utf-8"), original)
 
 
 class ConfigTest(ConfigMixin, unittest.TestCase):

@@ -46,10 +46,14 @@
 #      exception blocks are merged in on top (deduplicated by head line).
 #   2. FALLBACK (dump absent: probe build predates it, or --no-launch against
 #      a foreign log): Player.log is split into per-message entries and
+#      levelled. A RimWorld 1.7 (Waylith engine) log records the level on
+#      every entry, so that split is exact (WAYLITH_HEAD); a 1.6 log is
 #      levelled by the legacy stack-frame shapes plus message-shape
-#      heuristics tied to vanilla call sites (ERROR_MESSAGE_PATTERNS). This
-#      cannot see a frame-less warning at all and is announced as degraded;
-#      under --strict a launched run without the dump fails outright.
+#      heuristics tied to vanilla call sites (ERROR_MESSAGE_PATTERNS), which
+#      cannot see a frame-less warning at all and is announced as degraded.
+#      Either way the dump is still what names the translation load errors
+#      (below), so under --strict a launched run without the dump fails
+#      outright on both layouts.
 #
 # Config variables a shim MUST set before calling main():
 #   PACKAGE_ID           str        this mod's own packageId (About.xml)
@@ -140,11 +144,76 @@ LOG_DUMP_LEVELS = {"Error": "error", "Warning": "warning"}
 TRANSLATION_ERROR_HEAD = "Translation load error"
 
 # One levelled log message from either source. `stack` is the probe-captured
-# trace (dump) or "" (Player.log); `count` is the dump's `repeats` (a floor
-# of 99 when capped) or 1.
+# trace (dump), the entry's own frames (a 1.7 Player.log) or "" (a 1.6
+# Player.log); `count` is the dump's `repeats` (a floor of 99 when capped)
+# or 1.
 Entry = namedtuple("Entry", "level text stack count")
 
-# --- Player.log fallback: level heuristics -------------------------------
+# --- Player.log on RimWorld 1.7 (Waylith): levels are in the file ---------
+
+# Shape (verified on 1.7.4976 rev1043): a header block ("=== RimWorld by
+# Ludeon Studios log ===", Started/Version/OS/Runtime/Process/Log file/
+# Command lines, one blank line), then one entry per message. An entry's
+# head line is "YYYY-MM-DD HH:MM:SS.mmm  LEVEL [Category] text" (the
+# category is absent on the final "Log closed." line); the message's further
+# lines follow verbatim, then its stack frames as "    at ..." lines, every
+# entry carrying them, INFO included. Verse.Log routes Message/Warning/Error
+# to the "Verse" category at Info/Warning/Error (decompile-verified,
+# Verse.Log's static ctor and the three methods), so the level is the
+# game's own, not a guess. Levels print as INFO/WARN/ERROR; the engine's
+# other names (Brutal.Logging: Trace, Debug, Critical) are mapped on the
+# chance they appear.
+WAYLITH_LOG_HEADER = "=== RimWorld by Ludeon Studios log ==="
+WAYLITH_HEAD = re.compile(
+    r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} +"   # timestamp
+    r"(?P<level>[A-Z]+) "                                # INFO / WARN / ERROR
+    r"(?:\[(?P<category>[^\]]*)\] )?"                   # [Verse], [Vulkan], ...
+    r"(?P<text>.*)$")
+WAYLITH_FRAME = re.compile(r"^\s+at ")
+WAYLITH_LEVELS = {"WARN": "warning", "WARNING": "warning",
+                  "ERROR": "error", "CRIT": "error", "CRITICAL": "error",
+                  "FATAL": "error"}
+
+
+def is_waylith_log(text):
+    # The header is the cheap tell; a log whose header changed still
+    # qualifies if its first non-blank line is a timestamped head line.
+    head = text.lstrip()
+    return head.startswith(WAYLITH_LOG_HEADER) \
+        or bool(WAYLITH_HEAD.match(head.split("\n", 1)[0]))
+
+
+def waylith_entries(text):
+    # One Entry per timestamped head line. The head's prefix (timestamp,
+    # level, category) is stripped so the text is the message exactly as the
+    # game logged it - what the dump holds, what OWN_PATTERNS match and what
+    # merge_player_log_exceptions dedups by. Frames go to `stack`; any other
+    # line under a head continues the message. Lines before the first head
+    # (the file header) are not messages.
+    entries = []
+    current = None  # [level, message lines, frame lines]
+
+    def flush():
+        if current is not None:
+            entries.append(Entry(current[0], "\n".join(current[1]),
+                                 "\n".join(current[2]), 1))
+
+    for line in text.splitlines():
+        m = WAYLITH_HEAD.match(line)
+        if m:
+            flush()
+            current = [WAYLITH_LEVELS.get(m.group("level")), [m.group("text")], []]
+        elif current is None:
+            continue
+        elif WAYLITH_FRAME.match(line):
+            current[2].append(line.strip())
+        else:
+            current[1].append(line)
+    flush()
+    return entries
+
+
+# --- Player.log on RimWorld 1.6 (Unity): level heuristics ----------------
 
 # Legacy frame shapes, for builds that DO write stack traces: "Verse.Log:Error"
 # (vanilla), "Verse.Log.Error_Patch1" (another mod patched Log.Error).
@@ -242,13 +311,18 @@ CONTINUATION_LINE = re.compile(
 )
 
 
-def player_log_path():
+def player_log_path(rw):
     # Player.log sits in the same user folder as Config/ModsConfig.xml,
     # which the refresh engine already locates, so derive it rather than
     # glob for the file: launch() deletes the log before booting, and a
     # lookup that needs the file to exist would refuse to run after any
-    # failure between that unlink and the game writing a fresh one.
-    return refresh.modsconfig_path().parent.parent / "Player.log"
+    # failure between that unlink and the game writing a fresh one. Where
+    # in that folder depends on the installed game (refresh.GAME_LAYOUTS):
+    # 1.7 writes Logs/Player.log, 1.6 Player.log at the root, and after a
+    # Steam branch switch both files exist, so the install decides, never
+    # whichever file is newer.
+    return refresh.modsconfig_path().parent.parent \
+        / refresh.game_layout(rw).log_relpath
 
 
 def log_dump_path(rw):
@@ -271,18 +345,19 @@ def launch(rw, log):
     print("Launching RimWorld on the pinned smoke mod list "
           "(graphical boot, ~1-2 min; the probe quits the game itself)...")
     try:
-        subprocess.run(["./RimWorldWin64.exe", "-l10nprobe"], cwd=rw,
-                       check=False)
+        subprocess.run([f"./{refresh.game_layout(rw).exe}", "-l10nprobe"],
+                       cwd=rw, check=False)
     finally:
         mc.write_bytes(original)
         print(f"Restored {mc}")
 
 
 def split_entries(text):
-    # One entry per log message. A blank line always ends an entry (the
-    # legacy Unity separator); otherwise a line starts a new entry unless it
-    # is shaped like a continuation (CONTINUATION_LINE). The trailing
-    # "(Filename: ... Line: ...)" locator is dropped as noise.
+    # One entry per log message of a Unity-era (1.6 or older) log. A blank
+    # line always ends an entry (the legacy Unity separator); otherwise a
+    # line starts a new entry unless it is shaped like a continuation
+    # (CONTINUATION_LINE). The trailing "(Filename: ... Line: ...)" locator
+    # is dropped as noise.
     entries = []
     block = []
     for line in text.splitlines():
@@ -319,6 +394,9 @@ def classify_level(entry):
 
 
 def entries_from_player_log(text):
+    # A 1.7 log carries its levels; a 1.6 log is split and levelled by shape.
+    if is_waylith_log(text):
+        return waylith_entries(text)
     return [Entry(classify_level(e), e, "", 1) for e in split_entries(text)]
 
 
@@ -515,7 +593,7 @@ def main():
               "this mod if OWN_PATTERNS lists it")
 
     rw = refresh.rimworld_path()
-    log = player_log_path()
+    log = player_log_path(rw)
     if not args.no_launch:
         launch(rw, log)
 
@@ -531,10 +609,16 @@ def main():
     player_log_entries = entries_from_player_log(text)
     dump_entries, detail = load_log_dump(log_dump_path(rw), text)
     if dump_entries is None:
-        print(f"\nWARNING: no usable log dump ({detail}). Falling back to "
-              f"Player.log heuristics: a 1.6 log carries no stack traces, "
-              f"so frame-less warnings are invisible and errors are "
-              f"recognised by message shape only.")
+        if is_waylith_log(text):
+            print(f"\nWARNING: no usable log dump ({detail}). Levels come "
+                  f"from the 1.7 log itself, which records them, but the "
+                  f"translation load errors behind the game's one-line "
+                  f"warning are only in the dump and go unreported.")
+        else:
+            print(f"\nWARNING: no usable log dump ({detail}). Falling back "
+                  f"to Player.log heuristics: a 1.6 log carries no stack "
+                  f"traces, so frame-less warnings are invisible and errors "
+                  f"are recognised by message shape only.")
         entries = player_log_entries
         if args.strict and not args.no_launch:
             sys.exit("SMOKE TEST FAILED: --strict requires the probe's log "

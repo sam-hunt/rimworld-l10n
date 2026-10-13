@@ -67,7 +67,7 @@
 #     of leaking the other boot's mods into this sidecar;
 #   * a third-party mod ONLY if this mod's own content gates on it: a
 #     MayRequire attribute, or a LoadFolders IfModActive compat root
-#     (1.6/Mods/<Mod Name>/ with its own Defs and DefInjected). Gated defs
+#     (<version>/Mods/<Mod Name>/ with its own Defs and DefInjected). Gated defs
 #     load only with the gate active, so their keys reach the sidecar only
 #     if the gate is pinned — one list that includes every gate covers every
 #     branch, as long as a branch ADDS defs rather than rewriting the text of
@@ -151,6 +151,7 @@ import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+from collections import namedtuple
 from pathlib import Path
 
 # Per-repo constants. Neutral defaults; the consuming repo's
@@ -178,14 +179,37 @@ SIDECAR = None
 # — this engine never builds the probe itself.
 PROBE_SOURCE_ROOT = Path(__file__).resolve().parent.parent / "probe"
 
+# The two install layouts this engine can drive, told apart by the game
+# executable present under RIMWORLD_PATH. RimWorld 1.7 (the Waylith engine
+# on .NET 10) is a flat install whose RimWorld.exe hosts RimWorld.dll and
+# which writes its log to Logs/Player.log under the user data folder; 1.6
+# (Unity) is RimWorldWin64.exe with Player.log at that folder's root. The
+# exe decides, so a Steam branch switch needs no configuration. The Waylith
+# layout is probed first: a 1.7 install keeps an empty RimWorldWin64_Data/
+# folder behind, never the old exe, and a 1.6 install has no RimWorld.exe.
+GameLayout = namedtuple("GameLayout", "name exe log_relpath")
+GAME_LAYOUTS = (
+    GameLayout("waylith", "RimWorld.exe", Path("Logs") / "Player.log"),
+    GameLayout("unity", "RimWorldWin64.exe", Path("Player.log")),
+)
+
+
+def game_layout(rw):
+    # The GameLayout installed under rw, or None when neither exe is there.
+    for layout in GAME_LAYOUTS:
+        if (Path(rw) / layout.exe).is_file():
+            return layout
+    return None
+
 
 def rimworld_path():
     rw = os.environ.get("RIMWORLD_PATH")
     if not rw:
         sys.exit("RIMWORLD_PATH is not set (see CLAUDE.md's WSL setup note)")
     rw = Path(rw)
-    if not (rw / "RimWorldWin64.exe").is_file():
-        sys.exit(f"No RimWorldWin64.exe under RIMWORLD_PATH ({rw})")
+    if game_layout(rw) is None:
+        sys.exit(f"No RimWorld.exe (1.7) or RimWorldWin64.exe (1.6) under "
+                 f"RIMWORLD_PATH ({rw})")
     if not (rw / "Mods" / "L10nProbe" / "About").is_dir():
         sys.exit(f"L10nProbe is not deployed under {rw / 'Mods'} — build "
                  f"{PROBE_SOURCE_ROOT}/Source/1.6/L10nProbe.csproj -c Release "
@@ -221,14 +245,19 @@ def game_is_running():
     # over the session, and the ModsConfig swap must not race a live game
     # (which rewrites the file on mod-list edits and on exit). tasklist.exe
     # is reachable from WSL via interop; if it is not, skip the check rather
-    # than block the flow.
-    try:
-        out = subprocess.run(
-            ["tasklist.exe", "/FI", "IMAGENAME eq RimWorldWin64.exe"],
-            capture_output=True, text=True, timeout=15).stdout
-    except (OSError, subprocess.TimeoutExpired):
-        return False
-    return "RimWorldWin64.exe" in out
+    # than block the flow. Both layouts' exes are checked: the install under
+    # RIMWORLD_PATH says which one THIS flow will launch, not which one the
+    # player may still have open from before a branch switch.
+    for layout in GAME_LAYOUTS:
+        try:
+            out = subprocess.run(
+                ["tasklist.exe", "/FI", f"IMAGENAME eq {layout.exe}"],
+                capture_output=True, text=True, timeout=15).stdout
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+        if layout.exe in out:
+            return True
+    return False
 
 
 def warn_unpinned_probe_targets(worlds):
@@ -270,7 +299,7 @@ def launch_probe(rw, dump_path, mods, world=None):
     try:
         # WSL interop blocks until the Windows process exits; the probe
         # quits the game itself after writing its dumps.
-        subprocess.run(["./RimWorldWin64.exe", "-l10nprobe"], cwd=rw,
+        subprocess.run([f"./{game_layout(rw).exe}", "-l10nprobe"], cwd=rw,
                        check=False)
     finally:
         # Always hand the player's own mod list back, byte-identical.

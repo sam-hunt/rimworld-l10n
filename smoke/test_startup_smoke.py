@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Regression tests for the startup smoke engine's classification layer - the
 # part that went blind on RimWorld 1.6 (2026-08-28): Player.log stopped
-# carrying stack frames, so every plain Log.Error read as level None. Run
+# carrying stack frames, so every plain Log.Error read as level None - and
+# for the 1.7 (Waylith) log, which records the level on every entry. Run
 # from the repo root:
 #   python3 -m unittest discover -s . -p 'test_*.py'
 # Nothing here launches the game or reads a real log: the classification
@@ -120,6 +121,60 @@ LOG_1_6_CHUNK = "\r\n".join([
 
 LEGACY_CHUNK = "\n".join([LEGACY_ERROR, "", LEGACY_WARNING, "", "Plain info line", ""])
 
+# A RimWorld 1.7 (Waylith) Logs/Player.log: the file header, then one
+# timestamped, levelled head line per entry with the message's further
+# lines and its "    at ..." frames beneath. The header, the Vulkan WARN
+# (a multi-line message before its frames), the two Verse INFO lines and
+# the closing line are verbatim from 1.7.4976 rev1043 (frames shortened);
+# the ERROR entries are synthesised from the decompiled routing (Verse.Log
+# .Error logs at Error under the "Verse" category) in the WARN entry's
+# shape, since the verified boot logged no error.
+WAYLITH_PATCH_FAILURE_LINE = ("2026-10-13 23:00:55.101  ERROR [Verse] "
+                              + XTS_PATCH_FAILURE.split("\n")[0])
+LOG_1_7_CHUNK = "\n".join([
+    "=== RimWorld by Ludeon Studios log ===",
+    "Started:   2026-10-13 23:00:48.861 +13:00",
+    "Version:   1.0.0.0",
+    "OS:        Microsoft Windows 10.0.19045 (X64)",
+    "Runtime:   .NET 10.0.10-waylithclr.dev",
+    "Process:   pid 52632",
+    "Log file:  C:\\Users\\Sam\\AppData\\LocalLow\\Ludeon Studios\\RimWorld by Ludeon Studios\\Logs\\Player.log",
+    "Command:   \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\RimWorld.dll\"",
+    "",
+    "2026-10-13 23:00:48.389  WARN [Vulkan] [General] [Loader Message] windows_read_data_files_in_registry: Registry lookup failed to get layer manifest files.",
+    "Objects: 1",
+    "    [0] VkInstance 0x238c8cbe5b0",
+    "    at Brutal.Logging.LogCategory.Warning(LogString`1 message, String sourceMemberName, String sourceFilePath, Int32 sourceLineNumber) [0x0]",
+    "    at Waylith.Graphics.GraphicsDevice+<>c.<.cctor>b__114_1(String s) [0x0]",
+    "2026-10-13 23:00:49.363  INFO [Verse] RimWorld 1.7.4976 rev1043",
+    "    at Brutal.Logging.LogCategory.Info(LogString`1 message, String sourceMemberName, String sourceFilePath, Int32 sourceLineNumber) [0x0]",
+    "    at Verse.Log.Message(String text) [0x19]",
+    "    at RimWorld.VersionControl.LogVersionNumber() [0x0]",
+    "2026-10-13 23:00:52.432  INFO [Verse] Harmony Mod v3.0.0.0; Harmony library v3.0.0.0-rc.2",
+    "    at Brutal.Logging.LogCategory.Info(LogString`1 message, String sourceMemberName, String sourceFilePath, Int32 sourceLineNumber) [0x0]",
+    "    at Verse.Log.Message(String text) [0x19]",
+    "    at HarmonyMod.Main..cctor() [0x21E]",
+    "2026-10-13 23:00:55.100  INFO [Verse] [Xenogerm Trader Stock] Mod loaded.",
+    "    at Brutal.Logging.LogCategory.Info(LogString`1 message, String sourceMemberName, String sourceFilePath, Int32 sourceLineNumber) [0x0]",
+    "    at Verse.Log.Message(String text) [0x19]",
+    WAYLITH_PATCH_FAILURE_LINE,
+    XTS_PATCH_FAILURE.split("\n")[1],
+    "    at Brutal.Logging.LogCategory.Error(LogString`1 message, String sourceMemberName, String sourceFilePath, Int32 sourceLineNumber) [0x0]",
+    "    at Verse.Log.Error(String text) [0x19]",
+    "    at Verse.PatchOperation.Complete(String modIdentifier) [0x0]",
+    "2026-10-13 23:00:55.102  WARN [Verse] " + FRAMELESS_WARNING,
+    "    at Brutal.Logging.LogCategory.Warning(LogString`1 message, String sourceMemberName, String sourceFilePath, Int32 sourceLineNumber) [0x0]",
+    "    at Verse.Log.Warning(String text) [0x19]",
+    "2026-10-13 23:00:55.103  ERROR [Verse] System.NullReferenceException: Object reference not set to an instance of an object",
+    "    at XenogermTraderStock.StockGenerator_Xenogerms.GenerateThings(Int32 forTile, Faction faction) [0x12]",
+    "2026-10-13 23:00:55.104  INFO [Verse] Caught exception while loading mod settings data for shunter.x. Generating fresh settings.",
+    "    at Verse.Log.Message(String text) [0x19]",
+    "2026-10-13 23:01:40.000  INFO [Verse] [L10nProbe] wrote log dump C:\\x\\log-messages.json",
+    "    at Verse.Log.Message(String text) [0x19]",
+    "2026-10-13 23:24:15.353  INFO Log closed.",
+    "",
+])
+
 
 def configure(own=("XenogermTraderStock", "XTS_"), integration=None):
     engine.OWN_PATTERNS = list(own)
@@ -218,6 +273,71 @@ class SplitEntries(unittest.TestCase):
             ("error", engine.first_line(XTS_PATCH_FAILURE)),
             ("error", engine.first_line(PROBE_FAILED)),
         ])
+
+
+class WaylithLog(unittest.TestCase):
+    """The 1.7 log: levels come from the file, frames go to the stack."""
+
+    def test_detection(self):
+        self.assertTrue(engine.is_waylith_log(LOG_1_7_CHUNK))
+        # A log whose header changed still qualifies by its first head line.
+        self.assertTrue(engine.is_waylith_log(
+            LOG_1_7_CHUNK.split("\n", 9)[9] + "\n"))
+        self.assertFalse(engine.is_waylith_log(LOG_1_6_CHUNK))
+        self.assertFalse(engine.is_waylith_log(LEGACY_CHUNK))
+        self.assertFalse(engine.is_waylith_log(""))
+
+    def test_entries_strip_the_prefix_and_split_frames(self):
+        entries = engine.waylith_entries(LOG_1_7_CHUNK)
+        self.assertEqual(len(entries), 10)
+        vulkan, version, harmony, loaded, patch, warning, raw, settings, dump, closed = entries
+        self.assertEqual(vulkan.level, "warning")
+        self.assertEqual(vulkan.text.split("\n"), [
+            "[General] [Loader Message] windows_read_data_files_in_registry: "
+            "Registry lookup failed to get layer manifest files.",
+            "Objects: 1", "    [0] VkInstance 0x238c8cbe5b0"])
+        self.assertTrue(vulkan.stack.startswith("at Brutal.Logging.LogCategory.Warning("))
+        self.assertEqual((version.level, version.text), (None, "RimWorld 1.7.4976 rev1043"))
+        self.assertEqual(loaded.text, "[Xenogerm Trader Stock] Mod loaded.")
+        # The message is exactly what the game logged: what the dump holds
+        # and what OWN_PATTERNS and the dedup by head line compare against.
+        self.assertEqual((patch.level, patch.text, patch.count),
+                         ("error", XTS_PATCH_FAILURE, 1))
+        self.assertEqual(patch.stack.split("\n")[1], "at Verse.Log.Error(String text) [0x19]")
+        self.assertEqual((warning.level, warning.text), ("warning", FRAMELESS_WARNING))
+        self.assertEqual(raw.level, "error")
+        self.assertTrue(engine.EXCEPTION_HEAD.match(raw.text))
+        self.assertEqual((closed.level, closed.text, closed.stack), (None, "Log closed.", ""))
+
+    def test_levels_are_the_files_not_the_heuristics(self):
+        # An INFO entry whose text would trip the 1.6 heuristics stays info;
+        # an ERROR entry with innocuous text is an error.
+        entries = engine.entries_from_player_log(LOG_1_7_CHUNK)
+        by_text = {engine.first_line(e.text): e.level for e in entries}
+        self.assertIsNone(by_text["Caught exception while loading mod settings data "
+                                  "for shunter.x. Generating fresh settings."])
+        self.assertEqual(by_text[engine.first_line(XTS_PATCH_FAILURE)], "error")
+        self.assertEqual([e.level for e in entries if e.level],
+                         ["warning", "error", "warning", "error"])
+
+    def test_origin_and_merge_work_on_1_7_entries(self):
+        configure(own=["XenogermTraderStock", "[Xenogerm Trader Stock]", "XTS_"])
+        entries = engine.entries_from_player_log(LOG_1_7_CHUNK)
+        patch = next(e for e in entries if e.text == XTS_PATCH_FAILURE)
+        self.assertEqual(engine.classify_origin(patch.text + "\n" + patch.stack), "own")
+        # With the dump present only raw exception blocks are merged in, and
+        # one the dump already carries is not duplicated.
+        dump = [engine.Entry("error", "System.NullReferenceException: Object reference "
+                             "not set to an instance of an object", "trace", 1)]
+        merged = engine.merge_player_log_exceptions(dump, entries)
+        self.assertEqual(len(merged), 1)
+        merged = engine.merge_player_log_exceptions([], entries)
+        self.assertEqual([engine.first_line(e.text) for e in merged],
+                         ["System.NullReferenceException: Object reference not set "
+                          "to an instance of an object"])
+
+    def test_markers_are_found_in_a_1_7_log(self):
+        self.assertIn(engine.LOG_DUMP_MARKER, LOG_1_7_CHUNK)
 
 
 class ClassifyOrigin(unittest.TestCase):
@@ -475,6 +595,9 @@ class Launch(unittest.TestCase):
         (user / "Config").mkdir(parents=True)
         self.mc = user / "Config" / "ModsConfig.xml"
         self.mc.write_text(self.ORIGINAL, encoding="utf-8")
+        # A 1.6 install unless a test says otherwise: the exe decides.
+        (self.rw / "RimWorldWin64.exe").touch()
+        self.user = user
         self.log = user / "Player.log"
         self.log.write_text("stale log", encoding="utf-8")
         engine.SMOKE_ACTIVE_MODS = list(self.SMOKE_LIST)
@@ -521,7 +644,24 @@ class Launch(unittest.TestCase):
     def test_player_log_path_does_not_need_the_file_to_exist(self):
         self.log.unlink()
         with mock.patch.object(engine.refresh, "modsconfig_path", lambda: self.mc):
-            self.assertEqual(engine.player_log_path(), self.log)
+            self.assertEqual(engine.player_log_path(self.rw), self.log)
+
+    def test_a_1_7_install_launches_its_exe_and_reads_logs_player_log(self):
+        # After a branch switch both exes' logs can exist on disk; the
+        # install under RIMWORLD_PATH decides, never the newer file.
+        (self.rw / "RimWorldWin64.exe").unlink()
+        (self.rw / "RimWorld.exe").touch()
+        (self.user / "Logs").mkdir()
+        with mock.patch.object(engine.refresh, "modsconfig_path", lambda: self.mc):
+            log = engine.player_log_path(self.rw)
+        self.assertEqual(log, self.user / "Logs" / "Player.log")
+        seen = {}
+
+        def fake_run(cmd, cwd=None, check=False):
+            seen["cmd"] = cmd
+
+        self.run_launch(fake_run)
+        self.assertEqual(seen["cmd"], ["./RimWorld.exe", "-l10nprobe"])
 
     def test_launched_run_that_wrote_no_log_is_a_failed_boot(self):
         configure()
