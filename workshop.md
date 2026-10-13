@@ -8,7 +8,7 @@ A `Media/` folder for Workshop images can live beside it.
 ## Description/ layout
 
 One file per language, named after the RimWorld language folders in
-`1.6/Languages/` (`English.txt`, `German.txt`, `ChineseSimplified.txt`, ...).
+`<version>/Languages/` (`English.txt`, `German.txt`, `ChineseSimplified.txt`, ...).
 English is the source of truth; the others are machine-assisted first passes
 pending native review. Format:
 
@@ -16,7 +16,7 @@ pending native review. Format:
 - Line 2: blank
 - Rest: the BBCode description
 
-Every language present in `1.6/Languages/` should have a description file;
+Every language present in `<version>/Languages/` should have a description file;
 check for gaps whenever a language lands.
 
 ## Size limit: 8000 UTF-8 bytes, not characters

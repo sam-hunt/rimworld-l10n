@@ -27,9 +27,12 @@ English is always the source of truth; every other language derives from it.
 
 ## File and format conventions
 
-- Target layout: `1.6/Languages/<Language>/Keyed/*.xml` and
-  `1.6/Languages/<Language>/DefInjected/<DefTypeFolder>/*.xml`, mirroring
-  the English tree folder-for-folder.
+- Target layout: `<version>/Languages/<Language>/Keyed/*.xml` and
+  `<version>/Languages/<Language>/DefInjected/<DefTypeFolder>/*.xml`,
+  mirroring the English tree folder-for-folder. `<version>/` is the repo's
+  live version folder: `1.6/` until a repo splits a frozen `1.6/` from a
+  live `1.7/`, after which the checker reads only the tree the sidecar's
+  game version loads (`meta.gameBuild`), as the game does.
 - **The DefInjected type folder is load-bearing, not organizational**
   (decompile-verified, `Verse.LoadedLanguage`): RimWorld enumerates only the
   top-level directories under `DefInjected/` and resolves each directory
@@ -52,7 +55,7 @@ English is always the source of truth; every other language derives from it.
   dev mod in `probe/` here). The checker enforces every language's
   DefInjected files against the sidecar's `required` subset per def type and
   fails on any cross-language drift — never hand-derive the expected key set
-  by scanning `1.6/Defs/` yourself.
+  by scanning `<version>/Defs/` yourself.
 - **Some translatable fields can exist without ever appearing in a repo's
   own def XML** — inherited labels, comp-default strings, vanilla base-def
   fields reached only through a Harmony patch, or a `CompProperties_*` added
@@ -64,19 +67,19 @@ English is always the source of truth; every other language derives from it.
   from every non-English language, but demands nothing of English (English is
   served by the def XML's own `<label>`/`<description>`, so its DefInjected
   files are validated-if-present reference material only). **Enumerate from
-  the sidecar, not from `1.6/Languages/English/`,** and take the English
+  the sidecar, not from `<version>/Languages/English/`,** and take the English
   source text from the sidecar's `english` field (which is also what the
   checker compares `<!-- EN: -->` comments against, so sourcing EN comments
   from it programmatically makes drift impossible).
 - **Gated compat load roots are additional language roots.** MayRequire is
   honored on defs and patch nodes but IGNORED on DefInjected entries, so
   content whose strings depend on an optional mod or DLC ships from a
-  LoadFolders-gated compat root (`1.6/Mods/<Name>/` with its own
+  LoadFolders-gated compat root (`<version>/Mods/<Name>/` with its own
   `Defs`/`Languages` inside). Each gated def's translations mirror its own
   root, never the main `1.6` tree (that would be a startup error whenever the
   gate is inactive); the checker enforces the placement in both directions.
   Compat roots sit beside the well-known folders, never inside one — anything
-  under `1.6/Defs/**` or `1.6/Languages/**` loads unconditionally at any
+  under `<version>/Defs/**` or `<version>/Languages/**` loads unconditionally at any
   depth. **A compat root's language files must not reuse a main-tree file's
   language-relative path** (`DefInjected/<Type>/<File>.xml`,
   `Keyed/<File>.xml`): the game dedups language files per mod by that path
@@ -155,7 +158,7 @@ language's own vanilla rate and compare:
 
 ```python
 # strip comments and tags, count dashes per 100k chars of vanilla values,
-# then the same over 1.6/Languages/<lang>/ — flag anything above ~1x.
+# then the same over <version>/Languages/<lang>/ — flag anything above ~1x.
 ```
 
 At the 2026-08-10 BTG audit, generated translations ran **3.4x–11.3x**
@@ -184,7 +187,7 @@ disagree (fr's curly apostrophes are almost entirely legacy Core
    from each entry's `english` field — NOT from the English DefInjected tree,
    which may cover only part of the surface. Route each gated def's entries
    to its own compat root (the repo skill names them); everything else goes
-   in the main `1.6/Languages/<Language>/` tree. The checker enforces this
+   in the main `<version>/Languages/<Language>/` tree. The checker enforces this
    both ways, and its missing-entry errors name the root a translation
    belongs under.
 3. Extract the vanilla tar for the target language into the scratchpad;

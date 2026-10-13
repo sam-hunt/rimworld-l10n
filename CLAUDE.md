@@ -103,8 +103,8 @@ python3 -m unittest discover -s . -p 'test_*.py'   # checker, refresh and smoke 
 ```
 
 Run from the repo root before committing an engine change; nothing launches
-the game. The smoke tests classify fixture log shapes (1.6 frame-less,
-legacy frame-bearing, the probe's log dump) and drive `launch()` with the
+the game. The smoke tests classify fixture log shapes (1.6 frame-less, 1.7
+levelled, legacy frame-bearing, the probe's log dump) and drive `launch()` with the
 refresh engine's helpers and `subprocess.run` stubbed, since that is the
 engine's one call into another engine (`pinned_modsconfig`); the checker
 tests build fixture repos in temp dirs (LoadFolders gating, per-world sidecar
@@ -121,17 +121,20 @@ and exit codes.
 `probe/` is L10nProbe, a local-only dev mod that dumps a mod's expected
 DefInjected key set and, at the end of a `-l10nprobe` boot, the game's
 in-memory log (`Verse.Log.Messages` → `Output/log-messages.json`, the smoke
-engine's authoritative source of log levels — a 1.6 Player.log has no stack
-traces, see `lessons.md`'s tooling section). See `probe/README.md` and
+engine's authoritative source of log levels on 1.6, whose Player.log has no
+stack traces, and of the translation load errors on every version; see
+`lessons.md`'s tooling section). See `probe/README.md` and
 `probe/CLAUDE.md` for design and build. **Only this canonical checkout
 deploys it**: the csproj's deploy target checks whether the repo root's
 `.git` is a real directory and no-ops in submodule/worktree checkouts, so a
 consumer's pinned copy can never overwrite the deployed probe with a stale
 version. A probe change is live for every consumer's smoke run only once
 `dotnet build probe/L10nProbe.sln -c Release` has been run HERE — the smoke
-engine falls back to Player.log heuristics (and fails under `--strict`)
-when the deployed probe predates the dump. Never upload it to the Steam
-Workshop.
+engine falls back to Player.log (shape heuristics on 1.6, the file's own
+levels on 1.7) and fails under `--strict` when the deployed probe predates
+the dump. The engines drive a 1.6 or a 1.7 install alike, told apart by the
+game exe under `RIMWORLD_PATH` (`refresh.GAME_LAYOUTS`). Never upload it to
+the Steam Workshop.
 
 ## Policy
 

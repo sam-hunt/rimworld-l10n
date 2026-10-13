@@ -83,7 +83,7 @@ the originating passes.
   post-processes every string, so it can impose authoring requirements no
   amount of reading the vanilla data will reveal as *mandatory* — Korean's
   josa markers are invisible until you find `ReplaceJosa`. Decompile it:
-  `ilspycmd "$RIMWORLD_PATH/RimWorldWin64_Data/Managed/Assembly-CSharp.dll" -t
+  `ilspycmd "$RIMWORLD_PATH/Assembly-CSharp.dll" -t
   "Verse.LanguageWorker_<Language>"`. Languages with heavy inflection
   (Russian, Polish, Turkish, Czech, German) are the ones to check first. **A
   worker can also do work *for* you**, which is just as important to
@@ -320,7 +320,25 @@ name-grammar noun for any mod that adds name generation.
   `Output/log-messages.json` at the end of a `-l10nprobe` boot for the
   smoke engine to read. Player.log is a fallback with message-shape
   heuristics only; a raw unhandled exception Unity logs itself is the one
-  thing only Player.log has.
+  thing only Player.log has. (1.6 only: the next lesson has the 1.7 log.)
+- **RimWorld 1.7 (the Waylith engine) changed the install layout and the
+  log; the game exe present tells the two apart** (verified 2026-10-13 on
+  1.7.4976 rev1043, Steam `unstable`). The install is flat: `RimWorld.exe`
+  hosts `RimWorld.dll` on .NET 10, `Assembly-CSharp.dll`, `UnityStubs.dll`
+  and `Waylith.dll` sit in the install root, and an empty
+  `RimWorldWin64_Data/` is left behind; `ilspycmd
+  "$RIMWORLD_PATH/Assembly-CSharp.dll" -t <Type>` decompiles it (ilspycmd
+  10.1 reads the .NET 10 assembly). The log is `Logs/Player.log` under the
+  user data folder, and every entry is a timestamped head line carrying the
+  level the game logged at (`Verse.Log.Error` logs `ERROR [Verse] ...`,
+  decompile-verified) followed by its stack frames, so the 1.6 heuristics
+  above are not needed there; the probe's dump is still the only source of
+  the translation load errors. A net472 mod assembly built against the 1.6
+  references runs unchanged: `RimWorld.runtimeconfig.json` maps every
+  `UnityEngine*` assembly reference onto `UnityStubs` and binds laxly, so
+  the probe and the family's 1.6 builds load as-is. The engines read the
+  layout from the exe (`refresh.GAME_LAYOUTS`); after a Steam branch switch
+  both logs exist on disk, and the install decides which one is read.
 - **The game's `Translation data for language X has N errors` warning
   names nothing; the N errors and their files have to be dumped from
   memory.** `LoadedLanguage.InjectIntoData_AfterImpliedDefs` (1.6.4871)
