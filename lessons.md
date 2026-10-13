@@ -236,6 +236,59 @@ the originating passes.
   "unit of fuel" is the trap. The checker cannot see any of this; the
   glossary row of the noun names the lookup file it relies on.
 
+- **The injection walker reflects the def's runtime type, so a vanilla base
+  class's private field is invisible for every subclass def**
+  (decompile-verified 2026-10-13 on 1.6.4871, Toxin Warcasket's "spray gas"
+  verb). `DefInjectionUtility.FieldsInDeterministicOrder` calls
+  `type.GetFields(Instance | Public | NonPublic)` on the def's own type, and
+  .NET returns a base class's *private* fields only when asked on that base.
+  `ThingDef.verbs` is private, so a plain `ThingDef`'s `verbs.<handle>.label`
+  is a key (Biotech's `Apparel_PackTox.verbs.deploy_tox_pack.label`) while
+  the same verb on a `VFEPirates.WarcasketDef` never is: the sidecar did not
+  list it, a live refresh confirmed it, and the command read English in every
+  language. Any mod def that subclasses a vanilla def type inherits this for
+  each private `[MustTranslate]` field of the base. The fix is to carry the
+  string on something the walker does reach (a comp's own `[MustTranslate]`
+  field) and copy it onto the verb in `CompProperties.ResolveReferences`;
+  `InjectIntoData_BeforeImpliedDefs` has already injected the mod's own
+  defs by then, so the copy carries the translated text.
+- **A coined `chargeNoun` may need a Gender line as well as a plural one.**
+  Vanilla's German and Castilian reload tooltips switch on
+  `{CHARGENOUN_gender ? … : … : …}` (de `Stat_Thing_ReloadPerCharge_Desc`
+  and `Stat_Thing_ReloadDestroyOnEmpty_Desc`, es the latter). The game
+  resolves the gender from `WordInfo/Gender/{Male,Female,Neuter}.txt` in
+  every active language directory, mods included (`LanguageWordInfo.LoadFrom`,
+  lowercased lookup, masculine on a miss), and Core's tables list vanilla's
+  own nouns (`giftladung`) but never a mod's. So a feminine or neuter coined
+  noun ships `1.6/Languages/<Language>/WordInfo/Gender/Female.txt` (one
+  lowercased noun per line, no comment lines: `TryLoadFromFile` registers
+  every non-empty line verbatim). French, Portuguese, Russian, Korean,
+  Japanese and both Chinese Keyed never switch on it (grep
+  `CHARGENOUN_gender` over the tar's Keyed before deciding), so no file helps
+  there; pt-BR's frames hard-code masculine (`um {CHARGENOUN}`), so prefer a
+  masculine coinage. The checker cannot see this; the glossary row of the
+  noun names the file. (Shipcracker's `Treibstoffeinheit` and `unidad de
+  combustible` shipped without it until 2026-10-13.)
+- **Community Vanilla Expanded translation packs are fetchable from GitHub,
+  which matters because VFE Pirates ships English only** (Toxin Warcasket's
+  nine-language pass, 2026-10-13). Known packs with warcasket files: zh-Hans
+  `q847633684/Vanilla-Expanded-ZH` (1.6
+  `DefInjected/VFEPirates.WarcasketDef/VFEPirates.WarcasketDef.xml`, also the
+  source the zh-Hant pass converts from), ko RimWorldKorea's RMK (`Data/Vanilla
+  Expanded/Vanilla Factions Expanded - Pirates - 2723801948/1.6/Languages/Korean
+  (한국어)/`), ru `OneCodeUnit/VanillaRussianExpanded`, es Cito2310's pack
+  (the Pirates files sit under a `Tribal_Translate/` folder), pt-BR
+  `RafaelNaymaier/Traducao-Vanilla-Expanded-PT-BR`
+  (`Languages/PortugueseBrazilian/DefInjected/{ThingDef,ResearchProjectDef}/VFE_Pirates_*.xml`).
+  German and French have none. Fetch only the two warcasket files with
+  `gh api repos/<owner>/<repo>/contents/<path> --jq .content | base64 -d`
+  into a scratch directory outside the repo and grep them. The pack's text
+  wins for VFEP's own set names and the shared 7th-generation paragraph, so
+  the mod reads like VFEP in-game; a vanilla Core term wins over the pack's
+  (pt-BR tar `plastiaço` over the pack's `plastoaço`); and a pack's own
+  errors are corrected, not copied (es `7ta` is a Latin American ordinal,
+  Castilian is `7.ª`).
+
 RulePackDef-specific lessons — which part of speech a
 `traitAdjectives`/`namerLabels`-style field needs per language, the several
 techniques for solving name-grammar gender (German's inline markers, Spanish's

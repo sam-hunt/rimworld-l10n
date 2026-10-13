@@ -201,3 +201,12 @@ family and are safe defaults for new work.
   apply uniformly** — vanilla ja mixes ASCII `:` with full-width `：`, and
   the correct choice is decided by the nearest matching vanilla string, not
   a general policy.
+
+- Core Keyed `ModSettings` is `Mod 設定` (with a space) while `ModOptions`
+  is `MODオプション`: the bare-word MOD rule has that one exception
+  (2026-10-13, Toxin Warcasket).
+- ja Keyed never switches on `CHARGENOUN_gender`, so no `WordInfo/Gender`
+  file is ever needed.
+- The ja tree carries an untranslated `ToxicFallout.label` ("toxic fallout",
+  a different def type) beside the real `死の灰`, so a bare grep returns
+  both; pick by def type.

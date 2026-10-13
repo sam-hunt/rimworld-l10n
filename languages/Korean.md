@@ -200,3 +200,12 @@ strings unless noted):
   than shipped with confidence, and a future native pass should be checked
   against all four mods' own skills, not just this consolidated file, since
   each retains domain-specific vocabulary this file deliberately excludes.
+
+- The RimWorldKorea pack (RMK) carries VFE Pirates under `Data/Vanilla
+  Expanded/Vanilla Factions Expanded - Pirates - 2723801948/1.6/Languages/Korean
+  (한국어)/` and is fetchable from GitHub; its set names are `중무장`
+  (Cataphract), `재해` (Hazard), and it labels Aerial `충격` and Shock `강습`,
+  which read swapped against their meaning but are what players see in-game,
+  so follow them (2026-10-13, Toxin Warcasket).
+- ko Keyed never switches on `CHARGENOUN_gender`, so no `WordInfo/Gender`
+  file is ever needed.

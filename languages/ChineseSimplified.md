@@ -223,6 +223,15 @@ reinforces market value above.
   pick per-context (bare noun vs. compound) rather than treating either
   as strictly wrong.
 
+- **A mass-noun charge noun fits every vanilla reload slot; a counted one
+  does not** (2026-10-13, Toxin Warcasket): `燃料` reads naturally in
+  `没有燃料。` and `燃料剩余`, while `单位` would not, so keep the noun a mass
+  noun and put the counter in the mod's own strings
+  (`需要{COUNT}单位{CHARGENOUN_plural}`).
+- The community pack (`q847633684/Vanilla-Expanded-ZH`) is on GitHub with a
+  1.6 `DefInjected/VFEPirates.WarcasketDef/VFEPirates.WarcasketDef.xml`; its
+  shared 7th-generation paragraph carries a `——` to reflow into `，`.
+
 ## Excluded from this reference (mod-specific, not consolidated here)
 
 - **BTG:** cargo vault 货物保险库 (and hatch variants), shuttle bay

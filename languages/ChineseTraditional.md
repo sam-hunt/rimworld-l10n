@@ -301,3 +301,16 @@ mod:
   trailing 之 or 的** (official Odyssey traits: GoldInlay→黃金/金,
   Ugly→怪異/粗糙/醜陋, Cumbersome→笨拙/笨重/不便) — they must read directly
   prefixed to a weapon noun (黃金長劍).
+
+## Pitfalls and lessons
+
+- **A mass-noun charge noun fits every vanilla reload slot; a counted one
+  does not** (2026-10-13, Toxin Warcasket): `燃料` reads naturally in
+  `沒有燃料。` and `燃料剩餘`, while `單位` would not, so keep the noun a mass
+  noun and put the counter in the mod's own strings
+  (`需要{COUNT}單位{CHARGENOUN_plural}`).
+- Deadlife dust is `死者粉塵` (Core Keyed `DeadlifeDust`, Misc_Gameplay.xml).
+- No zh-Hant community VFE Pirates pack is known; the zh-Hans one
+  (`q847633684/Vanilla-Expanded-ZH`) is the grounding source, converted to
+  this tar's vocabulary (`塑鋼`, not the pack's `玻璃钢`) rather than
+  script-converted, per the section above.

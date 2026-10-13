@@ -238,3 +238,11 @@ strings unless noted):
   but never assume the same shape holds in another family language —
   Russian's `TryLookUp` override lowercases the key on a miss, which German
   does not do.
+
+- **A coined charge noun that is not masculine needs a `WordInfo/Gender`
+  line** (2026-10-13, Toxin Warcasket): `Stat_Thing_ReloadPerCharge_Desc`
+  and `Stat_Thing_ReloadDestroyOnEmpty_Desc` switch on `{CHARGENOUN_gender}`
+  and a table miss is masculine, so `Spriteinheit` prints "einen
+  Spriteinheit" until `WordInfo/Gender/Female.txt` lists `spriteinheit`
+  (lowercase, no comment lines). Core's own `Giftladung` is in the table;
+  see `lessons.md` for the mechanism.

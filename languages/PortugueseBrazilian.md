@@ -215,3 +215,15 @@ mod-coined, and several are independently corroborated by more than one repo.
   behavior are both unusually severe compared to the rest of the family, and
   assuming a milder shape (like Spanish's, which at least resolves gender
   for ~2700 nouns) will under-hedge real strings.
+
+- **pt-BR Keyed never switches on `CHARGENOUN_gender`, and its reload frames
+  hard-code masculine** (`um {CHARGENOUN}`, `seu último {CHARGENOUN}`), so a
+  feminine charge noun reads "um unidade" and no `WordInfo/Gender` line can
+  fix it: prefer a masculine coinage (2026-10-13, Toxin Warcasket).
+- `Miscellaneous` has no vanilla key; the nearest is `MiscRecordsCategory` =
+  `Outros`. Core's `Vent` building is `saída de ventilação` (the temperature
+  vent), so a gas vent should not reuse it (`válvulas` there).
+- The community pack (`RafaelNaymaier/Traducao-Vanilla-Expanded-PT-BR`) is
+  on GitHub; its VFE Pirates set names are adjectives (`catafrática`, `de
+  risco`, `aérea`) and its shared 7th-generation paragraph carries em dashes
+  and `plastoaço`, both to normalize (commas; the tar's `plastiaço`).

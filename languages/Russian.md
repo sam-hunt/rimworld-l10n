@@ -175,3 +175,14 @@ strings unless noted):
   Turkish, Czech, German) worth decompiling `LanguageWorker_<Language>` for
   before generating, since its authoring requirements (case/numeral
   agreement) are not otherwise obvious from reading the vanilla data alone.
+
+- **Vanilla ru ability labels are noun phrases** (`выброс пламени`,
+  `распыление пены`), not verbs (2026-10-13, Toxin Warcasket).
+- **A `{COUNT} {CHARGENOUN_plural}` slot cannot inflect an injected noun
+  with `numCase`.** Restructure around a genitive lookup plus a
+  parenthetical count: `Недостаточно {lookup: {CHARGENOUN_plural}; Case; 1}
+  в баке (нужно {COUNT}).`, which needs the mod's `WordInfo/case.txt` row
+  for the plural form (the lookup key is the pluralized noun).
+- The community pack (`OneCodeUnit/VanillaRussianExpanded`) is on GitHub;
+  its shared 7th-generation paragraph exists in two variants (with and
+  without a comma after «Также»), so pick one and record it in the glossary.

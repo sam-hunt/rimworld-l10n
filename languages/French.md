@@ -330,3 +330,12 @@ alternative and why.
   choice everywhere** — Core carries legacy curly apostrophes from
   `BackstoryDef` prose, Odyssey is decisively ASCII, and the elision worker
   only participates correctly with the ASCII form regardless of house style.
+
+- **Biotech ability labels are noun phrases** (`pulvérisation d'acide`,
+  `jet de mousse`, `projection de feu`), so a mod ability label is a noun
+  phrase too, not an imperative (2026-10-13, Toxin Warcasket).
+- Core's `{CHARGENOUN_plural} restants` is masculine-only and fr Keyed never
+  switches on `CHARGENOUN_gender`, so a feminine charge noun reads `unités
+  restants`; no WordInfo file can help, accept it or coin masculine.
+- `ToxicFallout` is `pluie toxique` on the GameConditionDef and IncidentDef
+  and `retombée toxique` on the TaleDef; ground on the condition.

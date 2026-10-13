@@ -229,3 +229,17 @@ strings unless noted):
   underlying constraint German solves with inline `|M|`/`|F|` markers and
   Japanese doesn't need at all — the fix is language-specific even though
   the underlying problem (a noun of unknown grammatical gender) is not.
+
+- **A coined feminine charge noun needs a `WordInfo/Gender/Female.txt`
+  line** (2026-10-13, Toxin Warcasket): Core's
+  `Stat_Thing_ReloadDestroyOnEmpty_Desc` switches `{CHARGENOUN_gender ? o : a}`
+  and a miss is masculine (`unidad` → `último unidad` without the line).
+  `StatsReport_ReloadRemainingChargesMultipler` hard-codes `las
+  {CHARGENOUN_plural}`, a vanilla slip for masculine nouns; nothing to do.
+- Grounded 2026-10-13: "requires restart" = `requiere un reinicio` (Core
+  `ChangedTextureCompressionRestart`); Miscellaneous = `Varios`
+  (`MiscRecordsCategory`); deadlife dust = `polvo de la muerte` (Core Keyed
+  `DeadlifeDust`; `Strings/Words/book.txt` has `polvo de necrovita`, Keyed
+  wins for a player-facing noun); downed = `incapacitado`
+  (`DownedCannotCrawl`). Ordinals are Castilian `7.ª`, never the Latin
+  American `7ta` a community pack may carry.
