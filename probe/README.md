@@ -1,6 +1,6 @@
 # L10nProbe
 
-> A local-only RimWorld 1.6 dev mod that dumps the complete expected DefInjected key set of selected mods
+> A local-only RimWorld 1.6 and 1.7 dev mod that dumps the complete expected DefInjected key set of selected mods
 
 **Never upload this to the Steam Workshop.** It is a build tool that happens to be a mod: it
 adds no content and changes no behaviour. Its job is to call RimWorld's own def-injection
@@ -31,7 +31,8 @@ A startup-triggered run (`-l10nprobe` or the probe-on-boot setting) also writes
 `Output/log-messages.json`: the game's in-memory log (`Verse.Log.Messages` — type, text,
 repeats, stack trace per message) as of the end of the boot. The family's startup smoke gate
 (`../smoke/startup_smoke.py`) reads message LEVELS from it, because a RimWorld 1.6 Player.log
-carries no stack traces and so no level for a plain `Log.Error`. The same file names the errors
+carries no stack traces and so no level for a plain `Log.Error` (a 1.7 log records the level, and
+the engine reads it there). On both versions the same file is what names the errors
 behind the game's one-line "Translation data for language X has N errors" warning, each with the
 mod file it came from. See `Source/1.6/Probe/LogDump.cs` and `TranslationLoadErrors.cs`.
 

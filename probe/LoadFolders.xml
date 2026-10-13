@@ -3,13 +3,19 @@
   <!--
     LoadFolders.xml - Tells RimWorld which folders to load based on game version.
 
-    This mod requires RimWorld 1.6+.
-    Version-specific content (the assembly) lives in the 1.6/ folder.
     The root "/" loads About/ and other shared metadata, rather than everything,
-    since RimWorld only looks for well-known folders within these directories
+    since RimWorld only looks for well-known folders within these directories.
+    The assembly lives in 1.6/ and serves 1.7 unchanged: the 1.7 runtime maps every
+    UnityEngine reference onto its UnityStubs, so the net472 build loads as-is. The
+    1.7 node is explicit rather than left to the game's highest-lower-version
+    fallback so the intent is visible.
   -->
   <v1.6>
     <li>/</li>
     <li>1.6</li>
   </v1.6>
+  <v1.7>
+    <li>/</li>
+    <li>1.6</li>
+  </v1.7>
 </loadFolders>

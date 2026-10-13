@@ -7,13 +7,11 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
-  <!-- RimWorld Installation Path Configuration -->
-  <!-- Override with environment variables RIMWORLD_PATH / RIMWORLD_DATA_FOLDER or pass -p: properties to dotnet build -->
+  <!-- RimWorld install path: decides only WHERE the build deploys (see DeployToModFolder).
+       Override with the RIMWORLD_PATH environment variable or -p:RimWorldPath=... -->
   <PropertyGroup>
     <RimWorldPath Condition="'$(RimWorldPath)' == ''">$(RIMWORLD_PATH)</RimWorldPath>
   </PropertyGroup>
-
-  <!-- Platform-specific defaults if RIMWORLD_PATH not set -->
   <PropertyGroup Condition="'$(RimWorldPath)' == '' And $([MSBuild]::IsOSPlatform('Windows'))">
     <RimWorldPath>C:\Program Files (x86)\Steam\steamapps\common\RimWorld</RimWorldPath>
   </PropertyGroup>
@@ -23,53 +21,18 @@
   <PropertyGroup Condition="'$(RimWorldPath)' == '' And $([MSBuild]::IsOSPlatform('OSX'))">
     <RimWorldPath>$(HOME)/Library/Application Support/Steam/steamapps/common/RimWorld</RimWorldPath>
   </PropertyGroup>
-
-  <!-- Platform-specific data folder names -->
-  <!-- Override with environment variable RIMWORLD_DATA_FOLDER or pass -p:RimWorldDataFolder="..." to dotnet build -->
   <PropertyGroup>
-    <RimWorldDataFolder Condition="'$(RimWorldDataFolder)' == ''">$(RIMWORLD_DATA_FOLDER)</RimWorldDataFolder>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(RimWorldDataFolder)' == '' And $([MSBuild]::IsOSPlatform('Windows'))">
-    <RimWorldDataFolder>RimWorldWin64_Data</RimWorldDataFolder>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(RimWorldDataFolder)' == '' And $([MSBuild]::IsOSPlatform('Linux'))">
-    <RimWorldDataFolder>RimWorldLinux_Data</RimWorldDataFolder>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(RimWorldDataFolder)' == '' And $([MSBuild]::IsOSPlatform('OSX'))">
-    <RimWorldDataFolder>RimWorldMac_Data</RimWorldDataFolder>
-  </PropertyGroup>
-  <!-- WSL fallback: if Linux data folder not found, try Windows data folder -->
-  <PropertyGroup Condition="'$(RimWorldPath)' != '' And !Exists('$(RimWorldPath)/$(RimWorldDataFolder)/Managed/Assembly-CSharp.dll') And Exists('$(RimWorldPath)/RimWorldWin64_Data/Managed/Assembly-CSharp.dll')">
-    <RimWorldDataFolder>RimWorldWin64_Data</RimWorldDataFolder>
+    <RimWorldInstalled Condition="Exists('$(RimWorldPath)/Mods')">true</RimWorldInstalled>
   </PropertyGroup>
 
-  <!-- Detect if local RimWorld installation exists -->
-  <PropertyGroup>
-    <UseLocalRimWorld Condition="Exists('$(RimWorldPath)/$(RimWorldDataFolder)/Managed/Assembly-CSharp.dll')">true</UseLocalRimWorld>
-  </PropertyGroup>
-
-  <!-- Use local references when RimWorld is installed -->
-  <ItemGroup Condition="'$(UseLocalRimWorld)' == 'true'">
-    <Reference Include="Assembly-CSharp" Private="false">
-      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine" Private="false">
-      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule" Private="false">
-      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.IMGUIModule" Private="false">
-      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/UnityEngine.IMGUIModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.TextRenderingModule" Private="false">
-      <HintPath>$(RimWorldPath)/$(RimWorldDataFolder)/Managed/UnityEngine.TextRenderingModule.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <!-- Fall back to NuGet package when there is no local RimWorld (headless checkout) -->
-  <ItemGroup Condition="'$(UseLocalRimWorld)' != 'true'">
-    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.*" />
+  <!-- The probe compiles against the published 1.6 reference assemblies, never the local
+       install: since RimWorld 1.7 (the Waylith engine, .NET 10) the install is a flat folder
+       with no Managed/ and no 1.6 assemblies, and this net472 build runs unchanged on both
+       1.6 and 1.7 (the 1.7 runtime maps every UnityEngine reference onto its UnityStubs), so
+       the final 1.6 build is the one reference that serves both. The local game is only the
+       decompile target. -->
+  <ItemGroup>
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4871" />
   </ItemGroup>
 
   <!-- No Lib.Harmony reference, unlike the family's mods: the probe only calls public
@@ -139,7 +102,8 @@
   </Target>
 
   <!-- After every local Release build, redeploy into the RimWorld Mods folder
-       (Release-only so a stray Debug build never deploys). Only the canonical
+       (Release-only so a stray Debug build never deploys; gated on the Mods folder
+       existing, not on the install's layout, which 1.7 changed). Only the canonical
        rimworld-l10n checkout may deploy: in a submodule (or worktree) checkout the
        repo root's .git is a gitfile, not a directory, so .git/HEAD does not exist
        and the deploy is skipped — a mod repo's pinned copy can never clobber the
@@ -148,7 +112,7 @@
     <IsCanonicalCheckout Condition="Exists('$(RepoRoot)/../.git/HEAD')">true</IsCanonicalCheckout>
   </PropertyGroup>
   <Target Name="DeployToModFolder" AfterTargets="Build"
-          Condition="'$(UseLocalRimWorld)' == 'true' And '$(Configuration)' == 'Release'">
+          Condition="'$(RimWorldInstalled)' == 'true' And '$(Configuration)' == 'Release'">
     <Message Condition="'$(IsCanonicalCheckout)' != 'true'" Importance="high"
              Text="Skipping probe deploy: this is a submodule/worktree checkout of rimworld-l10n. Build from the canonical clone to deploy." />
     <CallTarget Condition="'$(IsCanonicalCheckout)' == 'true'" Targets="StageMod" />

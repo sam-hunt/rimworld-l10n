@@ -1,6 +1,6 @@
 # L10nProbe — spec
 
-A tiny, local-only RimWorld 1.6 dev mod that dumps the **complete expected
+A tiny, local-only RimWorld 1.6 and 1.7 dev mod that dumps the **complete expected
 DefInjected key set** (with current English values) for selected loaded mods to
 machine-readable files. It replaces the manual in-game translation report in the
 mod family's release flows (UniqueMeleeWeapons, UniqueWeaponsUnbound,
@@ -26,7 +26,9 @@ callable, mod-filterable, and language-independent — this mod calls it.
 ## Decompile-verified API surface (RimWorld 1.6, verified 2026-07-31)
 
 Re-verify against the current build with
-`ilspycmd "$RIMWORLD_PATH/RimWorldWin64_Data/Managed/Assembly-CSharp.dll" -t <Type>`.
+`ilspycmd "$RIMWORLD_PATH/Assembly-CSharp.dll" -t <Type>` (1.7; on 1.6 the assembly is under
+`RimWorldWin64_Data/Managed/`). On 1.7.4976 `Log.Messages`, `Log.LockMessages` and
+`GenCommandLine.CommandLineArgPassed` are unchanged.
 
 - **`Verse.DefInjectionUtility.ForEachPossibleDefInjection(Type defType,
 PossibleDefInjectionTraverser action, ModMetaData onlyFromMod = null)`** —
@@ -211,7 +213,8 @@ Serialises `Verse.Log.Messages` (decompile-verified 1.6.4871: static
 (`LogMessageType.Message|Warning|Error`), `repeats`, and a `StackTrace`
 property RimWorld fills itself via `StackTraceUtility.ExtractStackTrace`).
 Consumer: the family's startup smoke engine, `../smoke/startup_smoke.py`,
-which needs levels a 1.6 Player.log no longer records.
+which needs levels a 1.6 Player.log no longer records (a 1.7 log records them, and the
+engine reads them there; the dump stays the only source of the translation load errors).
 
 ```json
 {
@@ -282,7 +285,8 @@ which needs levels a 1.6 Player.log no longer records.
 
 ## Repo/mod conventions
 
-- RimWorld 1.6 mod layout: `About/About.xml` (packageId `shunter.l10nprobe`),
+- RimWorld mod layout, one `1.6/` assembly serving 1.6 and 1.7 (`LoadFolders.xml` lists both
+  versions): `About/About.xml` (packageId `shunter.l10nprobe`),
   `1.6/Assemblies/`, C# source under `Source/` mirroring the family's csproj
   layout (auto-detect `RIMWORLD_PATH`, `Krafs.Rimworld.Ref` fallback). No
   Harmony dependency expected — everything is public API calls at startup —

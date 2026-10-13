@@ -4,7 +4,7 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 
 ## Project Overview
 
-**L10nProbe** is a local-only RimWorld 1.6 **dev tool shipped as a mod**: it dumps the complete
+**L10nProbe** is a local-only RimWorld 1.6 and 1.7 **dev tool shipped as a mod**: it dumps the complete
 expected DefInjected key set (with current English values) of selected loaded mods to JSON, by
 calling the game's own def-injection walker over the live `DefDatabase`. It adds no content and
 changes no game behaviour. **Never uploaded to the Steam Workshop, no CI, no release flow.**
@@ -37,14 +37,17 @@ dotnet build Source/1.6/L10nProbe.csproj -c Release \
   -t:StageMod -p:StageDir=/path/to/output/L10nProbe
 ```
 
-The build auto-detects the RimWorld install (Windows/Linux/Mac, including WSL targeting a
-Windows install), falling back to the `Krafs.Rimworld.Ref` NuGet package when there is none.
+The build compiles against the pinned `Krafs.Rimworld.Ref` 1.6 package, never the local
+install (a 1.7 install carries no 1.6 assemblies), and deploys whenever `RIMWORLD_PATH/Mods`
+exists (Windows/Linux/Mac defaults, including WSL targeting a Windows install). The one net472
+DLL runs on 1.6 and 1.7 alike: the 1.7 runtime maps its UnityEngine references onto UnityStubs.
 
 **WSL setup:** `RIMWORLD_PATH` in `~/.bashrc` pointing at the Windows install, e.g.
 `/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld`.
 
 Verifying a change end to end means launching the game — the probe only sees a loaded
-`DefDatabase`. `"$RIMWORLD_PATH/RimWorldWin64.exe" -l10nprobe` dumps and quits (~1-2 min boot).
+`DefDatabase`. `"$RIMWORLD_PATH/RimWorld.exe" -l10nprobe` (1.7; `RimWorldWin64.exe` on 1.6) dumps and quits
+(~1-2 min boot).
 
 ### Deployment
 
@@ -107,7 +110,7 @@ The repo lives outside the Mods folder; every local build redeploys.
 - **Emit `suggestedPath`, not a reconstructed path.** The walker already applies
   `TranslationHandleUtility` list handles (`tools.handle.label`, not `tools.0.label`) and
   `TKeySystem` remapping; that string is what a translation file must use.
-- **There is no JSON library.** RimWorld's `Managed/` ships no Newtonsoft, and
+- **There is no JSON library.** RimWorld ships no Newtonsoft, and
   `UnityEngine.JsonUtility` is class-shaped (no dictionaries), so the writer is hand-rolled.
   Output must be **stable-sorted and byte-identical across runs** (`meta.generated` aside) —
   consumers check dumps into git and diff them.
@@ -123,7 +126,9 @@ The repo lives outside the Mods folder; every local build redeploys.
 ## Debugging
 
 1. **Dev Mode:** Settings > Dev Mode > Logging.
-2. **Log:** `%USERPROFILE%\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\Player.log`
-   (WSL: `/mnt/c/Users/*/AppData/LocalLow/Ludeon Studios/RimWorld by Ludeon Studios/Player.log`).
-3. **Inspect the API:** `ilspycmd "/mnt/c/.../RimWorldWin64_Data/Managed/Assembly-CSharp.dll" -t "Namespace.ClassName"`.
+2. **Log:** `%USERPROFILE%\AppData\LocalLow\Ludeon Studios\RimWorld by Ludeon Studios\Logs\Player.log`
+   on 1.7 (timestamped, levelled, with stack frames), `...\RimWorld by Ludeon Studios\Player.log`
+   on 1.6 (WSL: the same under `/mnt/c/Users/*/AppData/LocalLow/`).
+3. **Inspect the API:** `ilspycmd "$RIMWORLD_PATH/Assembly-CSharp.dll" -t "Namespace.ClassName"`
+   on 1.7 (`RimWorldWin64_Data/Managed/Assembly-CSharp.dll` on 1.6).
    Re-verify SPEC.md's API section against the installed build whenever RimWorld updates.
