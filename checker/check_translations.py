@@ -58,7 +58,11 @@
 #   Sidecar:     generated with the right DLC set (MayRequire-gated defs
 #                vanish from a dump made without their DLC), fresh against
 #                Defs/ (defNames and label/description English text)
-#   LoadFolders: every Defs/ or Languages/ root sits in a listed load folder
+#   LoadFolders: every Defs/ or Languages/ root sits in a listed load folder,
+#                and only the roots the game loads on the sidecar's game
+#                version (meta.gameBuild) are checked: a repo that keeps a
+#                frozen 1.6/ tree beside its live 1.7/ one is checked as
+#                the 1.7 game loads it (see resolve_load_folders)
 #   Engine pin:  this engine checkout's HEAD (the l10n/ submodule in a
 #                consuming repo) is compared to upstream rimworld-l10n's
 #                release tags (vMAJOR.MINOR.PATCH, read via git ls-remote —
@@ -353,8 +357,8 @@ def load_language_xml(path, report):
 
 def collect_keyed(lang_dirs, report):
     # key -> (text, en_comment, path). Takes every root a language occupies (the
-    # main 1.6/Languages/<Lang> plus any LoadFolders-gated compat root under
-    # 1.6/Mods/<Mod Name>/Languages/<Lang>); the game merges them into one
+    # main <version>/Languages/<Lang> plus any LoadFolders-gated compat root under
+    # <version>/Mods/<Mod Name>/Languages/<Lang>); the game merges them into one
     # LoadedLanguage, so duplicate keys collide across roots too.
     keyed = {}
     for lang_dir in lang_dirs:
@@ -713,13 +717,15 @@ def package_ids(text):
             for p in text.split(",") if p.strip()}
 
 
-def load_folders(root):
-    # LoadFolders.xml as {resolved load root: [condition, ...]}, one
-    # condition per <li> listing the root under any version node (a root
-    # listed twice loads if either entry passes). A condition is
-    # {"any"|"all"|"not": set of ids, "raw": [(attribute, lowercased value
-    # as written)]}. None when the mod has no (readable) LoadFolders.xml:
-    # every root then loads.
+def parse_load_folders(root):
+    # LoadFolders.xml as {version node name: {resolved load root:
+    # [condition, ...]}}, one condition per <li> listing the root under that
+    # node (a root listed twice loads if either entry passes). Node names
+    # are lowercased with a leading "v" dropped, as the game reads them
+    # (Verse.ModLoadFolders.LoadDataFromXmlCustom), so "1.6" and "default".
+    # A condition is {"any"|"all"|"not": set of ids, "raw": [(attribute,
+    # lowercased value as written)]}. None when the mod has no (readable)
+    # LoadFolders.xml: every root then loads.
     path = root / "LoadFolders.xml"
     if not path.is_file():
         return None
@@ -727,8 +733,13 @@ def load_folders(root):
         tree = ET.parse(path).getroot()
     except ET.ParseError:
         return None
-    folders = {}
+    nodes = {}
     for version in tree:
+        if version.tag is ET.Comment:
+            continue
+        name = version.tag.lower()
+        name = name[1:] if name.startswith("v") else name
+        folders = nodes.setdefault(name, {})
         for li in version.findall("li"):
             text = (li.text or "").strip().strip("/")
             cond = {"raw": []}
@@ -738,7 +749,77 @@ def load_folders(root):
                     cond[kind] = package_ids(value)
                     cond["raw"].append((attr, value.strip().lower()))
             folders.setdefault((root / text).resolve(), []).append(cond)
+    return nodes
+
+
+def load_folders(root):
+    # Every root LoadFolders.xml lists under ANY version node, merged as
+    # {resolved load root: [condition, ...]}: the version-independent
+    # question "is this root listed at all". None without a LoadFolders.xml.
+    nodes = parse_load_folders(root)
+    if nodes is None:
+        return None
+    folders = {}
+    for per_root in nodes.values():
+        for load_root, conds in per_root.items():
+            folders.setdefault(load_root, []).extend(conds)
     return folders
+
+
+GAME_VERSION_RE = re.compile(r"^(\d+)\.(\d+)")
+
+
+def sidecar_game_version(meta):
+    # (major, minor) of the build the sidecar was dumped on, from
+    # meta.gameBuild ("1.7.4976 rev1043"); None when absent or unparsable.
+    m = GAME_VERSION_RE.match(str(meta.get("gameBuild") or ""))
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
+
+def resolve_load_folders(root, version):
+    # The roots the game loads on a given (major, minor) version, with the
+    # same resolution as Verse.ModContentPack.InitLoadFolders (decompile-
+    # verified on 1.7.4976; the same shape on 1.6): the highest-numbered
+    # version node at or below the running version, else the "default"
+    # node, else nothing from the file (the game then loads the mod root
+    # and the bare <major.minor>/ folder). The game looks its full
+    # "1.7.4976" string up first, which no node is ever named, so the
+    # "highest at or below" branch is the one that runs for every mod; it
+    # sorts node names as strings, which this mirrors numerically (the two
+    # agree until a minor version reaches 10). Returns ({resolved load
+    # root: [condition, ...]}, note): note is None on a node named for the
+    # version itself, else one sentence on the fallback taken; (None, None)
+    # without a LoadFolders.xml.
+    nodes = parse_load_folders(root)
+    if nodes is None:
+        return None, None
+    numbered = {}
+    for name in nodes:
+        m = GAME_VERSION_RE.match(name)
+        if m and name == f"{m.group(1)}.{m.group(2)}":
+            numbered[(int(m.group(1)), int(m.group(2)))] = name
+    wanted = f"{version[0]}.{version[1]}"
+    candidates = [v for v in numbered if v <= version]
+    if candidates:
+        name = numbered[max(candidates)]
+        if name == wanted:
+            return nodes[name], None
+        return nodes[name], (f"no <v{wanted}> node for the sidecar's game "
+                             f"version {wanted}; the game falls back to "
+                             f"<v{name}>, whose roots were checked — add an "
+                             f"explicit <v{wanted}> node listing the folders "
+                             f"{wanted} should load")
+    if "default" in nodes:
+        return nodes["default"], (f"no version node at or below the "
+                                  f"sidecar's game version {wanted}; the "
+                                  f"game falls back to <default>, whose "
+                                  f"roots were checked")
+    bare = {root.resolve(): [{"raw": []}]}
+    if (root / wanted).is_dir():
+        bare[(root / wanted).resolve()] = [{"raw": []}]
+    return bare, (f"no version node at or below the sidecar's game version "
+                  f"{wanted} and no <default> node; the game loads only the "
+                  f"mod root and {wanted}/ — add a <v{wanted}> node")
 
 
 def condition_holds(cond, packages):
@@ -918,7 +999,7 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report,
     # lang_dirs is EVERY root this language occupies, checked as one unit the
     # way English already is (and the way the game loads them). A gated compat
     # root is not a language of its own: a compat-root trait's injections can
-    # only live under 1.6/Mods/<Mod Name>/Languages/<Lang>/ (MayRequire
+    # only live under <version>/Mods/<Mod Name>/Languages/<Lang>/ (MayRequire
     # is ignored on DefInjected, so the LoadFolders gate has to be the folder),
     # yet the sidecar marks them required — checking that root standalone would
     # demand the whole Keyed set and every other def's injections from it.
@@ -1218,11 +1299,26 @@ def main():
 
     # Which load roots each world loads. A Defs/ or Languages/ root sitting
     # in no listed load folder never loads in any configuration: report it
-    # and leave it out. A listed root whose gate no world activates is
-    # checked in EVERY world instead, as it was before worlds existed: it
-    # loads for players who have the gate, so leaving it unchecked would
-    # hide its content, and check_sidecar_freshness names the missing gate.
-    folders = load_folders(args.root)
+    # and leave it out. A root listed only under version nodes the sidecar's
+    # game version does not resolve to (a frozen 1.6/ tree beside the live
+    # 1.7/ one) is not loaded by the game the sidecar describes: it is
+    # noted and left out too, never checked against that sidecar. A listed,
+    # live root whose gate no world activates is checked in EVERY world
+    # instead, as it was before worlds existed: it loads for players who
+    # have the gate, so leaving it unchecked would hide its content, and
+    # check_sidecar_freshness names the missing gate.
+    listed = load_folders(args.root)
+    version = sidecar_game_version(sidecar.meta)
+    if listed is None:
+        folders = None
+    elif version is None:
+        print("note: the sidecar's meta.gameBuild names no X.Y game version; "
+              "every LoadFolders.xml version node is treated as live.")
+        folders = listed
+    else:
+        folders, note = resolve_load_folders(args.root, version)
+        if note:
+            report.warn("[LoadFolders.xml]", note)
     worlds = list(sidecar.worlds)
     packages = {w: world_packages(sidecar.worlds[w]) for w in worlds}
 
@@ -1235,12 +1331,18 @@ def main():
         load_root = content_dir.parent
         if load_root in load_roots:
             continue
-        if folders is not None and load_root.resolve() not in folders:
+        if listed is not None and load_root.resolve() not in listed:
             report.error("[LoadFolders.xml]",
                          f"{load_root} holds {content_dir.name}/ but is "
                          f"listed in no <li>, so the game never loads it — "
                          f"list it (gated if it is compat content) or "
                          f"remove it")
+            load_roots[load_root] = []
+            continue
+        if folders is not None and load_root.resolve() not in folders:
+            print(f"note: {load_root} is listed only for game versions other "
+                  f"than the sidecar's {version[0]}.{version[1]}; not "
+                  f"checked.")
             load_roots[load_root] = []
             continue
         load_roots[load_root] = [w for w in worlds if gate_active(load_root, w)] \

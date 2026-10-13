@@ -84,7 +84,7 @@ class Fixture:
             path.write_text(text if isinstance(text, str) else
                             json.dumps(text, indent=2), encoding="utf-8")
 
-    def run(self):
+    def run(self, strict=False):
         engine.REPO_ROOT = self.root
         engine.REQUIRED_DLCS = set()
         engine.PARITY_EXEMPT_FIELDS = set()
@@ -92,7 +92,7 @@ class Fixture:
         engine.ALLOW_NO_KEYED_SURFACE = True
         engine.WORKSHOP_TITLE_KEY = None
         out = io.StringIO()
-        with mock.patch.object(sys, "argv", ["check"]), \
+        with mock.patch.object(sys, "argv", ["check"] + (["--strict"] if strict else [])), \
                 mock.patch.dict(os.environ, {"L10N_SKIP_PIN_CHECK": "1"}), \
                 contextlib.redirect_stdout(out):
             code = engine.main()
@@ -140,6 +140,68 @@ class LoadFoldersTest(unittest.TestCase):
     def test_no_load_folders(self):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertIsNone(engine.load_folders(Path(tmp)))
+            self.assertEqual(engine.resolve_load_folders(Path(tmp), (1, 7)),
+                             (None, None))
+
+
+SPLIT_LOAD_FOLDERS = ('<?xml version="1.0" encoding="utf-8"?>\n<loadFolders>\n'
+                      "  <!-- frozen -->\n"
+                      "  <v1.6>\n    <li>/</li>\n    <li>1.6</li>\n  </v1.6>\n"
+                      "  <v1.7>\n    <li>/</li>\n    <li>1.7</li>\n  </v1.7>\n"
+                      "</loadFolders>\n")
+
+
+class ResolveLoadFoldersTest(unittest.TestCase):
+    # The game's own rule (Verse.ModContentPack.InitLoadFolders): the
+    # highest version node at or below the running version, else <default>,
+    # else the bare root and <version>/ folders.
+
+    def test_sidecar_game_version(self):
+        self.assertEqual(engine.sidecar_game_version({"gameBuild": "1.7.4976 rev1043"}), (1, 7))
+        self.assertEqual(engine.sidecar_game_version({"gameBuild": "1.6.test"}), (1, 6))
+        self.assertIsNone(engine.sidecar_game_version({"gameBuild": "unknown"}))
+        self.assertIsNone(engine.sidecar_game_version({}))
+
+    def test_exact_node_wins_and_older_nodes_are_not_live(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / "LoadFolders.xml").write_text(SPLIT_LOAD_FOLDERS, encoding="utf-8")
+            live, note = engine.resolve_load_folders(root, (1, 7))
+            self.assertIsNone(note)
+            self.assertEqual(set(live), {root, root / "1.7"})
+            live, note = engine.resolve_load_folders(root, (1, 6))
+            self.assertIsNone(note)
+            self.assertEqual(set(live), {root, root / "1.6"})
+            # Every node stays listed for the "stray root" check.
+            self.assertEqual(set(engine.load_folders(root)),
+                             {root, root / "1.6", root / "1.7"})
+
+    def test_fallback_to_the_highest_lower_node_is_noted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / "LoadFolders.xml").write_text(SPLIT_LOAD_FOLDERS, encoding="utf-8")
+            live, note = engine.resolve_load_folders(root, (1, 8))
+            self.assertEqual(set(live), {root, root / "1.7"})
+            self.assertIn("no <v1.8> node", note)
+            self.assertIn("falls back to <v1.7>", note)
+            self.assertIn("add an explicit <v1.8> node", note)
+
+    def test_default_node_then_bare_folders(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / "LoadFolders.xml").write_text(
+                SPLIT_LOAD_FOLDERS.replace("</loadFolders>",
+                                           "  <default>\n    <li>Common</li>\n"
+                                           "  </default>\n</loadFolders>"),
+                encoding="utf-8")
+            live, note = engine.resolve_load_folders(root, (1, 5))
+            self.assertEqual(set(live), {root / "Common"})
+            self.assertIn("falls back to <default>", note)
+            (root / "LoadFolders.xml").write_text(SPLIT_LOAD_FOLDERS, encoding="utf-8")
+            (root / "1.5").mkdir()
+            live, note = engine.resolve_load_folders(root, (1, 5))
+            self.assertEqual(set(live), {root, root / "1.5"})
+            self.assertIn("loads only the mod root and 1.5/", note)
 
 
 class SidecarViewTest(unittest.TestCase):
@@ -316,6 +378,74 @@ class MainTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn(f"gated on {VGE}, which was not active during the probe "
                       f"boot — add the gate to CANONICAL_ACTIVE_MODS", out)
+
+
+class SplitVersionsTest(unittest.TestCase):
+    # A repo with a frozen 1.6/ tree beside its live 1.7/ one: the sidecar's
+    # game version decides which tree the checker reads, as the game does.
+
+    def files(self, game_build, load_folders=SPLIT_LOAD_FOLDERS):
+        stale = [("FX_Helmet.label", "helmet", "casque"),
+                 ("FX_Helmet.description", "An old helmet.", "Un casque.")]
+        return {
+            "LoadFolders.xml": load_folders,
+            "1.6/Defs/Things.xml": DEFS,
+            "1.6/Languages/French/DefInjected/ThingDef/Things.xml":
+                language_file(stale),
+            "1.7/Defs/Things.xml": DEFS,
+            "1.7/Languages/French/DefInjected/ThingDef/Things.xml":
+                language_file(MAIN_FRENCH),
+            "Scripts/expected-injections.json": {
+                "meta": {"gameBuild": game_build, "activeDlcs": ["Core"],
+                         "activeMods": BASE_MODS},
+                "defInjections": {"ThingDef": dict(BASE_ENTRIES)}},
+        }
+
+    def check(self, files, strict=False):
+        fx = Fixture(files)
+        self.addCleanup(fx.close)
+        return fx.root, *fx.run(strict)
+
+    def test_a_1_7_sidecar_checks_the_1_7_tree_only(self):
+        root, code, out = self.check(self.files("1.7.4976 rev1043"))
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"note: {root / '1.6'} is listed only for game versions "
+                      f"other than the sidecar's 1.7; not checked.", out)
+        self.assertNotIn("stale", out)
+        self.assertNotIn("WARNING", out)
+
+    def test_a_1_6_sidecar_checks_the_frozen_tree(self):
+        root, code, out = self.check(self.files("1.6.4871 rev591"))
+        self.assertEqual(code, 1)
+        self.assertIn(f"ERROR   {root / '1.6/Languages/French/DefInjected/ThingDef/Things.xml'}: "
+                      f"<FX_Helmet.description> is STALE", out)
+        self.assertIn(f"note: {root / '1.7'} is listed only", out)
+
+    def test_missing_version_node_warns_and_checks_the_fallback(self):
+        only_1_6 = SPLIT_LOAD_FOLDERS.replace(
+            "  <v1.7>\n    <li>/</li>\n    <li>1.7</li>\n  </v1.7>\n", "")
+        files = self.files("1.7.4976 rev1043", only_1_6)
+        del files["1.7/Defs/Things.xml"]
+        del files["1.7/Languages/French/DefInjected/ThingDef/Things.xml"]
+        files["1.6/Languages/French/DefInjected/ThingDef/Things.xml"] = \
+            language_file(MAIN_FRENCH)
+        _, code, out = self.check(files)
+        self.assertEqual(code, 0, out)
+        self.assertIn("WARNING [LoadFolders.xml]: no <v1.7> node for the sidecar's "
+                      "game version 1.7; the game falls back to <v1.6>", out)
+        _, code, out = self.check(files, strict=True)
+        self.assertEqual(code, 1)
+
+    def test_unparsable_game_build_treats_every_node_as_live(self):
+        root, code, out = self.check(self.files("unknown"))
+        self.assertEqual(code, 1)
+        self.assertIn("note: the sidecar's meta.gameBuild names no X.Y game "
+                      "version; every LoadFolders.xml version node is treated "
+                      "as live.", out)
+        # Both trees read as one mod, as before this rule existed: the
+        # frozen copy's staleness and its collisions with the live tree.
+        self.assertIn("<FX_Helmet.description> is STALE", out)
+        self.assertIn("duplicate key <FX_Helmet.label>", out)
 
 
 class MergeWorldsTest(unittest.TestCase):
