@@ -172,6 +172,9 @@ family and are safe defaults for new work.
 | Attack {0} / Attacking {0}. | {0}を攻撃 / {0}を攻撃中 | | Odyssey `Outpost` approach strings — verbatim; ja drops the English's trailing period on both |
 | reportStrings (clean/rescue/tend/feed/hack/open/board) | TargetAを掃除中 / TargetAを救助中 / TargetAの看病中 / TargetAをTargetBに給仕中 / TargetAをハッキングしている / TargetAを開封中 / TargetAに乗り込んでいる | | Core+Odyssey `JobDef`s — verbatim. No trailing period, and TargetA/TargetB stay bare |
 | advanced fabrication (research) | 先進組立製造 | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
+| MPa / mm RHA (Combat Extended units) | MPa / mm RHA | メガパスカル in a label | CE 16.7.4 ships no Japanese, so CE's own info card shows the English `CE_MPa`/`CE_mmRHA`; JIS Z 8203 uses the Latin SI symbols |
+| blunt armor / sharp armor | アーマー - 打撲系 / アーマー - 突刺系 | 鈍器, 鋭利 | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; ja keeps アーマー for armor |
+| flak vest / flak jacket / frag grenade | 防弾チョッキ / 防弾ジャケット / 手榴弾 | 破片手榴弾 | Core labels — verbatim; ja's frag grenade is plain 手榴弾 |
 
 ## Pitfalls and lessons
 

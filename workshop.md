@@ -3,7 +3,7 @@
 Family-wide conventions for the `.steamworkshop/` folder each mod repo carries.
 Nothing in that folder ships with a mod (the StageMod manifest never matches it)
 or is loaded by RimWorld — it is publishing metadata for the mod's Workshop page.
-A `Media/` folder for Workshop images can live beside it.
+An `Images/` folder beside it holds the page's gallery images, uploaded by hand.
 
 ## Description/ layout
 

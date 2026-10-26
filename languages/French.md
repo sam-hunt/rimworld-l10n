@@ -291,6 +291,10 @@ alternative and why.
 | Cancel / Reset / Confirm | Annuler / Réinitialiser / Confirmer | | Core buttons |
 | Reset to defaults / Default / None | Réinitialiser les valeurs par défaut / Par défaut / Aucune | | Core `ResetBinding`, `Default`, `None` |
 | advanced fabrication (research) | fabrication avancée | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
+| MPa / mm RHA (Combat Extended units) | MPa / mm RHA | mégapascal spelled out in a label | CE 16.7.4 fr Keyed lacks `CE_MPa`/`CE_mmRHA`, so CE's own info card shows the English fallback "MPa"/"mm RHA"; the SI symbols are the same in French |
+| blunt armor / sharp armor | Armure - Contondant / Armure - Perforant | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label` |
+| armor penetration | Pénétration d'armure | | CE fr `CE_DescArmorPenetration` — verbatim, the same as the family's existing settings strings |
+| flak vest / flak jacket / frag grenade | gilet pare-balles / veste renforcée / grenade à fragmentation | | Core labels — verbatim |
 
 ## Pitfalls and lessons
 

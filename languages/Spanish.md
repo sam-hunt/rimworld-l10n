@@ -202,6 +202,10 @@ strings unless noted):
 | starting people (ScenPart) | personas iniciales | | Core `ConfigPage_ConfigureStartingPawns.label` — identical English source, reuse verbatim |
 | fueled / electric smithy vs machining table vs fabrication bench vs generic workbench | forja de leña / forja eléctrica vs mesa de maquinado vs mesa de ensamblaje vs mesa de trabajo | banco de trabajo, estación de trabajo (generic); mesa de fabricación, mesa de mecanizado (specific benches) | Core building labels — each specific bench has its own name; only the *generic* concept is `mesa de trabajo`. `Smithing` the **skill**/WorkType is `Forja` while `Smithing` the **research project** is `herrería` — same defName pattern, two different defs, two different words; check the def type before reusing a lookup |
 | advanced fabrication (research) | fabricación avanzada | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
+| MPa / mm RHA (Combat Extended units) | MPa / mm RHA | megapascal spelled out in a label | CE 16.7.4 es `CE_MPa`/`CE_mmRHA` — verbatim |
+| blunt armor / sharp armor | Armadura - Contundente / Armadura - Cortante | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label` |
+| armor penetration | Penetración de armadura | Penetración de blindaje | CE es `CE_DescArmorPenetration` says blindaje; Core's armor stat is Armadura and the family's existing settings strings follow it |
+| flak vest / flak jacket / frag grenade | chaleco antibalas / chaqueta antibalas / granadas de fragmentación | | Core labels — verbatim; the grenade label is plural |
 
 ## Pitfalls and lessons
 

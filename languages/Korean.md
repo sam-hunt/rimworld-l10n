@@ -171,6 +171,10 @@ strings unless noted):
 | colour labels | `~색` (은색, 회색) | | Core `ColorDef`s |
 | reportStrings (clean/rescue/tend/feed/open/hack) | TargetA 청소 중 / TargetA 구조 중 / TargetA 간호 중 / TargetB에게 TargetA 먹여주는 중 / TargetA 여는 중 / {TargetA} 해킹 중 | | Core `JobDef`s — verbatim. Core's own `Hack.reportString` keeps braces around `{TargetA}`; drop them when reusing the pattern in a mod's own def, since the English `TargetA` symbol has no braces and a placeholder-parity checker reads the retained braces as an invented placeholder |
 | advanced fabrication (research) | 고급 부품 | 고급 제작 | Core `AdvancedFabrication.label` — verbatim; vanilla ko deliberately names the research identically to the advanced-component item, don't "fix" it (verified 2026-08-18) |
+| MPa / mm RHA (Combat Extended units) | MPa / mm RHA | 메가파스칼 in a label | CE 16.7.4 ko Keyed lacks `CE_MPa`/`CE_mmRHA`, so CE's own info card shows the English fallback; KS A ISO 80000 uses the Latin symbols |
+| blunt armor / sharp armor | 방어도 - 둔탁함 / 방어도 - 날카로움 | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label` |
+| armor penetration | 관통력 | 보호구 관통 | CE ko `CE_DescArmorPenetration` says 보호구 관통; the family's existing settings strings use 관통력, keep it |
+| flak vest / flak jacket / frag grenade | 방탄조끼 / 방탄재킷 / 파편 수류탄 | | Core labels — verbatim |
 
 ## Pitfalls and lessons
 

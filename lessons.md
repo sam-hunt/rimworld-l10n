@@ -301,6 +301,19 @@ tied to their def types. One pointer worth keeping visible: Core ships
 curated word corpora under `Strings/Words/` — check them before coining a
 name-grammar noun for any mod that adds name generation.
 
+- **Combat Extended jargon is grounded in CE's own shipped `Languages/`, and
+  that ground is patchy.** CE 16.7.4 ships Keyed sets for zh-Hans, zh-Hant,
+  fr, ko, pt-BR, ru and es, nothing for ja, and a `German/Keyed/Text.xml`
+  that is a stray Achtung! file; fr and ko lack the unit keys
+  `CE_MPa`/`CE_mmRHA`. A player in those languages sees CE's own info card
+  in English for the units, so a mod's MPa text matches the card by using
+  the Latin SI symbol everywhere except zh-Hant (兆帕 / 毫米均質裝甲) and ru
+  (МПа / мм RHA). Where CE's wording and Core's differ for a vanilla concept
+  (es blindaje vs Core Armadura, zh-Hant 鈍器 vs Core 鈍擊, ko 보호구 관통 vs
+  the family's 관통력), Core wins, as for any pack. Per-language rows sit
+  under "Grounded common vocabulary". (2026-10-27, Shipcracker Warcasket's
+  CE root.)
+
 ## Tooling lessons (cross-mod, not language-specific)
 
 - **A RimWorld 1.6 Player.log carries no stack traces, so a `Log.Error` is

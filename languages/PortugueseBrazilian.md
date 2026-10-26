@@ -192,6 +192,10 @@ mod-coined, and several are independently corroborated by more than one repo.
 | reportStrings (clean/rescue/**hack**/open/board) | limpando TargetA. / resgatando TargetA. / **hackeando TargetA.** / abrindo TargetA. / entrando em TargetA. | | Core+Odyssey `JobDef`s — verbatim gerund phrases that KEEP the trailing period (matches Spanish/French, unlike Russian/Korean) |
 | starting people (ScenPart) | Pessoas Iniciais | | Core `ConfigPage_ConfigureStartingPawns.label` |
 | advanced fabrication (research) | fabricação avançada | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
+| MPa / mm RHA (Combat Extended units) | MPa / mm RHA | megapascal spelled out in a label | CE 16.7.4 pt-BR `CE_MPa`/`CE_mmRHA` — verbatim |
+| blunt armor / sharp armor | Resistência - Contundente / Resistência - Cortante | Armadura - … | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; pt-BR's armor stat is "Resistência" |
+| armor penetration | Penetração de armadura | | CE pt-BR `CE_DescArmorPenetration` — verbatim, the same as the family's existing settings strings |
+| flak vest / flak jacket / frag grenade | colete de artilharia / jaqueta de artilharia / granadas de fragmentação | colete antibalas | Core labels — verbatim; the grenade label is plural |
 
 ## Pitfalls and lessons
 

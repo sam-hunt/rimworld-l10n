@@ -204,6 +204,9 @@ strings unless noted):
 | tech levels | neolithisch / mittelalterlich / industriell / Raumfahrt / Ultra / Archotech | Weltraum, Ultratech | Core `TechLevel_*`; "tech level" itself is Techstufe |
 | wood / plasteel / uranium / jade / steel / silver / gold | Holz / Plastahl / Uran / Jade / Stahl / Silber / Gold | Plasteel, Plastik | Core labels — Plastahl is translated, unlike some other family languages |
 | advanced fabrication (research) | Hightech-Fabrikation | | Core `AdvancedFabrication.label` — verbatim (verified 2026-08-18) |
+| MPa / mm RHA (Combat Extended units) | MPa / mm RHA | Megapascal spelled out in a label | CE 16.7.4 ships no German (its `Languages/German/Keyed/Text.xml` is a stray Achtung! file), so CE's own info card shows the English `CE_MPa`/`CE_mmRHA`; DIN 1301 symbols are the same |
+| blunt armor / sharp armor | Rüstung - Wucht / Rüstung - Schnitt | stumpf, scharf | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; Wucht/Schnitt are the damage classes in prose too |
+| flak vest / flak jacket / frag grenade | Schutzweste / Schutzjacke / Splitterhandgranaten | Flakweste | Core labels — verbatim; the grenade label is plural in de |
 
 ## Pitfalls and lessons
 

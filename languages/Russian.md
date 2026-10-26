@@ -133,6 +133,10 @@ strings unless noted):
 | starting people (ScenPart) | людей в начале | | Core `ConfigPage_ConfigureStartingPawns.label` — identical English source, reuse verbatim |
 | reportStrings (clean/rescue/tend/feed/hack/open) | убирает TargetA / спасает TargetA / лечит TargetA / скармливает TargetA TargetB / взламывает TargetA / открывает TargetA | | Core `JobDef`s — verbatim; a mod's NPC-safe copies of these JobDefs can reuse them 1:1. Odyssey's `Open`/`EnterTransporter` wrap TargetA in `{lookup: {TargetA}; Case; 3}` — **don't copy that**, the bare English `TargetA` has no braces so a placeholder-parity checker reads the wrapper as an invented placeholder |
 | advanced fabrication (research) | сверхвысокоточное производство | высокоточное производство | Core `AdvancedFabrication.label` — verbatim; the сверх- prefix is required, the shorter form reads as the fabrication-bench root (высокоточный станок) (verified 2026-08-18) |
+| MPa / mm RHA (Combat Extended units) | МПа / мм RHA | MPa in Latin | CE 16.7.4 ru `CE_MPa`/`CE_mmRHA` — verbatim (GOST 8.417 МПа; RHA stays Latin) |
+| blunt armor / sharp armor | Броня: Удар / Броня: Проникновение | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; CE's `CE_DescBluntPenetration`/`CE_DescSharpPenetration` reuse Удар/Проникновение |
+| armor penetration | Бронепробитие | | CE ru `CE_DescArmorPenetration` — verbatim, the same as the family's existing settings strings |
+| flak vest / flak jacket / frag grenade | бронежилет / бронекуртка / осколочные гранаты | | Core labels — verbatim; the grenade label is plural |
 
 ## Pitfalls and lessons
 

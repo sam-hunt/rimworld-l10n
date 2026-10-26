@@ -285,6 +285,15 @@ disagree with the persona-weapon table above are noted inline.
 | blue (plain colour label) | 藍色 | Core `Structure_Blue.label`; Core Keyed `Blue` is left untranslated English and is not a usable source |
 | DLC brand names (full set) | 「皇權」/「理念」/「生機」/「異邪」/「漫遊」 | Core `SimulateNotOwning*` — extends the Royalty/Ideology/Odyssey trio recorded above with Biotech and Anomaly |
 
+## Grounded common vocabulary, Combat Extended domain (CE 16.7.4 shipped zh-Hant + Core, 2026-10-27)
+
+| English | Use | Why |
+|---|---|---|
+| MPa / mm RHA (Combat Extended units) | 兆帕 / 毫米均質裝甲 | CE 16.7.4 zh-Hant `CE_MPa`/`CE_mmRHA` spell the units out, unlike zh-Hans which keeps MPa/mm RHA; match CE's own info card |
+| blunt armor / sharp armor | 防禦 - 鈍擊 / 防禦 - 利刃 | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; CE's `CE_DescBluntPenetration` = 鈍器防護 says 鈍器 where Core's stat says 鈍擊, and Core wins |
+| armor penetration | 護甲穿透值 | Core `ArmorPenetration` (see above); CE's `CE_DescArmorPenetration` drops the 值, and Core wins |
+| flak vest / flak jacket / frag grenade | 防彈背心 / 防彈夾克 / 手榴彈 | Core labels — verbatim; zh-Hant's frag grenade is plain 手榴彈 |
+
 ## RulePackDef / name-generation grammar
 
 Official zh-Hant `NamerUniqueWeapon` (Odyssey

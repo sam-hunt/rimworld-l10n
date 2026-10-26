@@ -116,6 +116,9 @@ mod builds on (BTG, 2026-08-09):
 | [faction_name] became hostile to you. | [faction_name]开始与你敌对了。 | | Core `TradeRequest` — verbatim |
 | Attack {0} / Attacking {0}. | 进攻{0} / 正在进攻{0}。 | | Core site approach strings — verbatim |
 | reportStrings (clean/rescue/tend/feed/hack/open) | 清理TargetA。/ 救援TargetA。/ 治疗TargetA。/ 将TargetA喂给TargetB吃。/ 骇入TargetA。/ 打开TargetA。 | | Core `JobDef`s — verbatim; NPC-safe copies of these JobDefs can reuse them 1:1 |
+| MPa / mm RHA (Combat Extended units) | MPa / mm RHA | 兆帕, 毫米均质装甲 | CE 16.7.4 zh-Hans `CE_MPa`/`CE_mmRHA` keep the Latin symbols, so match CE's own info card; the spelled-out forms are zh-Hant's |
+| blunt armor / sharp armor | 护甲 - 钝器 / 护甲 - 利器 | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; CE's `CE_DescBluntPenetration` = 钝器穿透 uses the same 钝器/利器 classes |
+| flak vest / flak jacket / frag grenade | 防弹背心 / 防弹夹克 / 破片手榴弹 | | Core labels — verbatim |
 
 Also confirmed independently by UWU: **caravan / quest / forbidden / cannot
 reach** → 远行队 / 任务 / 已禁用 / 无法到达, never 商队 for caravan (Core
