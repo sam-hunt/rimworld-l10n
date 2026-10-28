@@ -15,7 +15,8 @@ namespace L10nProbe;
 // scripts grep for it) and leaves NO output file at that mod's path — the dump is written to a
 // temp name and renamed only on success, and a pre-existing file at the target is deleted even
 // when the run fails, so a stale-but-complete dump can never masquerade as a fresh one. One
-// mod's failure does not stop the others.
+// mod's failure does not stop the others. A target absent from the active mod list is not a
+// failure but a skip, logged at Message level with the same stale-output deletion (see RunAll).
 public static class ProbeRunner
 {
     // Shown in the settings window so a manual run gives feedback without opening the log.
@@ -40,16 +41,30 @@ public static class ProbeRunner
 
         int written = 0;
         List<string> failed = new List<string>();
+        List<string> skipped = new List<string>();
         foreach (string packageId in targets)
         {
             string outPath = settings.OutputPathFor(packageId);
+            // A ticked target that is not in this boot's mod list is the normal shape of every
+            // family boot, not a failure: a refresh or smoke run pins ONE consumer's minimal
+            // list while every sibling stays ticked, so a clean boot used to log one
+            // Log.Error per absent sibling (15 on a BionicThumbGuild refresh) and read as
+            // broken to anything counting errors. It is a skip at Message level — but its
+            // stale output still goes, so a dump from an older boot can never pass as this
+            // one's (the refresh engine deletes its own target's file before launching, and
+            // refuses any dump whose meta.activeMods is not the pinned list, so the dump SET
+            // is never silently short on the consumer's side).
+            ModMetaData mod = ModLister.GetActiveModWithIdentifier(packageId);
+            if (mod == null)
+            {
+                skipped.Add(packageId);
+                DeleteQuietly(outPath + ".tmp");
+                string stale = DeleteQuietly(outPath) ? $"; deleted its stale {outPath}" : "";
+                Log.Message($"{L10nProbeMod.LogPrefix} skipped {packageId}: not in the active mod list{stale}");
+                continue;
+            }
             try
             {
-                // A configured target that is not active means the dump SET is silently short —
-                // exactly the failure mode the probe exists to eliminate — so it is an error,
-                // not a skip.
-                ModMetaData mod = ModLister.GetActiveModWithIdentifier(packageId)
-                    ?? throw new InvalidOperationException("mod is not in the active mod list");
                 WriteDump(mod, outPath, collectedAfterStartup: !atStartup);
                 written++;
                 Log.Message($"{L10nProbeMod.LogPrefix} wrote {outPath}");
@@ -68,9 +83,12 @@ public static class ProbeRunner
 
         // Invariant culture so the seconds figure never grows a comma decimal separator.
         string elapsed = stopwatch.Elapsed.TotalSeconds.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+        // "{written}/{active}" counts only the targets this boot could dump; the skipped ones
+        // are named so a short set is still visible at a glance, just not as an error.
+        string skippedNote = skipped.Count == 0 ? "" : $"; skipped {skipped.Count} inactive: {string.Join(", ", skipped)}";
         string summary = failed.Count == 0
-            ? $"probe ({reason}): {written}/{targets.Count} dump(s) written in {elapsed}s."
-            : $"probe ({reason}): {written}/{targets.Count} dump(s) written in {elapsed}s; FAILED: {string.Join(", ", failed)} — see log.";
+            ? $"probe ({reason}): {written}/{targets.Count - skipped.Count} dump(s) written in {elapsed}s{skippedNote}."
+            : $"probe ({reason}): {written}/{targets.Count - skipped.Count} dump(s) written in {elapsed}s{skippedNote}; FAILED: {string.Join(", ", failed)} — see log.";
         Log.Message($"{L10nProbeMod.LogPrefix} {summary}");
         return LastRunSummary = summary;
     }

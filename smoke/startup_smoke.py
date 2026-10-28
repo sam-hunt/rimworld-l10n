@@ -18,16 +18,18 @@
 # never mistaken for third-party API drift.
 #
 # Mechanics reused from the refresh engine (refresh_expectations.py, imported
-# below): RimWorld path detection, ModsConfig pin/restore, running-game
-# check. The boot rides the L10nProbe's -l10nprobe flag: the probe dumps
+# below): RimWorld path detection, the pinned boot (ModsConfig pin/restore
+# with the game's version stamped, pinned mods' settings files set aside so
+# the boot runs on defaults), running-game check. The boot rides the L10nProbe's -l10nprobe flag: the probe dumps
 # whatever its settings say (from the first post-load slot, before any mod's
 # static ctor), then, from a later ExecuteWhenFinished delegate - i.e. AFTER
 # every mod's static ctor, def write, and (for BTG-style deferred passes)
 # post-defs patch application has run and logged - writes the game's own
 # in-memory log (Verse.Log.Messages) to Output/log-messages.json and shuts
-# the game down. Probe dump failures are expected here (the smoke list
-# rarely matches the probe's ticked targets) and are classified as tooling
-# noise, never gated on. The dumps a smoke boot DOES write record this
+# the game down. Ticked probe targets absent from the smoke list are
+# skipped at Message level by the probe (an older probe logged each as an
+# error; anything it still logs under its prefix is classified as tooling
+# noise, never gated on). The dumps a smoke boot DOES write record this
 # list in meta.activeMods, so a later refresh --no-launch refuses them
 # rather than leaking the integration mods into a sidecar.
 #
@@ -351,19 +353,11 @@ def launch(rw, log):
     # A stale log or dump must never read as a fresh run.
     log.unlink(missing_ok=True)
     log_dump_path(rw).unlink(missing_ok=True)
-    mc = refresh.modsconfig_path()
-    original = mc.read_bytes()
-    mc.write_text(refresh.pinned_modsconfig(original.decode("utf-8-sig"),
-                                            SMOKE_ACTIVE_MODS),
-                  encoding="utf-8")
-    print("Launching RimWorld on the pinned smoke mod list "
-          "(graphical boot, ~1-2 min; the probe quits the game itself)...")
-    try:
+    with refresh.pinned_boot(rw, SMOKE_ACTIVE_MODS):
+        print("Launching RimWorld on the pinned smoke mod list "
+              "(graphical boot, ~1-2 min; the probe quits the game itself)...")
         subprocess.run([f"./{refresh.game_layout(rw).exe}", "-l10nprobe"],
                        cwd=rw, check=False)
-    finally:
-        mc.write_bytes(original)
-        print(f"Restored {mc}")
 
 
 def split_entries(text):

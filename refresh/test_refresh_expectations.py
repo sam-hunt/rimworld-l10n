@@ -17,6 +17,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
+import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import refresh_expectations as engine  # noqa: E402
@@ -203,6 +204,112 @@ class LayoutTest(unittest.TestCase):
             self.assertEqual(seen["cwd"], rw)
             self.assertIn("<li>shunter.l10nprobe</li>", seen["pinned"])
             self.assertEqual(mc.read_text(encoding="utf-8"), original)
+
+
+class PinnedBootTest(unittest.TestCase):
+    # The boot contract both launchers share (pinned_boot): the mod list
+    # pinned with the installed game's version stamped, the pinned mods'
+    # settings files set aside, and everything handed back byte-identical.
+
+    ORIGINAL = ('<?xml version="1.0" encoding="utf-8"?>\n<ModsConfigData>\n'
+                "  <version>1.6.4871 rev591</version>\n  <activeMods>\n"
+                "    <li>ludeon.rimworld</li>\n    <li>some.personal.mod</li>\n"
+                "  </activeMods>\n</ModsConfigData>\n")
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        d = Path(self.tmp.name)
+        self.rw = d / "rw"
+        (self.rw / "RimWorld.exe").parent.mkdir()
+        (self.rw / "RimWorld.exe").touch()
+        self.config = d / "Config"
+        self.config.mkdir()
+        self.mc = self.config / "ModsConfig.xml"
+        self.mc.write_text(self.ORIGINAL, encoding="utf-8")
+        for folder, pid in (("L10nProbe", "shunter.l10nprobe"),
+                            ("XenogermTraderStock", "Shunter.XenogermTraderStock"),
+                            ("UniqueMeleeWeapons", "shunter.uniquemeleeweapons")):
+            about = self.rw / "Mods" / folder / "About"
+            about.mkdir(parents=True)
+            (about / "About.xml").write_text(
+                f"<ModMetaData><packageId>{pid}</packageId></ModMetaData>",
+                encoding="utf-8")
+        self.probe_cfg = self.config / "Mod_L10nProbe_L10nProbeMod.xml"
+        self.probe_cfg.write_text("<targets/>", encoding="utf-8")
+        self.own_cfg = self.config / "Mod_XenogermTraderStock_XenogermTraderStockMod.xml"
+        self.own_cfg.write_bytes(b"<SettingsBlock>\xef\xbb\xbftoggled</SettingsBlock>")
+        self.other_cfg = self.config / "Mod_UniqueMeleeWeapons_UniqueMeleeWeaponsMod.xml"
+        self.other_cfg.write_text("<unpinned/>", encoding="utf-8")
+        self.mods = ["ludeon.rimworld", "shunter.xenogermtraderstock",
+                     "shunter.l10nprobe"]
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def boot(self, during):
+        with mock.patch.object(engine, "modsconfig_path", lambda: self.mc), \
+                contextlib.redirect_stdout(io.StringIO()):
+            with engine.pinned_boot(self.rw, self.mods):
+                during()
+
+    def test_version_is_stamped_from_the_install(self):
+        (self.rw / "Version.txt").write_text("1.7.4990 rev1069\n", encoding="utf-8")
+        seen = {}
+
+        def during():
+            seen["pinned"] = ET.fromstring(self.mc.read_text(encoding="utf-8"))
+
+        self.boot(during)
+        self.assertEqual(seen["pinned"].find("version").text, "1.7.4990 rev1069")
+        self.assertEqual([li.text for li in seen["pinned"].find("activeMods")],
+                         self.mods)
+        self.assertEqual(self.mc.read_bytes(), self.ORIGINAL.encode("utf-8"))
+
+    def test_version_passes_through_without_a_version_file(self):
+        self.assertIsNone(engine.game_version(self.rw))
+        pinned = engine.pinned_modsconfig(self.ORIGINAL, self.mods,
+                                          engine.game_version(self.rw))
+        self.assertIn("<version>1.6.4871 rev591</version>", pinned)
+        # A file with no <version> at all gains one when the game's is known.
+        bare = self.ORIGINAL.replace("  <version>1.6.4871 rev591</version>\n", "")
+        self.assertIn("<version>1.7.4990 rev1069</version>",
+                      engine.pinned_modsconfig(bare, self.mods, "1.7.4990 rev1069"))
+
+    def test_pinned_mods_settings_are_set_aside_and_restored(self):
+        seen = {}
+
+        def during():
+            seen["own_gone"] = not self.own_cfg.exists()
+            seen["probe_kept"] = self.probe_cfg.exists()
+            seen["other_kept"] = self.other_cfg.exists()
+            # The game may rewrite a settings file during the boot.
+            self.own_cfg.write_text("<defaults/>", encoding="utf-8")
+
+        self.boot(during)
+        self.assertTrue(seen["own_gone"])
+        self.assertTrue(seen["probe_kept"])
+        self.assertTrue(seen["other_kept"])
+        self.assertEqual(self.own_cfg.read_bytes(),
+                         b"<SettingsBlock>\xef\xbb\xbftoggled</SettingsBlock>")
+        self.assertEqual(self.other_cfg.read_text(encoding="utf-8"), "<unpinned/>")
+
+    def test_settings_come_back_when_the_boot_raises(self):
+        def during():
+            raise OSError("WSL interop unavailable")
+
+        with self.assertRaises(OSError):
+            self.boot(during)
+        self.assertTrue(self.own_cfg.exists())
+        self.assertEqual(self.mc.read_bytes(), self.ORIGINAL.encode("utf-8"))
+
+    def test_a_pinned_mod_without_a_settings_file_is_fine(self):
+        self.own_cfg.unlink()
+        with mock.patch.object(engine, "modsconfig_path", lambda: self.mc):
+            self.assertEqual(engine.settings_files(self.rw, self.mods), [])
+            # Workshop ids resolve to no local folder and are simply absent.
+            self.assertEqual(engine.settings_files(
+                self.rw, ["brrainz.harmony", "shunter.uniquemeleeweapons"]),
+                [self.other_cfg])
 
 
 class ConfigTest(ConfigMixin, unittest.TestCase):

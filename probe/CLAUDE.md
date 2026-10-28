@@ -116,7 +116,10 @@ The repo lives outside the Mods folder; every local build redeploys.
   consumers check dumps into git and diff them.
 - **Fail loudly, never partially.** Any per-mod exception logs with the `[L10nProbe]` prefix and
   leaves no valid output file: write to a temp name and rename on success. A release script must
-  never mistake a truncated dump for a complete one.
+  never mistake a truncated dump for a complete one. The one non-failure is a ticked target that
+  is not in the boot's mod list: every family boot pins one consumer's minimal list with every
+  sibling still ticked, so that is a `Log.Message` skip (its stale output still deleted), never
+  a `Log.Error` — a clean boot must not read as fifteen errors to anything counting them.
 - **`meta.activeDlcs` and `meta.activeMods` are load-bearing.** `MayRequire`-gated defs only
   exist — and only emit keys — when their DLC is active, so a dump taken with the wrong DLC
   set is silently short; and any loaded mod can patch or assign into a probed mod's defs, so a

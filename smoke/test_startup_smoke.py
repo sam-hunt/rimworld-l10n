@@ -731,6 +731,25 @@ class Launch(unittest.TestCase):
         self.assertTrue(seen["stale_dump_gone"])
         self.assertEqual(self.mc.read_bytes(), self.ORIGINAL.encode("utf-8"))
 
+    def test_launch_sets_the_pinned_mods_settings_aside(self):
+        # The settings dimension of the pinned boot reaches launch() through
+        # the refresh engine's context manager, like the mod list does.
+        about = self.rw / "Mods" / "XenogermTraderStock" / "About"
+        about.mkdir(parents=True)
+        (about / "About.xml").write_text(
+            "<ModMetaData><packageId>shunter.xenogermtraderstock</packageId>"
+            "</ModMetaData>", encoding="utf-8")
+        cfg = self.user / "Config" / "Mod_XenogermTraderStock_XenogermTraderStockMod.xml"
+        cfg.write_text("<toggled/>", encoding="utf-8")
+        seen = {}
+
+        def fake_run(cmd, cwd=None, check=False):
+            seen["cfg_gone"] = not cfg.exists()
+
+        self.run_launch(fake_run)
+        self.assertTrue(seen["cfg_gone"])
+        self.assertEqual(cfg.read_text(encoding="utf-8"), "<toggled/>")
+
     def test_launch_restores_the_original_when_the_game_fails_to_start(self):
         def fake_run(cmd, cwd=None, check=False):
             raise OSError("WSL interop unavailable")

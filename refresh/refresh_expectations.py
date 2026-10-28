@@ -41,7 +41,22 @@
 #
 # The probe boots with a PINNED mod list (CANONICAL_ACTIVE_MODS), not
 # whatever the user last played with: ModsConfig.xml is swapped for the run
-# and restored afterwards. The dump reflects the LIVE def graph, so any
+# and restored afterwards (pinned_boot). Two more things that swap pins:
+#   * the file's <version> is stamped with the installed game's Version.txt,
+#     because the game resets a ModsConfig whose major.minor is not its own
+#     to Core + DLCs before it reads the list (ModsConfig's static ctor,
+#     decompile-verified on 1.7.4990), so a file last written by 1.6 made
+#     every 1.7 boot run the wrong list and the probe dump nothing
+#     (PersonaWeaponsUnbound, 2026-10-16);
+#   * every pinned mod's settings file (Config/Mod_<folder>_<ModClass>.xml,
+#     the probe's own excepted) is set aside for the boot and put back
+#     after, so the mods run on their DEFAULT settings. The live file holds
+#     whatever the developer last toggled in-game, and a restart-gated
+#     toggle that rewrites defs (ToxinWarcasket's HazardVacuum patch,
+#     2026-10-19) would otherwise leak its text into the sidecar's English.
+#     A consumer that needs a toggled-on world exercised is a per-world
+#     settings dimension beside WORLDS, not yet built.
+# The dump reflects the LIVE def graph, so any
 # third-party mod that patches our defs leaks into the expectations — a mod
 # that reshuffles our defs' fields or hediff comps would show up in the dump
 # even though it is not installed for most players. The pinned list is this
@@ -144,6 +159,7 @@
 # refresh writes exactly the dump, as it always has.
 
 import argparse
+import contextlib
 import json
 import os
 import re
@@ -228,16 +244,100 @@ def modsconfig_path():
     return configs[-1]
 
 
-def pinned_modsconfig(original_text, mods):
-    # Rebuild only <activeMods>; version and knownExpansions pass through.
+def game_version(rw):
+    # The installed game's "1.7.4990 rev1069" from its Version.txt (the
+    # exact string VersionControl.CurrentVersionStringWithRev writes to
+    # ModsConfig.xml), or None when the file is absent.
+    path = Path(rw) / "Version.txt"
+    if not path.is_file():
+        return None
+    text = path.read_text(encoding="utf-8-sig", errors="replace").strip()
+    return text.splitlines()[0].strip() if text else None
+
+
+def pinned_modsconfig(original_text, mods, version=None):
+    # Rebuild only <activeMods>, stamp <version> when the installed game's
+    # is known (see the header: a mismatched major.minor resets the list
+    # before it is read); knownExpansions passes through.
     root = ET.fromstring(original_text)
     active = root.find("activeMods")
     for li in list(active):
         active.remove(li)
     for pid in mods:
         ET.SubElement(active, "li").text = pid
+    if version:
+        node = root.find("version")
+        if node is None:
+            node = ET.Element("version")
+            root.insert(0, node)
+        node.text = version
     ET.indent(root, space="  ")
     return ET.tostring(root, encoding="unicode", xml_declaration=True) + "\n"
+
+
+PROBE_FOLDER = "L10nProbe"
+
+
+def mod_folders(rw):
+    # packageId (lowercase) -> folder under the install's Mods/, read from
+    # each About.xml. Only local mods are listed, which is every mod whose
+    # settings a family boot must neutralise: the family itself and the
+    # locally installed dependencies; Workshop subscriptions live elsewhere.
+    folders = {}
+    for about in sorted((Path(rw) / "Mods").glob("*/About/About.xml")):
+        try:
+            pid = ET.parse(about).getroot().findtext("packageId")
+        except ET.ParseError:
+            continue
+        if pid:
+            folders[pid.strip().lower()] = about.parent.parent
+    return folders
+
+
+def settings_files(rw, mods):
+    # The settings files of the pinned mods, in pin order: RimWorld names
+    # them Mod_<mod folder name>_<Mod subclass name>.xml beside
+    # ModsConfig.xml (Verse.Mod's settings path), so the folder is enough
+    # and the shim need not know the class. The probe's own file is the
+    # list of targets to dump and stays.
+    config_dir = modsconfig_path().parent
+    folders = mod_folders(rw)
+    files = []
+    for pid in mods:
+        folder = folders.get(pid)
+        if folder is None or folder.name == PROBE_FOLDER:
+            continue
+        files.extend(sorted(config_dir.glob(f"Mod_{folder.name}_*.xml")))
+    return files
+
+
+@contextlib.contextmanager
+def pinned_boot(rw, mods):
+    # The boot contract both launchers share: ModsConfig.xml pinned to
+    # `mods` (stamped with the installed game's version) and every pinned
+    # mod's settings file set aside, then both handed back byte-identical
+    # whatever happened in between.
+    mc = modsconfig_path()
+    original = mc.read_bytes()
+    set_aside = [(f, f.read_bytes()) for f in settings_files(rw, mods)]
+    mc.write_text(pinned_modsconfig(original.decode("utf-8-sig"), mods,
+                                    game_version(rw)),
+                  encoding="utf-8")
+    for f, _ in set_aside:
+        f.unlink()
+    if set_aside:
+        print("Set aside " + ", ".join(f.name for f, _ in set_aside)
+              + " so the boot runs on default mod settings")
+    try:
+        yield
+    finally:
+        # Always hand the player's own mod list and settings back.
+        mc.write_bytes(original)
+        for f, data in set_aside:
+            f.write_bytes(data)
+        print(f"Restored {mc}"
+              + (f" and {len(set_aside)} settings file(s)" if set_aside
+                 else ""))
 
 
 def game_is_running():
@@ -289,22 +389,14 @@ def launch_probe(rw, dump_path, mods, world=None):
                  "boot (mod-list swap + -l10nprobe). Close the client, then "
                  "rerun this script.")
     dump_path.unlink(missing_ok=True)
-    mc = modsconfig_path()
-    original = mc.read_bytes()
-    mc.write_text(pinned_modsconfig(original.decode("utf-8-sig"), mods),
-                  encoding="utf-8")
-    print("Launching RimWorld with -l10nprobe on the pinned mod list "
-          + (f"of world {world} " if world else "")
-          + "(graphical boot, ~1-2 min)...")
-    try:
+    with pinned_boot(rw, mods):
+        print("Launching RimWorld with -l10nprobe on the pinned mod list "
+              + (f"of world {world} " if world else "")
+              + "(graphical boot, ~1-2 min)...")
         # WSL interop blocks until the Windows process exits; the probe
         # quits the game itself after writing its dumps.
         subprocess.run([f"./{game_layout(rw).exe}", "-l10nprobe"], cwd=rw,
                        check=False)
-    finally:
-        # Always hand the player's own mod list back, byte-identical.
-        mc.write_bytes(original)
-        print(f"Restored {mc}")
 
 
 def load_dump(dump_path, mods, world=None):
