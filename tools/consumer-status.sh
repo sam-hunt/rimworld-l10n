@@ -31,7 +31,7 @@ for repo in "$dev_dir"/*/; do
     [ -f "$repo/.gitmodules" ] || continue
     git -C "$repo" config -f .gitmodules submodule.l10n.url >/dev/null 2>&1 || continue
     name="$(basename "$repo")"
-    sha="$(git -C "$repo" rev-parse HEAD:l10n 2>/dev/null || true)"
+    sha="$(git -C "$repo" rev-parse --verify -q HEAD:l10n 2>/dev/null || true)"
     if [ -z "$sha" ]; then
         printf '%-28s %-22s %s\n' "$name" "-" "no pin committed"
         continue
