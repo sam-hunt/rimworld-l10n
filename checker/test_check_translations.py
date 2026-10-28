@@ -448,6 +448,161 @@ class SplitVersionsTest(unittest.TestCase):
         self.assertIn("duplicate key <FX_Helmet.label>", out)
 
 
+NESTED_DEFS = """<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef>
+    <defName>FX_Helmet</defName>
+    <label>helmet</label>
+    <description>A helmet.</description>
+    <comps>
+      <li MayRequire="fx.absent">
+        <chargeNoun>gated charge</chargeNoun>
+      </li>
+      <li>
+        <chargeNoun>charge</chargeNoun>
+      </li>
+    </comps>
+    <rules>
+      <rulesStrings>
+        <li>a->one</li>
+        <li MayRequireAnyOf="fx.absent,fx.other">b->gated</li>
+        <li>c->two</li>
+      </rulesStrings>
+    </rules>
+  </ThingDef>
+  <ThingDef ParentName="FX_Base">
+    <defName>FX_Child</defName>
+    <label>child</label>
+    <comps>
+      <li>
+        <chargeNoun>kid charge</chargeNoun>
+      </li>
+    </comps>
+    <tags>
+      <li>own tag</li>
+    </tags>
+    <verb>
+      <label>poke</label>
+    </verb>
+  </ThingDef>
+</Defs>
+"""
+
+RULES = "FX_Helmet.rules.rulesStrings"
+
+
+def nested_entries(**overrides):
+    entries = dict(BASE_ENTRIES)
+    entries.update({
+        CHARGE: {"english": "charge"},
+        RULES: {"english": ["a->one", "c->two"], "isCollection": True},
+        "FX_Child.label": {"english": "child", "required": True},
+        # Inheritance prepends the parent's list items, so these indexed
+        # and list entries differ from the child's own XML legitimately.
+        "FX_Child.comps.1.chargeNoun": {"english": "kid charge"},
+        "FX_Child.tags": {"english": ["parent tag", "own tag"],
+                          "isCollection": True},
+        "FX_Child.verb.label": {"english": "poke"},
+    })
+    entries.update(overrides)
+    return entries
+
+
+class NestedFreshnessTest(unittest.TestCase):
+    # check_sidecar_freshness over nested sidecar entries: the def XML's own
+    # English, where its path resolves, must match the sidecar's.
+
+    def run_entries(self, entries, active_mods=BASE_MODS):
+        fx = Fixture({
+            "LoadFolders.xml": load_folders_xml(),
+            "1.6/Defs/Things.xml": NESTED_DEFS,
+            "Scripts/expected-injections.json": {
+                "meta": {"gameBuild": "1.6.test", "activeDlcs": ["Core"],
+                         "activeMods": active_mods},
+                "defInjections": {"ThingDef": entries}},
+        })
+        self.addCleanup(fx.close)
+        code, out = fx.run()
+        return code, [l for l in out.splitlines() if l.startswith("ERROR")]
+
+    @staticmethod
+    def drift(path):
+        return (f"ERROR   [Scripts/expected-injections.json]: ThingDef {path} "
+                f"English differs between def XML and sidecar; expectations "
+                f"stale — rerun Scripts/refresh-translation-expectations.py")
+
+    def test_fresh_nested_entries_pass(self):
+        # Also proves the gated <li> items are not counted: index 0 and the
+        # two-element list match only once fx.absent's items are dropped.
+        code, errors = self.run_entries(nested_entries())
+        self.assertEqual((code, errors), (0, []))
+
+    def test_nested_scalar_drift(self):
+        code, errors = self.run_entries(nested_entries(
+            **{CHARGE: {"english": "old charge"}}))
+        self.assertEqual(code, 1)
+        self.assertEqual(errors, [self.drift(CHARGE)])
+
+    def test_collection_text_and_count_drift(self):
+        for english in (["a->one", "c->old"], ["a->one"],
+                        ["a->one", "c->two", "d->three"]):
+            with self.subTest(english=english):
+                _, errors = self.run_entries(nested_entries(
+                    **{RULES: {"english": english, "isCollection": True}}))
+                self.assertEqual(errors, [self.drift(RULES)])
+
+    def test_gated_items_count_when_their_package_is_active(self):
+        _, errors = self.run_entries(nested_entries(),
+                                     BASE_MODS + ["fx.absent"])
+        self.assertEqual(errors, [self.drift(CHARGE), self.drift(RULES)])
+
+    def test_parent_name_def_skips_indexed_paths_and_lists(self):
+        _, errors = self.run_entries(nested_entries(**{
+            "FX_Child.comps.0.chargeNoun": {"english": "parent charge"},
+            "FX_Child.verb.label": {"english": "jab"}}))
+        self.assertEqual(errors, [self.drift("FX_Child.verb.label")])
+
+    def test_unresolvable_paths_are_skipped(self):
+        code, errors = self.run_entries(nested_entries(**{
+            "FX_Helmet.comps.1.chargeNoun": {"english": "from a Patch"},
+            "FX_Helmet.comps.0.cooldownGerund": {"english": "a C# default"},
+            "FX_Helmet.tools.0.label": {"english": "inherited"},
+            "FX_Helmet.rules": {"english": ["markup, not text"],
+                                "isCollection": True}}))
+        self.assertEqual((code, errors), (0, []))
+
+    def test_handle_form_key_resolves_through_normalized(self):
+        handle = "FX_Helmet.comps.Charger.chargeNoun"
+        entries = nested_entries(**{handle: {
+            "english": "old charge", "normalized": CHARGE}})
+        del entries[CHARGE]
+        _, errors = self.run_entries(entries)
+        self.assertEqual(errors, [self.drift(handle)])
+
+    def test_label_drift_reports_once(self):
+        _, errors = self.run_entries(nested_entries(**{
+            "FX_Helmet.label": {"english": "hat", "required": True}}))
+        self.assertEqual(errors, [self.drift("FX_Helmet.label")])
+
+    def test_variant_rewritten_world_is_skipped(self):
+        entries = nested_entries(**{CHARGE: {
+            "english": "charge",
+            "variants": {"vge": {"english": "sealed charge"}}}})
+        fx = Fixture({
+            "LoadFolders.xml": load_folders_xml(),
+            "1.6/Defs/Things.xml": NESTED_DEFS,
+            "Scripts/expected-injections.json": two_world_sidecar(entries)})
+        self.addCleanup(fx.close)
+        code, out = fx.run()
+        self.assertEqual(code, 0, out)
+        entries[CHARGE]["english"] = "old charge"
+        (fx.root / "Scripts/expected-injections.json").write_text(
+            json.dumps(two_world_sidecar(entries)), encoding="utf-8")
+        _, out = fx.run()
+        errors = [l for l in out.splitlines() if l.startswith("ERROR")]
+        self.assertEqual(errors, [self.drift(CHARGE) + " [worlds: base]"])
+
+
 class MergeWorldsTest(unittest.TestCase):
     def test_merge_marks_partial_lines(self):
         a, b, into = engine.Report(), engine.Report(), engine.Report()

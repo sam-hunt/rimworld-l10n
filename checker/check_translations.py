@@ -57,7 +57,11 @@
 # Plus, language-independent:
 #   Sidecar:     generated with the right DLC set (MayRequire-gated defs
 #                vanish from a dump made without their DLC), fresh against
-#                Defs/ (defNames and label/description English text)
+#                Defs/ (defNames and label/description English text, plus
+#                the English of every nested sidecar entry whose path
+#                resolves in the def's own XML: tag segments by child, index
+#                segments by MayRequire-active <li>; unresolvable paths,
+#                and index paths or lists in ParentName defs, are skipped)
 #   LoadFolders: every Defs/ or Languages/ root sits in a listed load folder,
 #                and only the roots the game loads on the sidecar's game
 #                version (meta.gameBuild) are checked: a repo that keeps a
@@ -378,7 +382,8 @@ def def_is_active(elem, active_packages):
     # absent from the sidecar and outside the l10n surface (e.g.
     # BetterTradersGuild's Biotech-gated ScenPartDef, where this fix
     # originated). MayRequire = ALL listed packages must be active;
-    # MayRequireAnyOf = any.
+    # MayRequireAnyOf = any. The game gates list items (<li>) by the same
+    # attributes, so check_sidecar_freshness filters them through this too.
     may_require = elem.get("MayRequire")
     if may_require:
         ids = {p.strip().lower() for p in may_require.split(",") if p.strip()}
@@ -839,6 +844,49 @@ def describe_gate(conds):
     return " / ".join(" ".join(f'{a}="{v}"' for a, v in r) for r in raws)
 
 
+def nested_english(elem, key, is_collection, active_packages):
+    # The English a def's own XML gives the sidecar entry at key (index
+    # form, "defName.seg.seg..."): the normalized text of a scalar, or the
+    # list of normalized <li> texts of a collection. A tag segment selects
+    # that child; an integer segment selects the Nth <li>, counting only
+    # items whose MayRequire gate holds in this world (the game drops the
+    # rest at load, so the probe never indexed them). None whenever the XML
+    # cannot speak for the value, which is then skipped silently, never
+    # reported: a segment that does not resolve (the value comes from a
+    # parent, a Patch, a C# default or the live def graph — the probe is the
+    # authority on existence), an element holding markup instead of text, a
+    # list with no active <li>, and, in a ParentName def, any index or list
+    # (inheritance appends the child's <li> items after the parent's,
+    # shifting every index and count; tag-only scalar paths still compare,
+    # as the child's own value wins).
+    inherits = elem.get("ParentName") is not None
+    node = elem
+    for seg in key.split(".")[1:]:
+        if seg.isdigit():
+            if inherits:
+                return None
+            items = [li for li in node if li.tag == "li"
+                     and def_is_active(li, active_packages)]
+            if int(seg) >= len(items):
+                return None
+            node = items[int(seg)]
+        else:
+            node = node.find(seg)
+            if node is None:
+                return None
+    if is_collection:
+        if inherits:
+            return None
+        items = [li for li in node if li.tag == "li"
+                 and def_is_active(li, active_packages)]
+        if not items or any(len(li) for li in items):
+            return None
+        return [norm(li.text) for li in items]
+    if len(node) or not (node.text or "").strip():
+        return None
+    return norm(node.text)
+
+
 def check_sidecar_freshness(defs, sidecar, report, def_roots, gates):
     # The rule that makes stale expectations loud: every def carrying a
     # label/description in XML must appear in the sidecar, so new or edited
@@ -887,6 +935,11 @@ def check_sidecar_freshness(defs, sidecar, report, def_roots, gates):
         # regen. (Literal-\n unescaping lives in norm().) A world whose
         # variant rewrote the English got it from a gated Patch this scan
         # does not apply, so only the unvaried worlds compare against XML.
+        nested = {}  # defName -> [(key, entry)] past label/description
+        for key, entry in sorted(sidecar.entries[def_type].items()):
+            def_name, _, path = key.partition(".")
+            if path not in ("label", "description"):
+                nested.setdefault(def_name, []).append((key, entry))
         for def_name, elem in sorted(by_name.items()):
             for field in ("label", "description"):
                 node = elem.find(field)
@@ -903,6 +956,26 @@ def check_sidecar_freshness(defs, sidecar, report, def_roots, gates):
                     report.error(label, f"{def_type} {def_name}.{field} "
                                         f"English differs between def XML and "
                                         f"sidecar; {stale}")
+            # Nested fields (quest rulesStrings, comp chargeNouns, genStep
+            # sowTags, verb labels): the same drift one level down. Only an
+            # entry already in the sidecar is compared — the probe, not this
+            # scan, knows which nested fields are injection points.
+            for key, entry in nested.get(def_name, []):
+                if "english" in entry.get("variants", {}).get(sidecar.world, {}):
+                    continue
+                xml = nested_english(elem, entry.get("normalized", key),
+                                     entry.get("isCollection", False),
+                                     sidecar.active_packages)
+                if xml is None:
+                    continue
+                english = entry["english"]
+                if entry.get("isCollection"):
+                    drifted = [norm(e) for e in english] != xml
+                else:
+                    drifted = norm(english) != xml
+                if drifted:
+                    report.error(label, f"{def_type} {key} English differs "
+                                        f"between def XML and sidecar; {stale}")
 
 
 def check_english_definjected(lang_dir, sidecar, def_roots, seen, report):
