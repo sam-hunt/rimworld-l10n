@@ -474,3 +474,27 @@ name-grammar noun for any mod that adds name generation.
   `launch()`. Grep all three engine directories for a changed name, and
   keep every cross-engine entry point under a test (the smoke suite's
   `Launch` class drives `launch()` with the game stubbed).
+- **RimWorld 1.7's `-mod=` launch flag cannot replace the ModsConfig swap**
+  (decompile-verified 2026-10-28 on 1.7.4990 rev1069, `Verse.ModsConfig`).
+  `-mod=a,b;c` (or `-mod a,b`) is read in ModsConfig's static constructor,
+  after the file's own version check (a `<version>` whose major.minor is
+  not the game's still resets and SAVES Core + DLCs first, so the stamp in
+  `pinned_boot` matters either way). `ApplyCommandLineModList` starts from
+  Core plus EVERY installed, version-compatible official expansion, then
+  appends each id that resolves (`GetModWithIdentifier(id.ToLowerInvariant(),
+  ignorePostfix: true)`, else a mod whose folder name equals the id) — but
+  only when the mod's `Source` is `ContentSource.ModsFolder`: a Workshop
+  subscription logs `-mod: '<id>' is not in the local Mods folder, ignoring`
+  and is dropped. The result is `TrySortMods`-sorted, and
+  `commandLineModList` turns `Save()` and `SaveFromList()` into a logged
+  no-op ("ModsConfig.xml not saved, the mod list came from the command
+  line"), which is the one thing it has over swapping the file. Three of
+  the family's pins break on it: the lists omit installed expansions on
+  purpose (most pin Biotech and Odyssey while Royalty, Ideology and Anomaly
+  are installed, and the sidecar's `meta.activeDlcs`, the MayRequire gates
+  and the checker's `REQUIRED_DLCS` all hang on that), eleven pinned ids
+  are Workshop subscriptions (Harmony, the VE dependencies, HAR, CE, SOS2,
+  CWTL), and the pin order would be the game's sort, not the shim's. Both
+  engines therefore keep `pinned_boot`'s ModsConfig swap, which 1.6 needs
+  anyway; revisit only if a later build loads Workshop mods and honours an
+  omitted expansion.

@@ -8,8 +8,12 @@ this repository.
 **rimworld-l10n** is the shared localization toolkit for this author's family
 of RimWorld mods (BetterTradersGuild, UniqueWeaponsUnbound,
 UniqueMeleeWeapons, PersonaWeaponsUnbound, XenogermTraderStock,
-ArchotechAndroidHardware, ArchotechThumb, BionicThumbGuild). Every consuming
-mod repo pins this repo as its `l10n/` git submodule. See README.md for the
+ArchotechAndroidHardware, ArchotechThumb, BionicThumbGuild,
+LocalMineralScanner, MindTheBump, SanguophageLair, and the warcasket set:
+ShipcrackerWarcasket, ToxinWarcasket, MedicWarcasket, OverlordWarcasket).
+Every consuming mod repo pins this repo as its `l10n/` git submodule;
+`tools/consumer-status.sh` discovers them by their `.gitmodules`, so this
+list is a roster, not a registry. See README.md for the
 full layout; in short: `process.md` (workflow authority), `lessons.md`,
 `workshop.md`, `languages/<Language>.md` (per-language mechanics and
 vanilla-grounded vocabulary), `checker/`, `refresh/` and `smoke/` (script

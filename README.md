@@ -3,7 +3,8 @@
 The shared localization toolkit for this author's family of RimWorld mods
 (BetterTradersGuild, UniqueWeaponsUnbound, UniqueMeleeWeapons,
 PersonaWeaponsUnbound, XenogermTraderStock, ArchotechAndroidHardware,
-ArchotechThumb, BionicThumbGuild, ...). Everything localization-related that
+ArchotechThumb, BionicThumbGuild, LocalMineralScanner, MindTheBump,
+SanguophageLair and the four warcasket mods). Everything localization-related that
 is true for *every* mod lives here, exactly once; each mod repo keeps only its
 own facts (its translation surface, compat roots, coined-term glossary) and
 consumes this repo as a git submodule (conventionally at `l10n/`).
