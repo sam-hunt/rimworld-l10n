@@ -101,7 +101,11 @@ otherwise appends `s`. A coined compound in a `{X_plural}` slot therefore
 ships as `…s` unless the mod supplies the line itself in
 `Languages/German/WordInfo/plural.txt` (`Treibstoffeinheit;Treibstoffeinheiten`);
 the table is assembled from every mod's language folder, lowercase file
-name (see `lessons.md`). The `plural_decline` lookup that
+name (see `lessons.md`). The same goes for any multi-word `def.label` a mod
+hands to `Pluralize` or `{X_labelPlural}`: "antike Kryptoschlafkapsels"
+(decompile-verified 2026-10-18 on 1.7.4981, Core's `plural.txt` lacks the
+label), so phrase the string around the singular label rather than a
+pluralized one. The `plural_decline` lookup that
 `CommandReload_NoCharges` applies to that plural misses harmlessly, as
 above, so the dative plural reads as the nominative plural, identical for
 an `-en` plural.

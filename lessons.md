@@ -235,6 +235,33 @@ the originating passes.
   `{lookup: ...}` slots in five Keyed strings, where a word-for-word
   "unit of fuel" is the trap. The checker cannot see any of this; the
   glossary row of the noun names the lookup file it relies on.
+- **A def label that reaches `Pluralize` is the `chargeNoun` trap for every
+  multi-word label at once** (decompile- and tar-verified 2026-10-18 on
+  1.7.4981, from LocalMineralScanner's 1.3.0 release gate; the mechanism
+  above is unchanged on 1.7, the 1.6.4871 recheck is still owed). A mod that
+  calls `Find.ActiveLanguageWorker.Pluralize(def.label)`, or uses the
+  `{X_labelPlural}` Def symbol, which calls it, garbles a multi-word label
+  in four shipped languages unless that language's `WordInfo` plural table
+  lists the exact label: French appends `s`/`x` to the last word only
+  ("caisson d'hypersommeil antique" becomes "...antiques"), Spanish's rule
+  fallback does the same ("sarcófago de criptosueño antiguos"), German
+  delegates to the English worker ("antike Kryptoschlafkapsels"; Core's
+  `plural.txt` lacks it) and pt-BR, with no override, gets the singular
+  back unchanged. Russian is fine whenever Core's `WordInfo/Plural.txt`
+  lists the label (it did for `AncientCryptosleepCasket`). So pass a mod
+  string the bare `def.label` and phrase every language around a singular
+  noun; never hand translators a pluralized label.
+- **A `{X_gender ? m : f}` construct resolves only for a named `Def` or
+  `Pawn` arg or an `X_gender` `Gender` arg, never for a plain positional
+  string** (`GrammarResolverSimple`; verified alongside the finding above).
+  A `{0_gender ? …}` over a string `{0}` logs "Could not resolve symbol".
+  A `Def` arg's gender comes from the `WordInfo/Gender/*.txt` lookups of the
+  Gender lesson below and defaults to Male when the label is missing: Core
+  pt-BR omits `AncientCryptosleepPod`, so its feminine "cápsula de
+  criptosono antiga" reads masculine. A string whose variants differ in
+  gender is therefore safer with a neutral head noun than with a gender
+  switch or an agreeing adjective: "aucun exemplaire inexploré de {0}" (fr),
+  "ningún ejemplar ... de {0}" (es), "nenhum exemplar ... de {0}" (pt-BR).
 
 - **The injection walker reflects the def's runtime type, so a vanilla base
   class's private field is invisible for every subclass def**

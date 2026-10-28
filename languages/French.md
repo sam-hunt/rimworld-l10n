@@ -96,7 +96,11 @@ string. `Pluralize` knows `-al`→`-aux`, `-au`/`-eu`→`+x`, leaves
 consults the `plural` lookup table (decompile-verified 2026-10-11), so a
 mod-shipped `WordInfo/plural.txt` is dead in French and a multi-word noun in
 a `{X_plural}` slot (a `chargeNoun`) pluralizes on its last word: give such
-a slot a single word. `OrdinalNumber` gives `1er`, `2e`. There is **no
+a slot a single word. The same garbles any multi-word `def.label` a mod
+hands to `Pluralize` or `{X_labelPlural}` ("caisson d'hypersommeil antique"
+becomes "...antiques"; decompile-verified 2026-10-18 on 1.7.4981), so phrase
+the string around the singular label ("aucun exemplaire inexploré de
+{0}"). `OrdinalNumber` gives `1er`, `2e`. There is **no
 `TryLookUp` override**, and French ships only `WordInfo/Gender` data — no
 `decline.txt`/`Case.txt` — so the `{lookup: …}` function that German and
 Russian rely on has nothing to read here and is simply unusable.

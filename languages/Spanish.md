@@ -26,7 +26,12 @@ particle system (unlike Korean). It overrides only `WithIndefiniteArticle`
 (renders `N.º`) and `Pluralize` (a `plural` table lookup, which a mod's own
 `WordInfo/plural.txt` feeds too, then full rules); it
 returns names unchanged. So unlike German/Korean there is no silent
-string-rewrite to trip over — but also no runtime agreement help. Spanish's
+string-rewrite to trip over — but also no runtime agreement help. The
+`Pluralize` rules do pluralize a multi-word label on its last word only, so
+`Pluralize(def.label)` or `{X_labelPlural}` turns "sarcófago de criptosueño
+antiguo" into "sarcófago de criptosueño antiguos" (decompile-verified
+2026-10-18 on 1.7.4981): phrase the string around the singular label
+("ningún ejemplar ... de {0}"). Spanish's
 difficulty is gender, not case, and it shows up in two independent places:
 
 - **Contractions are not automatic and must be hand-written.**

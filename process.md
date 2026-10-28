@@ -120,6 +120,8 @@ English is always the source of truth; every other language derives from it.
 - Placeholders (`{0}`, `{1}`, named args) must match English exactly per key.
   Translator comments above placeholdered English keys explain what gets
   injected so the phrasing around them can be planned before translating.
+  Treat a `{0}` fed by a def label as singular (the mod never pluralizes it;
+  `lessons.md` has why) and phrase around a singular head noun.
 
 ## Terminology grounding (do not skip)
 

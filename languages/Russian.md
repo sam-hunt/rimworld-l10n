@@ -66,7 +66,10 @@ mechanism for each.
   language folder with lowercased keys. Name the files lowercase: the
   loader asks for `plural.txt`/`case.txt`, and Core's capitalised
   `Plural.txt`/`Case.txt` resolve only through the tar's case-insensitive
-  lookup.
+  lookup. A multi-word `def.label` a mod hands to `Pluralize` or
+  `{X_labelPlural}` pluralizes correctly only when Core's table lists it
+  (it does for `AncientCryptosleepCasket`; decompile-verified 2026-10-18 on
+  1.7.4981).
 
 ## Style and corpus findings
 

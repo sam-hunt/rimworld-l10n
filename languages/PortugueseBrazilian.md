@@ -63,11 +63,18 @@ gender (`Plural.txt` is read by `Pluralize`: `LanguageWorker_Portuguese`
 overrides only the article helpers, so the base `Pluralize` runs, a `plural`
 table lookup and otherwise the word *unchanged*; a mod ships its own
 `WordInfo/plural.txt` line for a coined noun in a `{X_plural}` slot, see
-`lessons.md`, 2026-10-11). `ResolveGender`'s `defaultGender` is **Male**, so `{0_gender ? … : …}`
-and `{0_definite}` against essentially any mod-injected noun (arma, bancada,
-espada, assentamento, caravana, …) is a silent coin flip, not a resolved
-value. (Vanilla itself uses the resolver freely for *pawn* gender, which is a
-different, always-known input — that case is fine.)
+`lessons.md`, 2026-10-11; a multi-word `def.label` handed to `Pluralize` or
+`{X_labelPlural}` comes back as the singular, decompile-verified 2026-10-18
+on 1.7.4981, so phrase the string around the singular label, "nenhum
+exemplar ... de {0}"). `ResolveGender`'s `defaultGender` is **Male**, so
+`{0_gender ? … : …}` and `{0_definite}` against essentially any
+mod-injected noun (arma, bancada, espada, assentamento, caravana, …) is a
+silent coin flip, not a resolved value. The same default applies to a `Def`
+arg whose label Core omits: `AncientCryptosleepPod`'s feminine "cápsula de
+criptosono antiga" is not listed, so it reads masculine (2026-10-18,
+1.7.4981); prefer a neutral head noun such as `exemplar`. (Vanilla itself
+uses the resolver freely for *pawn* gender, which is a different,
+always-known input — that case is fine.)
 
 **Gender hedging is a distinct technique from every other language checked in
 this family, and pt-BR applies it to the surface text itself**, pervasively —
