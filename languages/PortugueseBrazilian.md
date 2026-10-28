@@ -196,6 +196,54 @@ mod-coined, and several are independently corroborated by more than one repo.
 | blunt armor / sharp armor | Resistência - Contundente / Resistência - Cortante | Armadura - … | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; pt-BR's armor stat is "Resistência" |
 | armor penetration | Penetração de armadura | | CE pt-BR `CE_DescArmorPenetration` — verbatim, the same as the family's existing settings strings |
 | flak vest / flak jacket / frag grenade | colete de artilharia / jaqueta de artilharia / granadas de fragmentação | colete antibalas | Core labels — verbatim; the grenade label is plural |
+| spacer-tech (attributive, VFEP) | de tecnologia espacial (`Carcaça de guerra de tecnologia espacial especializada ...`) | | Verbatim in the community VFEP pack's 10th-generation openers; Core Keyed `TechLevel_Spacer` = "Espacial" is the tier word (VFEP section, "spacer tier") |
+| Imperial (adj.) | imperial (lowercase adjective) | | Royalty `Empire.pawnSingular`; in-text "flotilha imperial", "catafratas imperiais" |
+| respirator (onboard) | respirador de bordo | | Pack's `telemetria de bordo` for "onboard"; Shipcracker ships `respirador de bordo`, Toxin's shipped descriptions use the bare `respirador` where its English has no "onboard" |
+| sealed (helmet) | selado | | Shipped by Shipcracker and Toxin Warcasket helmet descriptions ("selado e equipado com um respirador de bordo", "selado por um respirador"); no Core attestation recorded in the glossaries |
+| wearer | portador | | Core `Apparel_ShieldBelt.description`; the sets' shipped text says "piloto" for the warcasket's wearer (VFEP section) |
+| plasteel / uranium / chemfuel | plastiaço / urânio / combustível químico | plastoaço | Core material labels. The community VFEP pack writes "plastoaço" in lore; vanilla's label wins because it is what the cost list shows |
+| Off / On (settings) | Desligado / Ligado | | Core Keyed `Off`, `On`; mirrored in "Padrão: desligado." / "Padrão: ligado." (Default itself is the Default row above) |
+| cooldown / cells / radius / range / hours (settings units) | tempo de recarga / células / raio / alcance / horas | Esfriamento | Royalty Keyed `Cooldown`; Core's `CooldownTime` "Esfriamento" is the weapon sense, not an ability's. Core Keyed `MapSizeDesc` "Células", `AbilityEffectRadius` "Raio do efeito". "alcance" and "horas" are as Shipcracker and Toxin ship them (`Alcance (células)`, `Tempo de recarga (horas)`); no Core key recorded for them |
+| Odyssey (DLC name) | Odyssey | | Core `ExpansionDef` `Odyssey.label` keeps the English name |
+| Using ability: {0} (VEF `AbilityDef.jobReportString`) | usando habilidade: {0}. | | VEF ships English only; subject-less lowercase gerund with the trailing period kept, like Core's `JobDef.reportString`s (Shipcracker Warcasket, shipped since 2026-09-26) |
+| on cooldown (a reloadable comp's `cooldownGerund`) | em recarga | | Vanilla's default for `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker Warcasket) |
+
+## Grounded common vocabulary, VFE Pirates warcasket domain (RafaelNaymaier/Traducao-Vanilla-Expanded-PT-BR pack + Core, 2026-10-28)
+
+VFE Pirates ships English only. A community pt-BR translation exists and was
+grounded against: RafaelNaymaier's "Tradução Vanilla Expanded PT-BR" (GitHub
+`RafaelNaymaier/Traducao-Vanilla-Expanded-PT-BR`, Workshop 3643091941),
+confirmed from its ThingDef, ResearchProjectDef and Keyed files; it carries the
+Siegebreaker, Brute, Guardian, Cataphract and Hazard sets and the 7th- and
+10th-generation paragraphs. Where the pack and Core disagree, Core wins
+(plastiaço over the pack's plastoaço, main table). Every warcasket set in the
+family (Shipcracker, Toxin, Medic, Overlord) renders these terms alike so the
+sets read as one family in-game; a change is made here first and each set's
+shipped files follow at its next pass. A set's own name, its Workshop title and
+its own coinages stay in that repo's glossary.
+
+| English | Use | Why |
+|---|---|---|
+| warcasket (the noun, "shell" in the English first line folded in) | carcaça de guerra (f.), pl. carcaças de guerra | Community VFEP pack throughout (`VFEP_Warcasket_*.label`, `VFEP.RequiresWarcasket`). "shell" in the English first line folds into the same noun, as the pack does, so there is no separate "warcasket shell" row. |
+| `<set>` warcasket / shoulders / helmet (label pattern) | carcaça de guerra `<set>` / ombreiras de carcaça de guerra `<set>` / capacete de carcaça de guerra `<set>` | Pack label pattern (`carcaça de guerra quebra-cerco`, `ombreiras de carcaça de guerra quebra-cerco`, `capacete de carcaça de guerra quebra-cerco`). The set name follows invariably or as an adjective (set-names row). Workshop titles are Title Case: `Carcaça de Guerra <Set>`. |
+| pauldrons / shoulders | ombreiras | Pack uses `ombreiras` for both the label and the "pauldrons" in descriptions. |
+| warcasket foundry | fundição de carcaças de guerra | Pack's `VFEP_WarcasketFoundry` label. |
+| entomb / welded into (Workshop) | integrar (em carcaça de guerra) | Pack's `VFEPirates.EntombInWarcasket` = "Integrar em carcaça de guerra". "welded" uses the same verb, since "soldado" reads as "soldier". |
+| spacer warcaskets / specialised warcaskets (VFEP research labels) | carcaças de guerra espaciais / carcaças de guerra especializadas | Pack `VFEP_SpacerWarcaskets.label` / `VFEP_SpecialisedWarcaskets.label`. Cited in prose as an ASCII double-quoted lowercase label, `a pesquisa "carcaças de guerra espaciais"`: no vanilla precedent, pt-BR research labels are lowercase, so the quotes do the job the English's Title Case does (Toxin Warcasket's shipped Keyed text; the "specialised" label is not cited in any shipped text yet). |
+| VFEP set names | Quebra-cerco (siegebreaker), Bruto (brute), Guardião (guardian), catafrática (cataphract), de risco (hazard), aérea (aerial) | Pack's lore paragraphs ("A série Quebra-cerco", "A série Bruto", "A série Guardião", `A série de Risco`, "O design catafrática") and labels (`VFEP_Warcasket_Cataphract.label` = `carcaça de guerra catafrática`, `VFEP_Warcasket_Hazard.label` = `carcaça de guerra de risco`, `VFEP_Warcasket_Aerial.label` = `carcaça de guerra aérea`). Quebra-cerco/Bruto/Guardião are nouns, catafrática/de risco/aérea adjectives agreeing with carcaça (f.). Toxin Warcasket's glossary records the Aerial label as pack-grounded, Shipcracker's as "not checked"; the pack-grounded reading is kept (both ship `carcaça de guerra aérea`). Sarcophagus and controller: the pack carries them, but no glossary records their renderings, so they are not set here. |
+| 7th generation / 10th generation (VFEP's two chassis) | de 7ª geração / de 10ª geração (`carcaças de guerra de 7ª geração`, `no nível espacial de 10ª geração`) | Pack's shared 7th- and 10th-generation lore paragraphs. |
+| Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | Carcaça de guerra especializada / Ombreiras de carcaça de guerra especializadas / Capacete de carcaça de guerra especializado, com proteção superior e peso elevado | Pack `VFEP_WarcasketShoulders_Cataphract.description` for the phrase "proteção superior e peso elevado", on its Cataphract line; Toxin Warcasket's shipped `shortDescription`s, agreement switched per part (especializada, especializadas for ombreiras, especializado for capacete). |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet with standard protection (VFEP's 10th-generation opener) | Carcaça de guerra de tecnologia espacial especializada com proteção padrão / Ombreiras de carcaça de guerra de tecnologia espacial especializadas com proteção padrão / Capacete de carcaça de guerra de tecnologia espacial especializado com proteção padrão | Verbatim opening of the pack's 10th-generation descriptions (`VFEP_Warcasket_Siegebreaker`, `VFEP_WarcasketShoulders_Siegebreaker`, `VFEP_WarcasketHelmet_Siegebreaker`), agreement switched per part as above. Shipcracker's variant ends "com dispersão de impacto aprimorada" for its "improved impact dispersion". |
+| the 7th-generation paragraph (VFEP's lore paragraph shared by every 7th-generation description) | As carcaças de guerra de 7ª geração surgiram após resultados insatisfatórios em melhorar ainda mais o desempenho básico, ... | Pack `VFEP_Warcasket_Hazard.description` paragraph 2, its "— embora intercambiáveis —" reflowed into commas ("que, embora intercambiáveis, funcionam melhor como um conjunto") and its "plastoaço" replaced by Core's `plastiaço`. The full text is Toxin Warcasket's shipped DefInjected `TXWC_Warcasket_Toxin.description`, paragraph 2, in `1.6/Languages/PortugueseBrazilian/`. |
+| the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | As carcaças de guerra de 10ª geração foram, na verdade, adaptadas de equipamentos piratas capturados, ... mesmo entre gerações. | Pack `VFEP_Warcasket_Siegebreaker.description` paragraph 2, verbatim (no dashes to reflow; its English "dreadnoughts" kept as the pack has it); the pack's Siegebreaker / Brute / Guardian / Sarcophagus / Controller descriptions share it. The full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/PortugueseBrazilian/`. |
+| pilot (the wearer) | piloto | Core backstories (`CargoPilot58.titleShort` "Piloto"); the shipped descriptions of Shipcracker and Toxin say "o piloto" where the English says "the pilot". |
+| spacer tier (settings and prose) | nível espacial (`é de nível espacial`, `no nível espacial de 10ª geração`, suffix ` (parte do nível espacial)`) | Core Keyed `TechLevel_Spacer` "Espacial"; the suffix avoids a participle that would have to agree with an unnamed setting (Toxin Warcasket). |
+| spacer armor and insulation / shield bubble / spacer components (what a spacer-tier set carries) | blindagem e isolamento de nível espacial / uma bolha de escudo / componentes avançados | Core `ComponentSpacer.label` "componente avançado"; "blindagem de nível espacial" and "bolha de escudo" are coined (Toxin Warcasket; Shipcracker uses "bolha de escudo" on its Workshop page and "escudo contra ataques à distância" from the pack's Brute lore for the ranged shield). |
+
+The glossaries list nothing as pending native review for these rows: they are
+the community pack's wording (the pack-grounded ones above) or Core-grounded.
+The coined ones (nível espacial, blindagem de nível espacial, bolha de escudo)
+are noted as coined in their rows; no glossary flags them as open.
 
 ## Pitfalls and lessons
 

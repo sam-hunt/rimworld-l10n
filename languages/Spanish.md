@@ -206,6 +206,54 @@ strings unless noted):
 | blunt armor / sharp armor | Armadura - Contundente / Armadura - Cortante | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label` |
 | armor penetration | Penetración de armadura | Penetración de blindaje | CE es `CE_DescArmorPenetration` says blindaje; Core's armor stat is Armadura and the family's existing settings strings follow it |
 | flak vest / flak jacket / frag grenade | chaleco antibalas / chaqueta antibalas / granadas de fragmentación | | Core labels — verbatim; the grenade label is plural |
+| Imperial (adj.) | imperial (lowercase adjective) | | Royalty (`batallón imperial`, `desertor imperial`) |
+| respirator | respirador (integrado / propio) | | No vanilla Castilian item; plain word (Shipcracker and Toxin Warcasket) |
+| sealed (airtight) | hermético | | Odyssey (`paredes y puertas herméticas`) |
+| wearer | portador | | Core `Apparel_ArmorMarineHelmetPrestige.description` |
+| Off / Default: on (settings) | Desactivado / Por defecto: activado; the suffix is (por defecto) | Apagado | Core `Off` = `Apagado` is a power state; `Desactivado` mirrors Core `Enabled` = `Activado`, and the value can replace a number (a radius at 0). `Default` = `Por defecto` is the first table row |
+| cooldown / cells / tank (settings) | enfriamiento / casillas / depósito | | Core Keyed `CooldownTime` = `Enfriamiento`, `{0} casillas`; `depósito` is plain Castilian for a fuel tank (no vanilla item) |
+| Odyssey (DLC name) | Odyssey | | Core `ExpansionDef` `Odyssey.label` keeps DLC names in English |
+| Using ability: {0} (VEF `AbilityDef.jobReportString`) | usando habilidad: {0}. | | VEF ships English only; a subject-less gerund with the terminal period, like Core's `JobDef.reportString`s (see the style section) (Shipcracker Warcasket, shipped since 2026-09-26) |
+| on cooldown (a reloadable comp's `cooldownGerund`) | en enfriamiento | | Core Keyed `ShieldOnCooldown` = `En enfriamiento`; the field is vanilla's `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker Warcasket) |
+
+## Grounded common vocabulary, VFE Pirates warcasket domain (Cito2310 community pack + Core, 2026-10-28)
+
+VFE Pirates ships English only. The terms here are grounded against the
+community Castilian-leaning VFE Pirates translation by Cito2310 (GitHub
+`Cito2310/translate-project-rimworld`; the Pirates files sit under
+`vanilla-factions-expanded/Tribal_Translate/DefInjected/` as `ThingDef/` and
+`ResearchProjectDef/Pirates_*.xml`, and despite the folder name they are the
+VFE Pirates files), with vanilla Core, Royalty and Odyssey for the rest.
+Folder `Spanish`, grounded against the Castilian tars only, never
+`SpanishLatin`, whose VFEP lineage uses "sarcotraje". Every warcasket set in
+the family (Shipcracker, Toxin, Medic, Overlord) renders these terms alike so
+the sets read as one family in-game; a change is made here first and each
+set's shipped files follow at its next pass. A set's own name, its Workshop
+title and its own coinages stay in that repo's glossary.
+
+| English | Use | Why |
+|---|---|---|
+| warcasket | ataúd de guerra (pl. ataúdes de guerra) | Community VFEP (`VFEP_Warcasket_Warcasket.label`). Also the Workshop title anchor. Not "sarcotraje", the `SpanishLatin` lineage's word. |
+| `<set>` warcasket / shoulders / helmet (label pattern) | ataúd de guerra `<set>` / hombreras `<set>` de ataúd de guerra / casco `<set>` de ataúd de guerra | Community VFEP label pattern (`ataúd de guerra bruto`, `hombreras bruto de ataúd de guerra`, `casco bruto de ataúd de guerra`); the set name stays invariable in apposition. |
+| warcasket shell / pauldrons (shoulders) / helmet | armazón / hombreras / casco | Community VFEP (`Un armazón de ataúd de guerra...`, `VFEP.Shoulderpads`, `VFEP.Helmet`). |
+| warcasket foundry | forja de ataúd de guerra | Community VFEP `VFEP_WarcasketFoundry.label`. |
+| entomb / welded into | sepultar / sepultado en | Community VFEP `VFEPirates.EntombingWarning` ("Sepultar colonos en un ataúd de guerra"). |
+| specialised warcaskets (VFEP research label) | ataúdes de guerra especializados | Community VFEP `VFEP_SpecialisedWarcaskets.label`. |
+| spacer warcaskets (VFEP research label, cited in prose) | "ataúdes de guerra de la era espacial" (ASCII quotes) | Shipcracker's Workshop FAQ wording, quoted as vanilla quotes research names (`proyectos de investigación: "{RESEARCH}"`). Not the pack's `ataúdes de guerra espacial`, which is ungrammatical. |
+| VFEP set names | Siegebreaker, Bruto, Guardián, catafracto (`el diseño Catafracto`), hazard (`la serie Hazard`, `el Hazard`); "series" (serie) for set | Community VFEP (`La serie Bruto`, `ataúd de guerra catafracto`, prose `El Catafracto`, `ataúd de guerra hazard`, prose `La serie Hazard`). The pack leaves Siegebreaker in English and is inconsistent on `guardian`/`guardián`, so the accented form is used; Royalty's `servoarmadura catafracta` agrees with catafracto. Controller, sarcophagus and aerial have no rendering recorded in any family glossary (no shipped string uses them yet). |
+| 7th generation / 10th generation (VFEP's two chassis) | de 7.ª generación / de 10.ª generación (`Los ataúdes de guerra de 7.ª generación surgieron tras...`) | The pack's `7ta`/`10ma` are Latin American ordinals; Castilian is `7.ª`/`10.ª`. Shipcracker's own lore prose writes `décima generación`. The 7th-generation paragraph is the pack's shared Aerial/Barrage/Hazard/Shock text, corrected (agreement slips `que entran` and `a hacer más frecuente`, "a separate class of" mistranslated as `separada de`); it keeps the pack's `si bien/aunque ... intercambiables, funcionan mejor en conjunto` and `unidades blindadas móviles`, and VFEP's dashed aside is commas. Shipped in Toxin Warcasket's descriptions. |
+| Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | Un armazón especializado de ataúd de guerra / Unas hombreras especializadas de ataúd de guerra / Un casco especializado de ataúd de guerra, followed by `con una protección superior y un peor peso` | `una protección superior y un peor peso` is the pack's Cataphract formula (`VFEP_Warcasket_Cataphract.description`), verbatim and kept for family consistency; a native reviewer may prefer `un peso mayor`. |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet with standard protection (VFEP's 10th-generation opener) | Un armazón especializado de ataúd de guerra de tecnología espacial con una protección estándar (`Un casco ...`, `Unas hombreras especializadas ...`) | The pack's opening phrase (`VFEP_Warcasket_Siegebreaker.shortDescription`, `Un armazón especializado de ataúd de guerra de tecnología espacial`); "spacer-tech" is the pack's `de tecnología espacial`. `de ataúd de guerra` stays on the helmet and shoulders as in the 7th-generation lines and Shipcracker. Shipcracker's variant ends `con dispersión de impacto mejorada` for its "improved impact dispersion" (the pack's Brute wording, verbatim). |
+| the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | Los ataúdes de guerra de 10.ª generación se adaptaron en realidad a partir de equipos piratas capturados, ... incluso de otras generaciones. | The pack's shared spacer paragraph (15 VFEP descriptions), corrected: `10ma` is a Latin American ordinal and it has agreement slips (`fueron adaptadas`, `un diseño avanzados`, `mejoro`). Keeps the pack's `verdaderos acorazados de una sola persona` and `servoarmadura` (Core `Apparel_PowerArmor`). The full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/Spanish/`. |
+| pilot (the wearer) | piloto | Core (`biofirma del piloto`), Odyssey (`consola de piloto`), community VFEP (`El piloto puede...`). |
+| spacer armor and insulation / shield bubble / spacer components (what a spacer-tier set carries) | blindaje y aislamiento de la era espacial / burbuja de escudo / componentes avanzados | "de la era espacial" is Core `TechLevel_Spacer` (see the tech levels row); components per Core `ComponentSpacer.label`; `burbuja de escudo` is coined (no vanilla Castilian noun for the bubble); `blindaje` is Toxin Warcasket's shipped wording (no vanilla grounding recorded). |
+
+Pending native review for the whole family: none of the VFEP rows above is
+open in Shipcracker's glossary (they are the community pack's). Toxin's lists
+the corrected 7th- and 10th-generation paragraphs (they diverge from the
+pack where it is ungrammatical or Latin American), `un peor peso`, and
+`burbuja de escudo`. The set-specific coinages each repo lists stay pending
+there.
 
 ## Pitfalls and lessons
 

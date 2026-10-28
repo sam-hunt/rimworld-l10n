@@ -137,6 +137,55 @@ strings unless noted):
 | blunt armor / sharp armor | Броня: Удар / Броня: Проникновение | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; CE's `CE_DescBluntPenetration`/`CE_DescSharpPenetration` reuse Удар/Проникновение |
 | armor penetration | Бронепробитие | | CE ru `CE_DescArmorPenetration` — verbatim, the same as the family's existing settings strings |
 | flak vest / flak jacket / frag grenade | бронежилет / бронекуртка / осколочные гранаты | | Core labels — verbatim; the grenade label is plural |
+| spacer-tech (attributive) | космического уровня | | Core `TechLevel_Spacer` = `космический`; the community VFEP pack's spacer sets say `сделанная по технологиям космического уровня` |
+| Imperial (adj.) | имперский | | Royalty (`имперский дезертир`, `имперский торговец`) |
+| plasteel / uranium / chemfuel | пласталь / уран / химтопливо | | Core; short form as in Odyssey and the community VFEP pack (`химтоплива`) |
+| Off / Default: {0}. / (default) / When enabled (settings) | Выкл / По умолчанию: {0}. / (по умолчанию) / Если включено | | Core Keyed `Off`, `Default`, `default`; `Если включено` per Core's tooltips (Toxin's glossary), `Если отключено` as shipped; the "Default: on" value reads `По умолчанию: включено.` / `выключено.` |
+| cooldown / range / cells and hours (settings units) | перезарядка / дальность / `(в клетках)`, `(в часах)`, `(%)` | | Core Keyed `CooldownTime`, `Range`; counts are written to avoid numeral agreement (`Клеток ...: {1}`) |
+| Odyssey (DLC name) / (requires Odyssey) | Odyssey / (требуется Odyssey) | | Core `ExpansionDef` keeps `Odyssey` in Latin; `требуется` as in Core `SkillNeededForConstructing` |
+| quantities with a named resource, tank capacity (settings) | `{0} ед. ({1})`, `Ёмкость бака ({0})` | | Core uses `{0} ед.` for mass quantities (`LowMedicineDesc`, `StatsReport_ReloadMarketValue`); the resource name stays nominative in parentheses, so no numeral or case agreement is needed |
+| Using ability: {0} (VEF `AbilityDef.jobReportString`) | применяет способность «{0}» | | VEF ships English only; third-person present like Core's `JobDef.reportString`s, no trailing period, guillemets around the label (Shipcracker Warcasket, shipped since 2026-09-26) |
+| on cooldown (a reloadable comp's `cooldownGerund`) | перезаряжается | | Shipcracker Warcasket's rendering of vanilla's `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it; Core's nearest string, Keyed `ShieldOnCooldown`, is `Восстанавливается`, so a native reviewer may prefer it |
+
+## Grounded common vocabulary, VFE Pirates warcasket domain (OneCodeUnit/VanillaRussianExpanded pack + Core, 2026-10-28)
+
+VFE Pirates ships English only. The community Russian translation of it,
+OneCodeUnit/VanillaRussianExpanded on GitHub (Vanilla Russian Expanded), is
+the grounding source: its warcasket is `броня мертвеца`, and its set pattern
+is an adjective on `броня мертвеца`, with a named set's shoulders and helmet
+dropping `мертвеца`. Every VFEP term below that cites a pack label was
+grounded against that pack as the Shipcracker and Toxin glossaries record it;
+the pack's files are not checked out beside the family repos, so a row not
+marked as pack-grounded is a family coinage. Every warcasket set in the
+family (Shipcracker, Toxin, Medic, Overlord) renders these terms alike so the
+sets read as one family in-game; a change is made here first and each set's
+shipped files follow at its next pass. A set's own name, its Workshop title
+and its own coinages stay in that repo's glossary.
+
+| English | Use | Why |
+|---|---|---|
+| warcasket (also "warcasket shell") | броня мертвеца (f.; gen. брони мертвеца, acc. броню мертвеца, dat. броне мертвеца) | Community VFEP pack (`VFEP_Warcasket_Warcasket.label`). No separate word for "shell": it is dropped in the part descriptions, as the pack does. Case forms as shipped: `заковать в броню мертвеца`, `наплечники брони мертвеца`, `Даёт защитной броне мертвеца`. Research labels that name the warcasket in the plural use the singular collective (`Космическая броня мертвеца`). |
+| `<set>` warcasket / shoulders / helmet (label pattern; pauldrons / shoulders, helmet) | `<set adj.>` броня мертвеца / наплечники `<set adj. gen.>` брони / шлем `<set adj. gen.>` брони | Pack pattern for named sets (Siegebreaker: `прорывная броня мертвеца`, `наплечники прорывной брони`, `шлем прорывной брони`). In descriptions the unnamed parts read `Специализированные наплечники брони мертвеца` / `Специализированный шлем брони мертвеца` (pack Hazard `shortDescription`s). |
+| chassis (the warcasket frame) | каркас | The pack's word for the warcasket frame (shipped in Shipcracker as `на космическом каркасе десятого поколения`). |
+| warcasket foundry | цех мертвеца | Community VFEP pack (`VFEP_WarcasketFoundry.label`). Foundries in general are `цеха`. |
+| entomb / weld into (the set) | заковать в броню мертвеца | Community VFEP pack (`VFEPirates.EntombInWarcasket`). Shipcracker uses it on its Workshop page for "weld it on" and "welded into the set". |
+| spacer warcaskets / specialised warcaskets (VFEP research labels, cited in prose) | «Космическая броня мертвеца» / «Специализированная броня мертвеца» | Pack `VFEP_SpacerWarcaskets.label` (`космическая броня мертвеца`) and `VFEP_SpecialisedWarcaskets.label`, capitalised in guillemets as a cited project label; Russian quotes cited labels on its own convention, not because the English did. The pack's spacer label confirms Shipcracker's earlier coined row. |
+| VFEP set names | прорывная (siegebreaker) / беспощадная (brute) / охранная (guardian) / катафрактарская (cataphract) / защитная (hazard) / воздушная (aerial), each as `<adj.> броня мертвеца` | Siegebreaker, Brute, Guardian: community pack set adjectives. Cataphract: pack `VFEP_Warcasket_Cataphract.label` `катафрактарская броня мертвеца`, agreeing with Royalty `Apparel_ArmorCataphract.label` (not used in Toxin's shipped Russian text). Hazard: pack `VFEP_Warcasket_Hazard.label` `защитная броня мертвеца` (shipped in Toxin's settings). Aerial: Shipcracker's Workshop and settings usage, shipped as `детали воздушной брони мертвеца`; the pack's own Aerial adjective was not available to check. The pack's Shock set is `штурмовая`, which is why Shipcracker avoids it. Sarcophagus and Controller: the glossaries record no Russian rendering (only that the pack has them); take the pack's adjective when a set first needs one. |
+| 7th generation / 10th generation (VFEP's two chassis) | `Седьмое поколение` (pack's 7th-generation paragraph) / `Броня мертвеца десятого поколения` (pack lore), `каркас десятого поколения` (Shipcracker's prose) | Pack lore wording; `каркас` per the chassis row. |
+| Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | Специализированная броня мертвеца / Специализированные наплечники брони мертвеца / Специализированный шлем брони мертвеца с превосходной защитой ценой большего веса | The `Специализированная ...` head is the pack's Hazard `shortDescription`s; `с превосходной защитой ценой большего веса` is Toxin's coinage, pending native review. Shipped in Toxin's DefInjected `shortDescription`s. |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet with standard protection (VFEP's 10th-generation opener) | Специализированная броня мертвеца / Специализированные наплечники брони мертвеца / Специализированный шлем брони мертвеца со стандартными защитными характеристиками, сделанная / сделанные / сделанный по технологиям космического уровня. | Pack verbatim: `VFEP_Warcasket_Siegebreaker.shortDescription`, `VFEP_WarcasketShoulders_Siegebreaker.shortDescription`, `VFEP_WarcasketHelmet_Siegebreaker.description`; shipped in Toxin's Keyed `TXWC_SpacerShortDescription_*`. Shipcracker's variant replaces the protection clause: `космического уровня с улучшенным рассеиванием энергии ударов`, from the pack's Guardian (`с продвинутым рассеиванием энергии ударов`) with `улучшенным` for "improved". |
+| the 7th-generation paragraph (VFEP's lore paragraph shared by every 7th-generation description) | Седьмое поколение стало результатом смены направления разработки. ... | Pack verbatim (its Aerial / Barrage / Hazard / Shock descriptions); of its two variants (comma after `Также` or not) the comma-less one, and its own comma in `вместо полной взаимозаменяемости, разные` is kept. The full text is the tail of Toxin Warcasket's shipped DefInjected descriptions in `1.6/Languages/Russian/`. |
+| the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | Броня мертвеца десятого поколения была создана на основе образцов, найденных на захваченных пиратских судах. ... с меньшими потерями производительности. | Pack verbatim (its Siegebreaker / Guardian / Controller / Sarcophagus / Brute descriptions, `VFEPirates.WarcasketDef/Apparel_Various.xml`); of its two variants (comma after `подчиняющихся правительству` or not) the one with the comma, which closes the participial phrase, and the pack's `привело` (for a compound subject) is kept verbatim. The full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/Russian/`. |
+| pilot (the wearer) | пилот | Pack (`Пилот может с комфортом...`); Shipcracker's prose; shipped in both sets. |
+| spacer armor and insulation / shield bubble / spacer components (what a spacer-tier set carries) | защита и изоляция космического уровня / силовой щит / продвинутые компоненты | Core `Insulation_Cold` (`Изоляция`) and `ComponentSpacer.label`; `силовой щит` is the pack's word (Shipcracker's ranged shield), and Core's shield-belt tutor text frames it as stopping ranged attacks. |
+
+Pending native review for the whole family: nothing in the pack-grounded rows
+is open. Family coinages not checked against the pack: `воздушная` (aerial,
+the pack's Aerial adjective was not available) and `с превосходной защитой
+ценой большего веса`; the Sarcophagus and Controller adjectives are not yet
+recorded. Shipcracker's open question about the spacer research label is
+settled by the pack's own `VFEP_SpacerWarcaskets.label` row above. The
+set-specific coinages each repo lists stay pending there.
 
 ## Pitfalls and lessons
 

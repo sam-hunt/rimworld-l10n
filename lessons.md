@@ -313,6 +313,23 @@ name-grammar noun for any mod that adds name generation.
   the family's 관통력), Core wins, as for any pack. Per-language rows sit
   under "Grounded common vocabulary". (2026-10-27, Shipcracker Warcasket's
   CE root.)
+- **VFE Pirates' warcasket vocabulary is family vocabulary and lives here,
+  once, under each language file's "Grounded common vocabulary, VFE Pirates
+  warcasket domain" section.** Four sets (Shipcracker, Toxin, Medic and
+  Overlord Warcasket) share VFEP's nouns (warcasket, the parts, the foundry,
+  entomb), its set names and research labels, its two description openers
+  and its 10th-generation lore paragraph, and they must render alike so the
+  sets read as one family and as VFEP in-game. The rows were coined in
+  Shipcracker's 2026-09-26 pass and extended by Toxin's, then copied into
+  each new set's glossary until the fourth copy; now a set's glossary keeps
+  only its own name, Workshop title, charge nouns and coinages, and a VFEP
+  term is changed here first, with each set's shipped files following at
+  its next pass. The section's intro records the community pack grounded
+  against (see the pack lesson above) or the absence of one, and the
+  vanilla- and VEF-grounded words the sets settled on the way (spacer-tech,
+  Imperial, sealed, the settings words, VEF's `Using ability: {0}`, a
+  reloadable's `on cooldown`) sit in the main table like any other grounded
+  row. (2026-10-28, Medic Warcasket.)
 
 ## Tooling lessons (cross-mod, not language-specific)
 

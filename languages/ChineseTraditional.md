@@ -172,6 +172,14 @@ have been wrong in its most-repeated strings.
 | persona weapon (bladelink) | 羈絆武器 | Royalty trait descs, `place_personalWeapon` |
 | Odyssey / Royalty (DLC names) | 「漫遊」/「皇權」 (《…》 for the soundtrack product names) | Core Keyed `SimulateNotOwningRoyalty`, `BuySoundtrack_*` |
 | unconscious | 失去意識 | Core `Anesthetic.description` |
+| spacer-tech (attributive) | 太空科技 | Core `Synthread.description`; VFEP's "specialized spacer-tech" is 特化型太空科技 (the 太空 of `TechLevel_Spacer`, tech levels row above) |
+| Imperial (adj.) | 帝國 | Royalty cataphract descriptions (帝國的甲冑騎士); the faction itself is 破碎帝國 (Empire row below) |
+| respirator | 呼吸器 | Odyssey rulestrings (組裝呼吸器) |
+| Default: {0}. / (default) / Off / On (settings) | 預設值：{0}。 / (預設) / 關閉 / 開啟 | Core Keyed `Default` 預設, `Off` 關閉, `On` 開啟; 預設值 per the Taiwan register list above; the fullwidth colon is the label:value shape (Shipcracker and Toxin Warcasket, shipped) |
+| requires Odyssey (settings suffix) | (需要「漫遊」DLC) | Core `SimulateNotOwning*` 「漫遊」DLC (the DLC brand names row above). ASCII parens set solid, so the suffix drops the English leading space |
+| Using ability: {0} (VEF `AbilityDef.jobReportString`) | 使用能力：{0} | VEF ships English only; fullwidth-colon label shape like vanilla's 查看任務：{0}, no trailing period (Shipcracker Warcasket, shipped since its first pass; Toxin Warcasket the same) |
+| on cooldown (a reloadable comp's `cooldownGerund`) | 冷卻 | Vanilla's default for `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker and Toxin Warcasket) |
+| tank (an armor's fuel tank, settings) | 燃料箱 | Odyssey `FuelStorage.label` 燃料箱 (Core Keyed 燃料槽 is the fueling port) |
 
 Composition note for quest prose: vanilla renders "[discoveryMethod] the
 location of X" as `[discoveryMethod][X]的位置。` with **no 了**, but
@@ -293,6 +301,50 @@ disagree with the persona-weapon table above are noted inline.
 | blunt armor / sharp armor | 防禦 - 鈍擊 / 防禦 - 利刃 | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; CE's `CE_DescBluntPenetration` = 鈍器防護 says 鈍器 where Core's stat says 鈍擊, and Core wins |
 | armor penetration | 護甲穿透值 | Core `ArmorPenetration` (see above); CE's `CE_DescArmorPenetration` drops the 值, and Core wins |
 | flak vest / flak jacket / frag grenade | 防彈背心 / 防彈夾克 / 手榴彈 | Core labels — verbatim; zh-Hant's frag grenade is plain 手榴彈 |
+
+## Grounded common vocabulary, VFE Pirates warcasket domain (q847633684/Vanilla-Expanded-ZH pack + Core, 2026-10-28)
+
+VFE Pirates ships English only, and the Traditional Chinese pack could not be
+read: the Workshop pack "Vanilla Factions Expanded - Pirates - 簡&繁中文漢化包"
+(id 2727638702) attests the noun 戰棺 on its page, but its Traditional files
+could not be obtained. The zh-Hant renderings are therefore converted from the
+zh-Hans pack (GitHub `q847633684/Vanilla-Expanded-ZH`, the `Vanilla Factions
+Expanded - Pirates` folder; zh-Hans 战棺 = zh-Hant 戰棺), each term checked
+character by character against the zh-Hant Core, Royalty and Odyssey tars
+(vocabulary conversion, not a script conversion; see the inversion table
+above). Terms marked "derived" are such conversions of the pack's terms. Every
+warcasket set in the family (Shipcracker, Toxin, Medic, Overlord) renders
+these terms alike so the sets read as one family in-game; a change is made
+here first and each set's shipped files follow at its next pass. A set's own
+name, its Workshop title and its own coinages stay in that repo's glossary.
+
+| English | Use | Why |
+|---|---|---|
+| warcasket | 戰棺 | Attested on the Workshop pack 2727638702's page; the zh-Hans pack uses 战棺 throughout (`VFEP.RequiresWarcasket`, every set label); the Workshop title anchor. The page's 無畏戰棺 prefix is deliberately not used. |
+| `<set>` warcasket / shoulders / helmet (label pattern) | `<set>`型戰棺裝甲 / `<set>`型戰棺護肩 / `<set>`型戰棺頭盔 | Derived from the zh-Hans pack's pattern (`<set>`型战棺装甲 / 护肩 / 头盔). The body piece takes 裝甲 although the English label has no noun, as the pack does. 頭盔 and 裝甲 match vanilla (Core `Apparel_PowerArmorHelmet` 海陸頭盔, 海陸裝甲). |
+| pauldrons / shoulder pads | 護肩 | Derived (zh-Hans 护肩, also the foundry UI's `VFEP.Shoulderpads`). No vanilla hit either way. |
+| warcasket shell | 外殼 | Core `Shell.label`, Royalty cataphract helmet 防護外殼. Shipcracker ships 戰棺外殼 in its openers, while Toxin ships the pack's 戰棺裝甲 for the same English "shell" (see the 10th-generation opener row). |
+| torso piece (Workshop) | 裝甲主體 | Derived from the foundry UI's `VFEP.ArmorFrame` (装甲主体). |
+| warcasket foundry | 戰棺鑄造廠 | Derived (zh-Hans 战棺铸造厂); 鑄造廠 is Core `FoundryApprentice76`. |
+| entomb / weld (Workshop) | 封在戰棺內; assembling at the foundry 組裝 | zh-Hans pack's `VFEP.WarcasketText` (封入, 组装) rather than a literal "weld". |
+| spacer warcaskets / specialised warcaskets (VFEP research labels, cited in prose) | 「太空戰棺」 / 「特化型戰棺」 | 「太空戰棺」 is cited in Toxin Warcasket's shipped `TXWC_SpacerTierDesc` (Toxin's glossary records Shipcracker's zh-Hant Workshop page as the same); 太空 is Core `TechLevel_Spacer` where the zh-Hans pack writes 太空时代战棺. 「特化型戰棺」 is derived from the pack's `VFEP_SpecialisedWarcaskets.label` 特化型战棺; no shipped file cites it yet. Corner brackets per the Core citation style. |
+| VFEP set names | 破襲型 (siegebreaker), 狂怒型 (brute), 聖盾型 (guardian), 空襲型 (aerial), 騎士型 (cataphract), 險境型 (hazard) | Derived from the zh-Hans pack; 騎士型 / 險境型 are the pack's `VFEP_Warcasket_Cataphract.label` 骑士型 and `VFEP_Warcasket_Hazard.label` 险境型 (險境 attested in the zh-Hant tars; Royalty's own cataphract armor is 全覆式裝甲, the set name follows the pack). 空襲型 is coined and shipped in Shipcracker Warcasket's Keyed; the zh-Hans section of its sibling file records the pack's aerial as 突击型, so 空襲型 deviates from the pack's wording (a 突擊型 conversion) and is unverified against the Traditional pack. Controller and sarcophagus: no glossary records the pack's rendering and the pack's files were not available to this pass, so they are unrecorded here; take them from the pack when a set needs them. |
+| 7th generation / 10th generation (VFEP's two chassis) | 第七代 / 第十代 | Shipcracker's and Toxin's shipped prose (Toxin 第七代戰棺 and 第十代戰棺), following the pack's paragraphs. |
+| Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | 特化型戰棺`<part>`，在增加機體重量的同時大幅提升了防護性。 | zh-Hans pack's Cataphract opener (进阶型→特化型); Toxin Warcasket's shipped `shortDescription`s (戰棺裝甲 / 護肩 / 頭盔). |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet (VFEP's 10th-generation opener) | 特化型太空科技戰棺裝甲 / 護肩 / 頭盔 | zh-Hans pack's opening phrase for every 10th-generation part (特化型太空时代级别战棺…), with 太空科技 for the pack's 太空时代级别 (see the spacer-tech row in the main table); 特化型 from the pack's descriptions. Toxin ships 戰棺裝甲 for the shell where Shipcracker ships 戰棺外殼; the two are not reconciled, so settle the shell slot here before the next set ships. |
+| ... with standard protection (the 10th-generation opener's tail) | ，在不增加機體重量的同時極大幅提升了防護性。 | zh-Hans pack's Siegebreaker / Controller / Sarcophagus openers (在不增加机体重量的同时极大幅提升了防护性), loose for "standard protection" as the pack is; Toxin Warcasket's shipped `TXWC_SpacerShortDescription_*`. Shipcracker's variant ends 強化了衝擊分散性能 for its "improved impact dispersion" (coined, close to the English; the pack's loose rendering was not adopted because it invents a weight claim). |
+| 7th-generation paragraph (VFEP's lore paragraph on the 7th-generation chassis) | 由於機體基本性能的強化陷入瓶頸，第七代戰棺的研發重心轉向了創新改進。… | zh-Hans pack's Hazard paragraph, its dash reflowed into ，; 玻璃钢→塑鋼 (zh-Hant Core `Plasteel`); shipped in Toxin Warcasket's descriptions. |
+| the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | 第十代戰棺有些特殊，它們是用從海盜那裡收繳的設備改造而成的。… | zh-Hans pack's paragraph (repeated on every spacer set; the Siegebreaker, Brute, Guardian, Sarcophagus and Controller descriptions share it), dash reflowed into ，; 兼容性→相容性 (Core `Incompatible` 不相容), 借助→藉助, quotes →「戰棺」. The full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/ChineseTraditional/`. |
+| pilot (the wearer) | 駕駛員 | zh-Hant Core/Odyssey `Shuttle.description` (駕駛員的生物特徵); Shipcracker's and Toxin's shipped prose. |
+| spacer armor and insulation / shield bubble / spacer components / spacer tier (what a spacer-tier set carries) | 太空級的護甲與隔熱性能 / 一層護盾 / 高級零件 / 太空級 | Toxin Warcasket's shipped `TXWC_SpacerTierDesc`; 護盾 per Core `ShieldBelt.label`, 高級零件 per Core `ComponentSpacer.label` (the advanced component row above). 太空級 is coined (太空 is Core `TechLevel_Spacer`, 級 as in a grade); 隔熱 and 心靈抗性 are coined because the stat labels (隔絕 - 冷/熱) do not read as prose. |
+
+Pending native review for the whole family: every "derived" term above (護肩,
+裝甲主體, 戰棺鑄造廠, 破襲型 / 狂怒型 / 聖盾型, 特化型, 騎士型 / 險境型 /
+「特化型戰棺」 and the 7th-generation paragraph), converted from the zh-Hans pack
+and character-checked against the zh-Hant tars, but the actual Traditional pack
+could not be compared; the coined 空襲型, 太空級 and the adopted opener's 極大幅
+for "standard protection"; the shell slot (外殼 or 裝甲) in the openers. The
+set-specific coinages each repo lists stay pending there.
 
 ## RulePackDef / name-generation grammar
 

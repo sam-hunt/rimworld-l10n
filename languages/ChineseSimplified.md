@@ -119,6 +119,15 @@ mod builds on (BTG, 2026-08-09):
 | MPa / mm RHA (Combat Extended units) | MPa / mm RHA | 兆帕, 毫米均质装甲 | CE 16.7.4 zh-Hans `CE_MPa`/`CE_mmRHA` keep the Latin symbols, so match CE's own info card; the spelled-out forms are zh-Hant's |
 | blunt armor / sharp armor | 护甲 - 钝器 / 护甲 - 利器 | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; CE's `CE_DescBluntPenetration` = 钝器穿透 uses the same 钝器/利器 classes |
 | flak vest / flak jacket / frag grenade | 防弹背心 / 防弹夹克 / 破片手榴弹 | | Core labels — verbatim |
+| plasteel / uranium (uranium only; plasteel is bulleted above) | 玻璃钢 / 铀 | | Core labels |
+| respirator / breathing | 呼吸器 / 呼吸能力 | | Respirator is coined (no vanilla respirator item or gene in the zh tars), a plain everyday word, pending native review; Core `Breathing.label` = 呼吸能力 |
+| Imperial (adj.) | 帝国 | | Royalty adjective use (帝国逃兵, 帝国穿梭机, 帝国的甲胄骑士); the faction noun stays 破碎帝国 per the Empire bullet below |
+| Off / On / default / Default: on (settings) | 关 / 开 / 默认 / 默认：启用 | | Core Keyed `Off`, `On`, `Default`, `Enabled`. Where a file also writes `Default: off.`, use the On/Off pair 默认：开 / 默认：关 (Toxin Warcasket, shipped); 默认：启用 is Shipcracker Warcasket's on-by-default flag |
+| settings suffixes (requires Odyssey / default) | （需要奥德赛） / （默认） | | Full-width parens with no leading space, as vanilla 锻造台（燃料）; shipped by Shipcracker and Toxin Warcasket |
+| cooldown | 冷却时间 | | Core Keyed `CooldownTime`; settings label 冷却时间（小时） |
+| Royalty / Odyssey (DLC names) | 皇权 / 奥德赛 | | Core `ExpansionDefs`; ground Biotech's name the same way (Toxin Warcasket's Workshop page leaves it English, its in-game name is 生物技术) |
+| Using ability: {0} (VEF `AbilityDef.jobReportString`) | 使用{0}。 | | VEF ships English only; trailing period kept like Core's `JobDef.reportString`s (Shipcracker Warcasket, shipped since 2026-09-26; Toxin Warcasket's abilities too) |
+| on cooldown (a reloadable comp's `cooldownGerund`) | 冷却中 | | Vanilla's default for `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker and Toxin Warcasket) |
 
 Also confirmed independently by UWU: **caravan / quest / forbidden / cannot
 reach** → 远行队 / 任务 / 已禁用 / 无法到达, never 商队 for caravan (Core
@@ -193,6 +202,44 @@ reinforces market value above.
 - scrap / mod / log / save: 废料 / 模组 / 日志 / 存档 (Core
   `CubeMaterialScrap`, `ScenPart_Error`, `OpenLogOnWarnings`,
   `SaveGameDataFolder`)
+
+## Grounded common vocabulary, VFE Pirates warcasket domain (q847633684/Vanilla-Expanded-ZH pack + Core, 2026-10-28)
+
+VFE Pirates ships English only; its terms are grounded against the community
+Vanilla Expanded Simplified Chinese pack (GitHub
+`q847633684/Vanilla-Expanded-ZH`, the `Vanilla Factions Expanded - Pirates`
+folder: its 1.6 `DefInjected/VFEPirates.WarcasketDef/VFEPirates.WarcasketDef.xml`
+WarcasketDef ThingDef injections, Keyed UI and ResearchProjectDef files), which
+carries the Siegebreaker, Cataphract and Hazard sets and the 7th- and
+10th-generation paragraphs; vanilla terms are grounded against the Core,
+Royalty, Odyssey and Biotech `ChineseSimplified (简体中文).tar`. Every warcasket
+set in the family (Shipcracker, Toxin, Medic, Overlord) renders these terms
+alike so the sets read as one family in-game; a change is made here first and
+each set's shipped files follow at its next pass. A set's own name, its
+Workshop title and its own coinages stay in that repo's glossary.
+
+| English | Use | Why |
+|---|---|---|
+| warcasket | 战棺 | Community VFEP pack throughout (`VFEP.RequiresWarcasket` = 需要战棺, every set label); the Workshop title anchor. |
+| `<set>` warcasket / shoulders / helmet (label pattern) | `<set>`型战棺装甲 / `<set>`型战棺护肩 / `<set>`型战棺头盔 | Community pattern (`VFEP_Warcasket_Siegebreaker.label` = 破袭型战棺装甲 and siblings). The body piece takes 装甲 although the English label has no noun, exactly as the pack does. |
+| warcasket foundry | 战棺铸造厂 | Community `VFEP_WarcasketFoundry.label`. |
+| weld on / entomb (Workshop) | 在战棺铸造厂完成改造; 封在战棺里 | Community renders entomb loosely (进入铸造厂, 战棺改造 in `VFEPirates.EntombingWarning`); the Workshop follows that looseness. |
+| spacer warcaskets / specialised warcaskets (VFEP research labels, cited in prose) | 「太空时代战棺」 / 「特化型战棺」 | Community `VFEP_SpacerWarcaskets.label` and `VFEP_SpecialisedWarcaskets.label`; corner brackets per vanilla research-name citation (研究「基础逆重科技」). Shipcracker's and Toxin's shipped text cites 「太空时代战棺」; no shipped file cites 「特化型战棺」 yet. |
+| VFEP set names | 破袭型 (siegebreaker), 狂怒型 (brute), 圣盾型 (guardian), 突击型 (aerial), 骑士型 (cataphract), 险境型 (hazard) | Community pack labels (`VFEP_Warcasket_Aerial.label` = 突击型战棺装甲, `VFEP_Warcasket_Cataphract.label` = 骑士型战棺装甲, `VFEP_Warcasket_Hazard.label` = 险境型战棺装甲); 骑士 also matches Royalty's 骑士装甲. The third-party 无畏 prefix (WarCasket Expanded) is not used; the VFEP pack has none. Controller and sarcophagus: no glossary records the pack's rendering and the pack's files were not available to this pass, so they are unrecorded here; take them from the pack when a set needs them. |
+| 7th generation / 10th generation (VFEP's two chassis) | 第七代 / 第十代 | Shipcracker's and Toxin's shipped prose (第七代战棺, 第十代太空时代机体), following the pack's paragraphs. |
+| Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | 特化型战棺`<part>`，在增加机体重量的同时大幅提升了防护性 | Community pack: superior = 大幅 (Shock), worse weight = 增加机体重量 (Barrage); Toxin Warcasket's shipped `shortDescription`s. |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet (VFEP's 10th-generation opener) | 特化型太空时代级别战棺装甲/护肩/头盔 | Community pack's opening phrase for every 10th-generation part, verbatim (Shipcracker and Toxin Warcasket, shipped). |
+| ... with standard protection (the 10th-generation opener's tail) | ，在不增加机体重量的同时极大幅提升了防护性 | Community pack's Siegebreaker / Controller / Sarcophagus openers, every "standard protection" part (loose, as the pack is); Toxin Warcasket's shipped `TXWC_SpacerShortDescription_*`. |
+| 7th-generation paragraph (VFEP's lore paragraph on the 7th-generation chassis) | 由于机体基本性能的强化陷入瓶颈，第七代战棺的研发重心转向…… | Community pack's Hazard/Barrage/Shock text verbatim, its —— reflowed to a comma; shipped in Toxin Warcasket's descriptions. |
+| the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | 第十代战棺有些特殊，它们是用从海盗那里收缴的设备改造而成的…… | Community pack's Siegebreaker text verbatim (loose, as the pack is; the pack's Siegebreaker / Brute / Guardian / Sarcophagus / Controller descriptions share it), its —— reflowed to a comma; the full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/ChineseSimplified/`. |
+| spacer tier / spacer (armor, costs) | 太空时代级别 | Community pack's 10th-gen opener (特化型太空时代级别…); vanilla `TechLevel_Spacer` = 太空时代. Toxin's toggle 毒素型战棺升级为太空时代级别 is declarative like 险境型战棺可抵御真空. |
+| pilot (the wearer) | 驾驶员 | Community Keyed/lore (成为驾驶员的殖民者); Shipcracker's and Toxin's shipped prose. |
+| spacer armor and insulation / shield bubble / spacer components (what a spacer-tier set carries) | 太空时代级别的护甲与隔温 / 能量护盾 / 高级零部件 | Toxin Warcasket's shipped `TXWC_SpacerTierDesc`; 能量护盾 per Core `Apparel_ShieldBelt.description` (单人用的能量护盾装置); 高级零部件 per Core `ComponentSpacer.label`. The glossaries record no Core row for 隔温. |
+
+Pending native review for the whole family: 呼吸器 (coined, no vanilla or
+community source). Everything else in this section is the community pack's own
+rendering or a vanilla term; the set-specific coinages each repo lists stay
+pending there.
 
 ## Pitfalls and lessons
 

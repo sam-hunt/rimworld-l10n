@@ -295,6 +295,55 @@ alternative and why.
 | blunt armor / sharp armor | Armure - Contondant / Armure - Perforant | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label` |
 | armor penetration | Pénétration d'armure | | CE fr `CE_DescArmorPenetration` — verbatim, the same as the family's existing settings strings |
 | flak vest / flak jacket / frag grenade | gilet pare-balles / veste renforcée / grenade à fragmentation | | Core labels — verbatim |
+| spacer / spacer-tech (attributive) | spatial / de technologie spatiale | | Core `TechLevel_Spacer` = `spatial`; `de technologie spatiale` for the attributive "spacer-tech" (*native*, Shipcracker Warcasket PR #1) |
+| Imperial (adj.) | impérial | | Royalty `Empire.pawnSingular` |
+| onboard respirator | respirateur intégré | | **Coined**, plain word: no vanilla French respirator item (Biotech has only `masque à gaz`) |
+| sealed (airtight) | étanche | | Odyssey `GravshipHull.description` (`paroi étanche`); plain French, fine without Odyssey |
+| plasteel / uranium / chemfuel | plastacier / uranium / chemfuel | | Core labels; `chemfuel` stays untranslated, as vanilla keeps it |
+| Off / On (settings) | Désactivé / Activé | | Core Keyed `Off` = `Désactivé(e)`, `On` = `Activé(e)`; a label-only value takes the masculine form |
+| settings window phrases (Keyed) | Par défaut : {0}. / (par défaut) / (nécessite Odyssey) | | Core Keyed `Default` = `Par défaut`; French-spaced colon; the DLC keeps its English name |
+| cooldown / range / cells / hours | temps de recharge / portée / cases / heures | | Core `FlightCooldown` = `temps de recharge du vol`, Keyed `Range` = `Portée`, `HoursLower` = `heures`; `case` is vanilla's map-tile word (`inspecter les détails d'une case`) |
+| Odyssey (DLC name) | Odyssey | | Odyssey `ExpansionDef` label keeps the English name |
+| Using ability: {0} (VEF `AbilityDef.jobReportString`) | utilise la capacité : {0}. | | VEF ships English only; third-person present like Core's `JobDef.reportString`s, French-spaced colon, trailing period kept (Shipcracker Warcasket, shipped since 2026-09-26) |
+| on cooldown (a reloadable comp's `cooldownGerund`) | rechargement | | Shipcracker Warcasket's rendering of vanilla's `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it |
+
+## Grounded common vocabulary, VFE Pirates warcasket domain (coined in Shipcracker Warcasket's 2026-09-26 pass, extended by Toxin Warcasket's 2026-10-13 and 2026-10-22 passes; 2026-10-28)
+
+VFE Pirates ships English only, and no community French translation survives
+(the "Vanilla Factions Expanded - Pirates [Fr]" Workshop item, id 2725064005,
+has been removed), so a French player sees "siegebreaker warcasket" and
+"warcasket foundry" in English in-game and every VFEP term here is a family
+coinage. "warcasket" is therefore kept untranslated, as vanilla keeps
+"chemfuel": Shipcracker Warcasket's native-speaker PR #1 (Joedox) replaced the
+earlier "sarcophage", which matched nothing the player sees. Rows marked
+*native* were settled by that review and are not reopened. Every warcasket set
+in the family (Shipcracker, Toxin, Medic, Overlord) renders these terms alike
+so the sets read as one family in-game; a change is made here first and each
+set's shipped files follow at its next pass. A set's own name, its Workshop
+title and its own coinages stay in that repo's glossary.
+
+| English | Use | Why |
+|---|---|---|
+| warcasket | warcasket (m., pl. warcaskets; invariable as a modifier: `coque warcasket`) | *native*. Untranslated, matching VFEP's English labels in a French game (see above); also the Workshop title anchor. Rejected: sarcophage (came from the removed pack's page, matches nothing in-game). |
+| `<set>` warcasket / shoulders / helmet (label pattern) | warcasket `<set>` / épaulières de warcasket `<set>` / casque de warcasket `<set>` | *native* order. Core/Royalty apparel pattern `casque de cataphracte`, `armure de commando` (part `de` class noun); the set adjective stays invariable after the noun. |
+| pauldrons / shoulders / shoulder pads | épaulières | **Coined** (no vanilla shoulder apparel; Core only has `épaule` body parts). Ordinary French armor term. Plural label: `[X_definite]` agreement may default masculine singular in vanilla keyed strings. |
+| helmet | casque | Core `casque de commando`. |
+| warcasket shell (torso) | coque warcasket | *native* (replaced the coined `carapace`); the `warcasket` modifier keeps it apart from a ship's `coque`. |
+| warcasket foundry | fonderie de warcaskets | **Coined.** |
+| entomb / weld into / welded | souder / soudé dans | Community VFEP Workshop page ("se soudent à l'intérieur"); the Shipcracker glossary's row, not found in the shipped DefInjected or Keyed. |
+| spacer warcaskets / specialised warcaskets (VFEP research labels, cited in prose) | « spacer warcaskets » (warcaskets spatiaux) | The English label in guillemets, because that is the clickable project every French player sees (VFEP is untranslated), with the French gloss in parentheses. Render `specialised warcaskets` the same way (not yet shipped anywhere). |
+| VFEP set names | Brise-siège (siegebreaker), Brute (brute), Gardien (guardian), Aérien (aerial; in-game prose `pièces de warcasket aériennes`), cataphracte (cataphract; `le modèle cataphracte` in-game), hazard (hazard; `warcasket hazard`, `ensemble Hazard`) | **Coined** pattern, "ensemble" for set. Brise-siège, Brute, Gardien and Aérien are capitalized as proper names on the Workshop pages only; in-game the English label stays (`warcasket siegebreaker`, `warcasket hazard`) because VFEP's own labels are untranslated. cataphracte follows Royalty `Apparel_ArmorCataphract.label` = `armure de cataphracte`. Controller and sarcophagus have no French rendering recorded in any glossary. |
+| 7th generation / 10th generation (VFEP's two chassis) | 7e génération / 10e génération (`les warcaskets de 7e génération`, `le châssis spatial de 10e génération`) | Shipcracker's and Toxin's prose; VFEP's dashed aside on the 7th generation becomes `qui, bien qu'interchangeables, fonctionnent mieux en ensemble`. |
+| Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | Coque warcasket spécialisée, plus protectrice mais plus lourde. / Épaulières warcasket spécialisées, plus protectrices mais plus lourdes. / Casque warcasket spécialisé, plus protecteur mais plus lourd. | Toxin Warcasket's shipped `shortDescription`s; the participle agrees with the part, the `warcasket` modifier stays invariable. |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet with standard protection (VFEP's 10th-generation opener) | Coque warcasket spécialisée de technologie spatiale, offrant une protection standard. (shoulders: Épaulières warcasket spécialisées ...; helmet: Casque warcasket spécialisé ...) | Toxin Warcasket's shipped text; `offrant une protection standard` replaces the 7th-gen `plus protectrice mais plus lourde`. Shipcracker's variant ends `qui disperse mieux les impacts` (a finite relative clause for "improved impact dispersion"). |
+| the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | Les warcaskets de 10e génération ont en réalité été adaptés à partir d'équipements pirates capturés, ... même d'une génération à l'autre. | Translated, no pack; the full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/French/`. power armour = `armure motorisée` (Core `Apparel_PowerArmor.description`); single-user dreadnoughts = `cuirassés à un seul pilote`; the rest coined in the 7th-gen paragraph's register. |
+| pilot (the wearer) | pilote | Odyssey (`console de pilotage`, `pilote`); Shipcracker's prose. |
+| spacer armor and insulation / shield bubble / spacer components (what a spacer-tier set carries) | blindage et isolation de niveau spatial / bouclier d'énergie / composants avancés | Core `Apparel_ShieldBelt.label` (`bouclier d'énergie`), `ComponentSpacer.label` (`composants avancés`); blindage and isolation as shipped in Toxin's `TXWC_SpacerTierDesc`. |
+| ability description register (VFEP ability text) | third-person present (`Allume les propulseurs...`) | *native*. The majority vanilla form (Royalty 23 third-person vs 8 infinitive); Biotech's infinitive `Longjump` is the outlier. |
+
+Pending native review for the whole family: `fonderie de warcaskets`,
+`épaulières`, and the set-name capitalization pattern (Brise-siège, Brute,
+Gardien). The set-specific coinages each repo lists stay pending there.
 
 ## Pitfalls and lessons
 

@@ -175,6 +175,60 @@ family and are safe defaults for new work.
 | MPa / mm RHA (Combat Extended units) | MPa / mm RHA | メガパスカル in a label | CE 16.7.4 ships no Japanese, so CE's own info card shows the English `CE_MPa`/`CE_mmRHA`; JIS Z 8203 uses the Latin SI symbols |
 | blunt armor / sharp armor | アーマー - 打撲系 / アーマー - 突刺系 | 鈍器, 鋭利 | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; ja keeps アーマー for armor |
 | flak vest / flak jacket / frag grenade | 防弾チョッキ / 防弾ジャケット / 手榴弾 | 破片手榴弾 | Core labels — verbatim; ja's frag grenade is plain 手榴弾 |
+| spacer-tech (attributive) | 宇宙技術を用いた | | Royalty `Apparel_PackJump.description` renders "spacer militaries" as 宇宙技術を用いる一部の軍隊 |
+| spacer (tech tier) | 宇宙世紀 | | Core Keyed `TechLevel_Spacer` |
+| Imperial | 帝国 / 帝国の | | Royalty `Empire.pawnSingular` 帝国; backstories 帝国教会, 帝国の牧師; `Apparel_ArmorCataphract` 帝国のカタフラクト部隊 |
+| respirator / breathing (capacity) | 呼吸装置 / 肺機能 | | 呼吸装置 is a coined plain term (no vanilla respirator item); Core PawnCapacityDef `Breathing.label` is 肺機能 |
+| sealed (airtight) | 気密 | | Odyssey `GravshipHull.description` (気密壁) |
+| plasteel / uranium / chemfuel | プラスチール / ウラン / バイオ液化燃料 | | Core |
+| ability | 能力 | | Royalty Keyed (この能力を獲得しますか) |
+| Off / On (settings) | Off / On | | Core Keyed `Off`, `On` (vanilla keeps On/Off in Latin script); Default is the row above |
+| cooldown / cells | クールダウン / タイル | | Core Keyed `StatsReport_Cooldown`, `AbilityOnCooldown`; `RoomRequirementArea` ({0}タイル) counts map cells as タイル, no space before the unit (vanilla also uses セル in one Keyed string, pending native review) |
+| range / hours (settings slider captions) | 範囲 (タイル) / クールダウン (時間) | | The shipped Shipcracker Warcasket Keyed forms (`SCWC_JumpRange`, `SCWC_Cooldown`); (時間) could read as "(time)", pending native review |
+| Odyssey (DLC name) | Odyssey | | Core `ExpansionDef` `Odyssey.label` keeps the Latin name; DLC names stay in Latin script (style section above) |
+| (requires Odyssey) / (default) suffixes (settings window) | ` (Odysseyが必要)` / ` (デフォルト)` | | ASCII parens with a leading space, as in vanilla Keyed (`使用できない (太陽フレア)`, `{1_label} (死亡)`); が必要 from Core Alerts (`医者が必要`) |
+| Using ability: {0} (VEF `AbilityDef.jobReportString`) | 能力を使用中: {0} | | VEF ships English only; progressive 〜中 form with no trailing period, per the reportString rule above (Shipcracker Warcasket, shipped since 2026-09-26) |
+| on cooldown (a reloadable comp's `cooldownGerund`) | クールダウン中 | | Vanilla's default for `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker Warcasket) |
+
+## Grounded common vocabulary, VFE Pirates warcasket domain (coined in Shipcracker Warcasket's 2026-09-26 pass, extended by Toxin Warcasket's 2026-10-13 and 2026-10-22 passes; 2026-10-28)
+
+VFE Pirates ships English only, and no community Japanese translation could
+be grounded against: only the noun is attested (the Japanese mod database
+rimworld.2game.info tags VFE Pirates content as ウォーキャスケット and marks
+VFEP as 日本語化対応, but no translation files were found), so every other
+VFEP term here is a family coinage pending native review. A different mod,
+Vanilla Armour Expanded, renders "siegebreaker" as シージブレーカー, which is
+the basis for keeping set names in katakana. If a community VFEP pack turns
+up, re-ground these rows against it and prefer its renderings. Every
+warcasket set in the family (Shipcracker, Toxin, Medic, Overlord) renders
+these terms alike so the sets read as one family in-game; a change is made
+here first and each set's shipped files follow at its next pass. A set's own
+name, its Workshop title and its own coinages stay in that repo's glossary.
+
+| English | Use | Why |
+|---|---|---|
+| warcasket | ウォーキャスケット | The community VFEP noun (rimworld.2game.info tagging), the one attested term. Required in the Workshop title. No gender or plural in Japanese. |
+| `<set>` warcasket / `<set>` warcasket helmet (label pattern) | `<セット>`・ウォーキャスケット / `<セット>`・ウォーキャスケットヘルメット | Core/Royalty attach ヘルメット and アーマー directly (カタフラクトヘルメット, レコンヘルメット); Biotech/Odyssey separate a katakana modifier from a katakana compound with ・ (メカノイド・ドロップポッド, サブコア・エンコーダー). |
+| pauldrons / shoulders / shoulder pads | ショルダーアーマー | Coined; no vanilla shoulder piece exists. Chosen over bare ショルダー (reads as the body part or a bag) and ショルダーパッド (evokes suit or sports padding). Used for the label, the description and the Workshop "shoulder pads"; the resulting label length is pending native review. |
+| warcasket shell | ウォーキャスケット外殻 | Coined; plain word for "shell". |
+| warcasket foundry | ウォーキャスケット鋳造台 | Coined; also "foundries" in prose as 鋳造台. The Korean community uses 주조대, the same "casting bench" idea. Unattested in Japanese. |
+| entomb | 封入 | Proposed coinage; not used in any shipped string of the family's mods. Unattested. |
+| spacer warcaskets / specialised warcaskets (VFEP research labels, cited in prose) | 「宇宙世紀のウォーキャスケット」 / 「特殊なウォーキャスケット」 | Coined; 宇宙世紀 is Core `TechLevel_Spacer` (main table). 「」 for a label cited in descriptive prose, per the quoting rule above. The first is shipped in Toxin Warcasket's Keyed (研究「宇宙世紀のウォーキャスケット」), both appear on its Workshop page. |
+| VFEP set names | シージブレーカー (siegebreaker), ブルート (brute), ガーディアン (guardian), エアリアル系 (aerial), カタフラクト (cataphract), ハザード (hazard; ハザード・ウォーキャスケット) | Katakana per the set-name habit; シージブレーカー is attested in Vanilla Armour Expanded's Japanese, the others coined to match, pending native review, except カタフラクト (Royalty `Apparel_ArmorCataphract.label` = カタフラクトアーマー). controller and sarcophagus have no Japanese rendering recorded yet. |
+| 7th generation / 10th generation (VFEP's two chassis) | 第7世代 / 第10世代 | Plain generation numbering. VFEP's dashed aside on the 7th generation is reflowed as "パーツの互換性は保ちつつ,". |
+| Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | 特殊なウォーキャスケット`<パーツ>`で,防護性能に優れる反面,重量が増しています. | Toxin Warcasket's shipped `shortDescription`s; 特殊な for "specialized" is Shipcracker's description wording, the rest coined. |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet with standard protection (VFEP's 10th-generation opener) | 宇宙技術を用いた特殊なウォーキャスケット`<パーツ>`で,標準的な防護性能を備えています. | "宇宙技術を用いた" is spacer-tech (main table); 標準的な防護性能 coined against the 7th-generation 防護性能に優れる. Shipcracker's variant ends "で,衝撃分散性能が向上しています." for its "improved impact dispersion". |
+| the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | 第10世代のウォーキャスケットは,実は鹵獲した宙賊の装備を改造したもので,... | Translated, no pack; the full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/Japanese/`. 宙賊 is Core `Pirate.label`; "dreadnoughts" is 弩級の兵器. |
+| pilot (the wearer) | パイロット | Odyssey `PilotAssistant` (パイロットアシスタント); Shipcracker's prose. |
+| spacer components / shield bubble (what a spacer-tier set carries) | 先進コンポーネント / シールドバブル | Core `ComponentSpacer.label`; Biotech `Mech_Centurion.description`. No rendering recorded for "spacer armor and insulation". |
+
+Pending native review for the whole family: ショルダーアーマー and the
+resulting label length, ウォーキャスケット鋳造台 (foundry) and 封入 (entomb),
+both unattested, the coined set names (all but カタフラクト), 特殊な for
+"specialized", 標準的な防護性能 for "standard protection" and the
+10th-generation paragraph's phrasing (no community VFEP rendering exists).
+If a community VFEP translation surfaces, align these and the set names to
+it. The set-specific coinages each repo lists stay pending there.
 
 ## Pitfalls and lessons
 

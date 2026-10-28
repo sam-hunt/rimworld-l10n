@@ -207,6 +207,53 @@ strings unless noted):
 | MPa / mm RHA (Combat Extended units) | MPa / mm RHA | Megapascal spelled out in a label | CE 16.7.4 ships no German (its `Languages/German/Keyed/Text.xml` is a stray Achtung! file), so CE's own info card shows the English `CE_MPa`/`CE_mmRHA`; DIN 1301 symbols are the same |
 | blunt armor / sharp armor | Rüstung - Wucht / Rüstung - Schnitt | stumpf, scharf | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label`; Wucht/Schnitt are the damage classes in prose too |
 | flak vest / flak jacket / frag grenade | Schutzweste / Schutzjacke / Splitterhandgranaten | Flakweste | Core labels — verbatim; the grenade label is plural in de |
+| spacer-tech (attributive) | aus der Raumfahrttechnik | | Core `Plasteel.description` / `Synthread.description` render "spacer-tech" exactly so |
+| Imperial (adj.) | imperial (imperiale, imperialen ...) | | Royalty `PawnKinds_Empire` (imperialer Grenadier), `Apparel_ArmorRecon.description` (imperialen Spähtrupps) |
+| respirator / breathing | Atemgerät / Atmen, Atemleistung | | Odyssey research story "Atemgeräten"; Core `Breathing` = Atmen |
+| sealed (airtight) | luftdicht versiegelt | | Odyssey `GravshipHull.description` "luftdichte Wand" |
+| chemfuel | Sprit | | Core `Chemfuel.label` |
+| mod (noun) | die Mod | | Core Keyed `ModLoadFolder...` "About.xml der Mod" |
+| Off / On / When enabled / When disabled (settings) | Aus / an / Wenn aktiviert / Wenn deaktiviert | | Core Keyed `Off`, `On`, `CommandAllowCutDesc` |
+| cooldown / cells | Abklingzeit / Zellen | | Core Keyed `CooldownTime`, `MapSizeDesc` |
+| Odyssey (DLC name) | Odyssey | | Core `ExpansionDef` `Odyssey.label` keeps the English name |
+| Using ability: {0} (VEF `AbilityDef.jobReportString`) | setzt Fähigkeit '{0}' ein. | | VEF ships English only; third-person present like Core's `JobDef.reportString`s, trailing period kept (Shipcracker Warcasket, shipped since 2026-09-26) |
+| on cooldown (a reloadable comp's `cooldownGerund`) | klingt gerade ab | | Vanilla's default for `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker Warcasket) |
+
+## Grounded common vocabulary, VFE Pirates warcasket domain (coined in Shipcracker Warcasket's 2026-09-26 pass, extended by Toxin Warcasket's 2026-10-13 and 2026-10-22 passes; 2026-10-28)
+
+VFE Pirates ships English only, and no community German translation could be
+grounded against: a Workshop pack "Vanilla Factions Expanded - Pirates
+Deutsch" (id 2810180496) exists, but its page shows none of its terms and its
+files were not available, so every VFEP term here is a family coinage pending
+native review. If that pack's files turn up, re-ground these rows against them
+and prefer its renderings. Every warcasket set in the family (Shipcracker,
+Toxin, Medic, Overlord) renders these terms alike so the sets read as one
+family in-game; a change is made here first and each set's shipped files
+follow at its next pass. A set's own name, its Workshop title and its own
+coinages stay in that repo's glossary.
+
+| English | Use | Why |
+|---|---|---|
+| warcasket | Kriegssarg (m.), pl. Kriegssärge | Literal war + coffin, mirroring the English compound and vanilla's war- → Kriegs- pattern (`MeleeWeapon_Zeushammer` = Kriegshammer). Does not collide with Core's coffin furniture, whose label is `Sarcophagus` = Sarkophag ("Sarg" appears only inside that def's description, never as a label in Core, Royalty or Odyssey). Masculine, like every label head in the sets, so the Gender-table miss default (masculine) is correct. Rejected: Kriegssarkophag (collides with Sarkophag and doubles up in VFEP's Sarkophag set), Kriegskapsel (vanilla casket = Kapsel, but loses the coffin sense and reads as a drop pod), Panzersarg (invites a tank reading and clashes with Schulterpanzer), Kampfsarg (Kriegs- mirrors the English war- and vanilla's Kriegshammer), Kriegsrüstung / Kriegshülle (lose the sealed-coffin sense; Rüstung is vanilla's generic armor), the English loan (vanilla de translates its coined nouns: Plastahl, Sprit). |
+| compound rule for Kriegssarg | always hyphenated to a set name or part: `<Set>`-Kriegssarg, Kriegssarg-Helm, Kriegssarg-Hülle, Kriegssarg-Schulterpanzer, Kriegssarg-Gießerei | Durchkopplung once a set prefix is present; kept uniform in descriptions too so labels and prose match. |
+| `<set>` warcasket / shoulders / helmet (label pattern) | `<Set>`-Kriegssarg / `<Set>`-Kriegssarg-Schulterpanzer / `<Set>`-Kriegssarg-Helm | VFEP's `<set> warcasket <part>` label pattern. |
+| pauldrons / shoulders / shoulder pads | Schulterpanzer | Ordinary German armor term for VFEP's "warcasket shoulders" and the Workshop "shoulder pads". Rejected: Schultern (reads as the body part), Schulterstücke (reads as uniform epaulettes). |
+| warcasket shell | Kriegssarg-Hülle | Per the compound rule. |
+| warcasket foundry | Kriegssarg-Gießerei | foundry = Gießerei per Core `FoundryApprentice76.title` = Gießereilehrling. Rejected: Kriegssargschmiede (Schmiede is vanilla's smithy), Kriegssarggießerei unhyphenated (hard to read). |
+| entomb | einsargen | Real German verb (to put into a coffin), derived directly from Kriegssarg. The Workshop page's "weld" stays einschweißen, as in English. Rejected: einschließen (too weak), einmauern (walling in, wrong image), bestatten (burial). |
+| spacer warcaskets / specialised warcaskets (VFEP research labels, cited in prose) | 'Raumfahrt-Kriegssärge' / 'spezialisierte Kriegssärge' | Core `TechLevel_Spacer` = Raumfahrt; single-quoted as a cited label per this file, lowercase adjective start per its research-label rule. |
+| VFEP set names | Belagerungsbrecher (siegebreaker), Rohling (brute), Wächter (guardian), Kontrolleur (controller), Sarkophag (sarcophagus), Luft-Kriegssarg (aerial), Kataphrakt (cataphract; Kataphrakt-Entwurf, Kataphrakt-Chassis), Gefahrenschutz (hazard; Gefahrenschutz-Kriegssarg, das Gefahrenschutz-Set) | Plain coinages hyphenated to Kriegssarg per the compound rule, all pending native review except Sarkophag (Core `Sarcophagus` label) and Kataphrakt (Royalty `Empire_Fighter_Cataphract.label` = Kataphrakt, `Apparel_ArmorCataphract.label` = Kataphraktrüstung). Gefahrenschutz renders the hazmat set as "hazard protection". |
+| 7th generation / 10th generation (VFEP's two chassis) | die Kriegssärge der 7. Generation / das Raumfahrt-Chassis der 10. Generation | Shipcracker's and Toxin's prose; VFEP's dashed aside on the 7th generation is reflowed as "die zwar untereinander austauschbar sind, im Set aber besser funktionieren". |
+| Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | Eine spezialisierte Kriegssarg-Hülle / Spezialisierte Kriegssarg-Schulterpanzer / Ein spezialisierter Kriegssarg-Helm mit überlegenem Schutz und höherem Gewicht | Toxin Warcasket's shipped `shortDescription`s; plain description wording. |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet with standard protection (VFEP's 10th-generation opener) | Eine spezialisierte Kriegssarg-Hülle / Spezialisierte Kriegssarg-Schulterpanzer / Ein spezialisierter Kriegssarg-Helm aus der Raumfahrttechnik mit Standardschutz | "aus der Raumfahrttechnik" is Core's "spacer-tech" (main table); Shipcracker's variant ends "mit verbesserter Stoßverteilung" for its "improved impact dispersion"; "standard" as in Shipcracker's Standardschild. |
+| the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | Die Kriegssärge der 10. Generation gingen eigentlich aus erbeuteten Piratenmodellen hervor, ... selbst über Generationen hinweg. | Translated, no pack; the full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/German/`. power armour = Powerrüstungen (Core `Fabrication.description`); dreadnoughts = wandelnde Schlachtschiffe; "armour series" = Baureihen. |
+| pilot (the wearer) | Pilot | Core/Odyssey (Pilotenkonsole, Pilotenassistent); Shipcracker's prose. |
+| spacer armor and insulation / shield bubble / spacer components (what a spacer-tier set carries) | Raumfahrt-Panzerung und -Isolierung / Schutzschild / Hightech-Bauteile | Core `Insulation_Cold.label` (Isolierung), `Make_ComponentSpacer.label` (Hightech-Bauteil); Schutzschild per Core `Apparel_ShieldBelt.description` "persönlichen Schutzschild". |
+
+Pending native review for the whole family: Kriegssarg, Kriegssarg-Gießerei,
+einsargen, Schulterpanzer, the coined set names and the two research labels
+(all may differ from the community pack). The set-specific coinages each repo
+lists stay pending there.
 
 ## Pitfalls and lessons
 

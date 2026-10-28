@@ -175,6 +175,56 @@ strings unless noted):
 | blunt armor / sharp armor | 방어도 - 둔탁함 / 방어도 - 날카로움 | | Core `ArmorRating_Blunt.label`/`ArmorRating_Sharp.label` |
 | armor penetration | 관통력 | 보호구 관통 | CE ko `CE_DescArmorPenetration` says 보호구 관통; the family's existing settings strings use 관통력, keep it |
 | flak vest / flak jacket / frag grenade | 방탄조끼 / 방탄재킷 / 파편 수류탄 | | Core labels — verbatim |
+| spacer-tech / spacer | 우주시대 기술 / 우주시대 | | RMK VFEP descriptions (`우주시대 기술로 특화된`); Core `TechLevel_Spacer` = `우주` |
+| Imperial (adj.) | 제국 (bare prefix) | | Royalty backstories: `제국 부대`, `제국 사제`, `제국군` |
+| respirator / breathing | 내장 호흡 장치 (호흡 장치 when shortened) / 호흡 | | Coined around Core `Breathing.label` = `호흡`; Shipcracker ships the full form, Toxin the shortened one |
+| sealed (airtight helmet) | 밀폐형 | | `밀폐` is the usual word for an airtight suit; Core's `AncientSealedContainer` family uses `밀봉` for sealed containers, which is why the helmet does not |
+| chemfuel / plasteel / uranium | 화학연료 / 플라스틸 / 우라늄 | | Core / Odyssey labels |
+| Off (slider value at 0) / on (toggle) | 없음 / 켜짐 | 끄기 | Core Keyed `None` = `없음`; Core `Off` = `끄기` is a toggle verb and reads wrong as a value |
+| cooldown (slider caption) / radius | 재사용 대기 / 범위 | | Core Keyed `StatsReport_Cooldown` = `재사용 대기시간` with `시간` dropped so the caption does not repeat a `(시간)` unit; `AbilityEffectRadius` = `효과 범위` |
+| Odyssey (DLC name) / (requires Odyssey) | 오디세이 / (오디세이 필요) | | Core `ExpansionDef` `Odyssey.label` = `오디세이`; suffix shape after Core `BlockedByTerrain` (`({0_label} 필요)`) |
+| fuel tank (settings) | 탱크 / 연료 탱크 | | Shipcracker Warcasket's shipped Workshop and settings text (`연료 탱크`); Toxin keeps `탱크` for its gas tank |
+| Using ability: {0} (VEF `AbilityDef.jobReportString`) | {0} 능력 사용 중 | | VEF ships English only; Shipcracker Warcasket's rendering, shipped by Shipcracker and Toxin Warcasket (no trailing period) |
+| on cooldown (a reloadable comp's `cooldownGerund`) | 재사용 대기 중 | | Core Keyed `ShieldOnCooldown` = `재사용 대기 중`; the field is vanilla's `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker and Toxin Warcasket) |
+
+## Grounded common vocabulary, VFE Pirates warcasket domain (RimWorldKorea RMK pack + Core, 2026-10-28)
+
+VFE Pirates ships English only. The community translation these terms were
+grounded against is the RimWorldKorea `RMK` pack (GitHub RimWorldKorea/RMK,
+its VFE Pirates folder under `Data/Vanilla Expanded/`, Workshop id 2723801948,
+`1.6/Languages/Korean (한국어)/`): VFE Pirates' ThingDef, WarcasketDef and
+Keyed files. Its warcasket set labels follow `<bare set prefix> 워캐스킷 [어깨|헬멧]`
+and every set description opens with `우주시대 기술로 특화된 워캐스킷
+...입니다.`; the family copies both patterns, so the sets read like VFEP's own.
+Every warcasket set in the family (Shipcracker, Toxin, Medic, Overlord)
+renders these terms alike so the sets read as one family in-game; a change is
+made here first and each set's shipped files follow at its next pass. A set's
+own name, its Workshop title and its own coinages stay in that repo's
+glossary.
+
+| English | Use | Why |
+|---|---|---|
+| warcasket | 워캐스킷 | RMK VFEP, every warcasket label. No separate word for "shell": RMK drops it (`...워캐스킷입니다.`), and so does the family. |
+| `<set>` warcasket / shoulders / helmet (label pattern) | `<prefix>` 워캐스킷 / `<prefix>` 워캐스킷 어깨 / `<prefix>` 워캐스킷 헬멧 | RMK `VFEP_Warcasket*_*.label`; the prefix is the bare set name (돌격, 수호, ...). |
+| pauldrons / shoulders / shoulder pads | 워캐스킷 어깨 | RMK `VFEP_WarcasketShoulders_*.label`; "pauldrons" in a description is rendered the same way (`워캐스킷 어깨입니다.`). |
+| helmet (warcasket helmet) | 워캐스킷 헬멧 | RMK `VFEP_WarcasketHelmet_*.label`. |
+| warcasket shell | 워캐스킷 (no separate word) | RMK drops "shell" (see the warcasket row); the torso piece reads as the bare 워캐스킷, and Toxin's shipped prose says `워캐스킷의 탱크` where it must tell the shell from the set. |
+| warcasket foundry | 워캐스킷 주조대 | RMK `VFEP_WarcasketFoundry.label`; bare "foundries" in lore is `주조대`. |
+| entomb / weld on | 안치 (워캐스킷에 안치) | RMK `VFEPirates.EntombInWarcasket`; the Workshop's "welded into" / "weld it on" both use 안치. |
+| spacer warcaskets / specialised warcaskets (VFEP research labels, cited in prose) | 우주시대 워캐스킷 / 전문화 워캐스킷 | 전문화 워캐스킷 is RMK `VFEP_SpecialisedWarcaskets.label`; 우주시대 워캐스킷 is Shipcracker's Workshop wording (Core `TechLevel_Spacer` = `우주`). Cited as `'우주시대 워캐스킷' 연구` in ASCII single quotes per this file's research-citation rule. |
+| VFEP set names (siegebreaker / brute / guardian / cataphract / hazard / aerial) | 돌격 / 야수 / 수호 / 중무장 / 재해 / 충격 (each as the bare prefix: `돌격 워캐스킷`) | RMK set prefixes (`VFEP_Warcasket_Cataphract.label`, `_Hazard`, `_Aerial`). Aerial is `충격` and Shock is `강습`, which read swapped against their meaning but are what players see in-game; Royalty's `근위대 갑옷` is the vanilla Cataphract armor, not the VFEP set. Controller and sarcophagus are not rendered in any family glossary yet; take RMK's labels when one is needed. |
+| 7th generation / 10th generation (VFEP's two chassis); chassis | 7세대 워캐스킷 / 10세대 워캐스킷 (10세대 우주시대 프레임); 프레임 | RMK `10세대 워캐스킷`, and its foundry text `워캐스킷 프레임` for "chassis". |
+| Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | `무게는 늘어났지만 뛰어난 방어력을 갖춘 특화형 워캐스킷[ 어깨\| 헬멧]입니다.` | RMK Cataphract opener `무게는 늘어났지만 뛰어난 방어력을 갖춘 신형 워캐스킷입니다.` with 특화형 for "specialized" (RMK's 7th-gen sets use `특화되었습니다`); Toxin Warcasket's shipped `shortDescription`s. 특화형 is the family's one deviation from the pack's text. |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet with standard protection (VFEP's 10th-generation opener) | `우주시대 기술로 특화된 표준적인 방어력의 워캐스킷[ 어깨\| 헬멧]입니다.` | RMK `VFEP_Warcasket*_Siegebreaker.shortDescription`, verbatim (the pack's opening phrase `우주시대 기술로 특화된 워캐스킷 ...입니다.`); Toxin Warcasket's shipped spacer-tier `shortDescription`s. Shipcracker's variant keeps the opener and adds RMK's `개선된 충격 분산 능력` (Guardian/Brute, "improved impact dispersion"). |
+| the 7th-generation paragraph (VFEP's lore paragraph on 7th-gen sets) | `7세대 워캐스킷은 기존 성능을 개선하기 위한 연구가 난관에 봉착하자, ...취급되곤 했습니다.` | RMK Aerial/Hazard/Shock descriptions, verbatim; it already reflows the dashed aside into 모듈 방식, no dashes. Toxin Warcasket's shipped 7th-gen descriptions in `1.6/Languages/Korean/`. |
+| the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | `10세대 워캐스킷은 사실 노획한 해적 장비를 ...더 자유로운 편입니다.` | RMK 1.6 WarcasketDef, every spacer set's description (Siegebreaker, Guardian, Brute, Controller, Sarcophagus), verbatim; no dashes. The full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/Korean/`. |
+| pilot (the wearer) | 조종사 | RMK `VFEP_WarcasketHelmet_Shock` (`조종사의 반응 시간`); every shipped description. |
+| spacer armor and insulation / shield bubble / spacer components (what a spacer-tier set carries) | 우주시대 수준의 방어도 / 단열 / 보호막 / 고급 부품 | Core `Insulation_Cold.label` = `단열`, `ShieldBelt.label` (RMK uses 보호막 throughout), `ComponentSpacer.label` = `고급 부품`; the armor phrase is coined around them (the Workshop says 우주시대 수준의 장갑). |
+
+Pending native review for the whole family: nothing open for the RMK rows
+(they are the pack's own). The family's deviations from the pack are 특화형
+in the 7th-generation opener (Toxin) and the coined 우주시대 수준의 방어도
+phrase; the set-specific coinages each repo lists stay pending there.
 
 ## Pitfalls and lessons
 
