@@ -75,6 +75,18 @@
 #   REPO_ROOT            Path       consuming repo's root; without it the
 #                                   display-name pattern cannot be derived
 #
+# UNRESOLVED CROSS-REFERENCES: Verse.DirectXmlCrossRefLoader logs "Could not
+# resolve cross-reference: No {type} named {defName} found to give to {wanter
+# type} {wanter}" (and TryResolveDef's "Could not resolve cross-reference to
+# {T} named {defName}") naming NO mod and carrying no mod frame - the loader
+# runs after every def is read - so a consumer's own broken Patch (a
+# MayRequire-less reference to an inactive mod's def: BetterTradersGuild,
+# 2026-10-15) matched no pattern and read as `other`, which never gates. The
+# engine therefore attributes such an error to the consumer when its own XML
+# (every *.xml under REPO_ROOT except l10n/, .git/ and Languages/ folders)
+# has an element whose text is exactly the wanted defName. Integration mods'
+# folders are not known to the engine, so their half stays `other`.
+#
 # TRANSLATION LOAD ERRORS: the game folds every broken translation file
 # into one Warning, "Translation data for language English has N errors.
 # Generate translation report for more info.", naming neither the errors
@@ -108,10 +120,12 @@
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
 from collections import namedtuple
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "refresh"))
@@ -495,10 +509,67 @@ def display_name_pattern():
     return f"[{m.group(1)}]" if m else None
 
 
+# Verse.DirectXmlCrossRefLoader's two error shapes (1.6 and 1.7 alike): the
+# wanter form, "Could not resolve cross-reference: No {type} named {defName}
+# found to give to {wanter type} {wanter}", and TryResolveDef's "Could not
+# resolve cross-reference to {T} named {defName}" (some call sites append a
+# suffix after the defName). The def type is not needed.
+CROSS_REF_DEFNAME_PATTERNS = [
+    re.compile(r"Could not resolve cross-reference: No \S+ named (\S+) found to give to"),
+    re.compile(r"Could not resolve cross-reference to \S+ named (\S+)"),
+]
+
+# Directories whose XML never counts as the consumer's own def/patch
+# references: git internals and any Languages folder (translations inject
+# text into defs, they never create references); the pinned l10n/ submodule
+# is skipped at the repo root only.
+_XML_SKIP_DIRS = {".git", "Languages"}
+
+# REPO_ROOT -> set of every element-text string in the consumer's own XML.
+# The boot log can carry thousands of entries; the tree is read once.
+_own_xml_texts_cache = {}
+
+
+def own_xml_texts():
+    key = str(REPO_ROOT)
+    texts = _own_xml_texts_cache.get(key)
+    if texts is None:
+        texts = set()
+        for dirpath, dirnames, filenames in os.walk(REPO_ROOT):
+            dirnames[:] = [d for d in dirnames if d not in _XML_SKIP_DIRS]
+            if Path(dirpath) == Path(REPO_ROOT):
+                dirnames[:] = [d for d in dirnames if d != "l10n"]
+            for name in filenames:
+                if not name.lower().endswith(".xml"):
+                    continue
+                try:
+                    root = ET.parse(Path(dirpath) / name).getroot()
+                except (ET.ParseError, OSError):
+                    continue
+                for elem in root.iter():
+                    if elem.text and elem.text.strip():
+                        texts.add(elem.text.strip())
+        _own_xml_texts_cache[key] = texts
+    return texts
+
+
+def cross_reference_defname(entry):
+    # Only the message's first line is read; the rest is the stack trace.
+    head = first_line(entry)
+    for pattern in CROSS_REF_DEFNAME_PATTERNS:
+        m = pattern.search(head)
+        if m:
+            return m.group(1)
+    return None
+
+
 def classify_origin(entry):
     # `entry` is the message text plus, when known, its stack trace: an
     # error raised inside an integration mod's code but caused by ours (the
-    # BTG/CWTL incident) is attributed through the frames.
+    # BTG/CWTL incident) is attributed through the frames. An unresolved
+    # cross-reference names no mod and has no mod frame (see the header), so
+    # once the patterns fail it is attributed by its wanted defName: `own`
+    # when the consumer's own XML references that defName.
     if TOOLING_PATTERN in entry:
         return "tooling"
     for pattern in OWN_PATTERNS:
@@ -508,6 +579,10 @@ def classify_origin(entry):
         for pattern in patterns:
             if pattern in entry:
                 return f"integration:{name}"
+    if REPO_ROOT is not None:
+        wanted = cross_reference_defname(entry)
+        if wanted is not None and wanted in own_xml_texts():
+            return "own"
     return "other"
 
 

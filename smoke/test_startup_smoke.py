@@ -378,6 +378,104 @@ class ClassifyOrigin(unittest.TestCase):
                 engine.REPO_ROOT = None
         self.assertIsNone(engine.display_name_pattern())
 
+    # --- unresolved cross-references: attributed by the wanted defName -----
+
+    WANTER_ERROR = ("Could not resolve cross-reference: No Verse.ThingDef named "
+                    "Apparel_PrestigeArmor found to give to "
+                    "RimWorld.StockGenerator_SingleDef RimWorld.StockGenerator_SingleDef")
+    TRYRESOLVE_ERROR = ("Could not resolve cross-reference to Verse.ThingDef "
+                        "named Apparel_PrestigeArmor (wanter=Foo)")
+
+    def repo(self, files):
+        d = tempfile.TemporaryDirectory()
+        self.addCleanup(d.cleanup)
+        for rel, text in files.items():
+            path = Path(d.name) / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
+        engine._own_xml_texts_cache.clear()
+        engine.REPO_ROOT = Path(d.name)
+        self.addCleanup(setattr, engine, "REPO_ROOT", None)
+        self.addCleanup(engine._own_xml_texts_cache.clear)
+        return Path(d.name)
+
+    PATCH = ('<?xml version="1.0" encoding="utf-8"?>\n<Patch><Operation Class="PatchOperationAdd">'
+             '<xpath>/Defs/TraderKindDef/stockGenerators</xpath><value><li>'
+             '<thingDef>Apparel_PrestigeArmor</thingDef></li></value></Operation></Patch>\n')
+
+    def test_cross_ref_wanted_def_in_own_patch_is_own(self):
+        configure()
+        self.repo({"Patches/Armor.xml": self.PATCH})
+        self.assertEqual(engine.classify_origin(self.WANTER_ERROR), "own")
+        # The stack trace appended after the message does not matter.
+        self.assertEqual(engine.classify_origin(
+            self.WANTER_ERROR + "\nVerse.Log:Error(String)"), "own")
+
+    def test_cross_ref_try_resolve_def_shape_is_own(self):
+        configure()
+        self.repo({"Patches/Armor.xml": self.PATCH})
+        self.assertEqual(engine.classify_origin(self.TRYRESOLVE_ERROR), "own")
+
+    def test_cross_ref_li_and_defname_elements_count(self):
+        configure()
+        self.repo({"Defs/A.xml": "<Defs><ThingDef><defName>Apparel_PrestigeArmor</defName></ThingDef></Defs>"})
+        self.assertEqual(engine.classify_origin(self.WANTER_ERROR), "own")
+        self.repo({"Defs/A.xml": "<Defs><TraderKindDef><li>  Apparel_PrestigeArmor </li></TraderKindDef></Defs>"})
+        self.assertEqual(engine.classify_origin(self.WANTER_ERROR), "own")
+
+    def test_cross_ref_not_referenced_stays_other(self):
+        configure()
+        self.repo({"Patches/Armor.xml": self.PATCH.replace("Apparel_PrestigeArmor", "Apparel_Other")})
+        self.assertEqual(engine.classify_origin(self.WANTER_ERROR), "other")
+        # Substrings do not count: the element text must be exactly the defName.
+        self.repo({"Patches/Armor.xml": self.PATCH.replace(
+            "Apparel_PrestigeArmor", "Apparel_PrestigeArmor_Extra")})
+        self.assertEqual(engine.classify_origin(self.WANTER_ERROR), "other")
+
+    def test_cross_ref_referenced_only_in_languages_or_l10n_stays_other(self):
+        configure()
+        self.repo({
+            "Languages/German/DefInjected/ThingDef/A.xml": self.PATCH,
+            "1.6/Languages/French/Keyed/K.xml": self.PATCH,
+            "l10n/probe/Dump.xml": self.PATCH,
+            ".git/x.xml": self.PATCH,
+        })
+        self.assertEqual(engine.classify_origin(self.WANTER_ERROR), "other")
+
+    def test_cross_ref_scan_skips_unparseable_files(self):
+        configure()
+        self.repo({"Patches/Broken.xml": "<Patch><unclosed>",
+                   "Patches/Armor.xml": self.PATCH})
+        self.assertEqual(engine.classify_origin(self.WANTER_ERROR), "own")
+
+    def test_cross_ref_without_repo_root_stays_other(self):
+        configure()
+        engine.REPO_ROOT = None
+        self.assertEqual(engine.classify_origin(self.WANTER_ERROR), "other")
+
+    def test_non_cross_ref_error_is_not_attributed_by_defname(self):
+        configure()
+        self.repo({"Patches/Armor.xml": self.PATCH})
+        self.assertEqual(engine.classify_origin(
+            "Failed to find Verse.ThingDef named Apparel_PrestigeArmor."), "other")
+
+    def test_cross_ref_matching_own_pattern_skips_the_scan(self):
+        configure(own=["XenogermTraderStock"])
+        engine.REPO_ROOT = Path("/nonexistent-repo-root")
+        self.addCleanup(setattr, engine, "REPO_ROOT", None)
+        with mock.patch.object(engine, "own_xml_texts",
+                               side_effect=AssertionError("scanned")):
+            self.assertEqual(engine.classify_origin(
+                self.WANTER_ERROR + "\n at XenogermTraderStock.Foo"), "own")
+
+    def test_cross_ref_scan_is_cached_per_repo_root(self):
+        configure()
+        self.repo({"Patches/Armor.xml": self.PATCH})
+        with mock.patch.object(engine.ET, "parse", wraps=ET.parse) as parse:
+            engine.classify_origin(self.WANTER_ERROR)
+            engine.classify_origin(self.TRYRESOLVE_ERROR)
+        self.assertEqual(parse.call_count, 1)
+
 
 class LogDump(unittest.TestCase):
 
