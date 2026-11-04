@@ -24,7 +24,9 @@ L10nProbe dev mod), `tools/` (release tagging and consumer pin management).
 
 - **Mod-independent knowledge lives here, exactly once**: engine mechanics
   (LanguageWorker findings), per-language grammar/style rules, vanilla corpus
-  facts, vanilla-grounded common vocabulary, cross-language lessons, process.
+  facts, vanilla-grounded common vocabulary, cross-language lessons, process,
+  and the English register itself (`languages/English.md`, with each
+  language's generated-text tells in its own file).
   When a translation pass in a consuming repo surfaces such a finding, it is
   recorded HERE — never in that repo's skill.
 - **Mod-specific knowledge stays in each consuming repo**: coined terms,

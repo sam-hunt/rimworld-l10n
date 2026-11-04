@@ -166,7 +166,11 @@ language's own vanilla rate and compare:
 At the 2026-08-10 BTG audit, generated translations ran **3.4x–11.3x**
 vanilla's dash rate in every language that had any, which is what "unnatural
 overuse" looks like numerically. Re-run the comparison after any generation
-pass.
+pass. The checker covers the two cases that need no tar: any dash in the
+English, and a dash in a translation into a language whose vanilla has none
+(Spanish, Brazilian Portuguese, Korean; `DASH_FREE_LANGUAGES` in the engine,
+with the measured rates). For the languages whose vanilla uses dashes, the
+density comparison and the register read remain the test.
 
 **Count style over the whole tar, not just `Keyed/`.** The French pass found
 two style rules inverted because they had been derived from Core+DLC Keyed
@@ -177,6 +181,34 @@ under-samples exactly the register a mod's own descriptions are written in.
 Walk both, strip comments first, and split the count per DLC when the two
 disagree (fr's curly apostrophes are almost entirely legacy Core
 `BackstoryDef`s; Odyssey is decisively ASCII).
+
+## Register (the second gate)
+
+Terminology grounding catches vocabulary, never syntax. The family's first
+native-player complaint (Russian, LocalMineralScanner, 2026-09-19) traced
+entirely to free prose with no vanilla analog: native words on an English
+skeleton. So register is checked separately, on both sides of a pass:
+
+- **English first.** The source register lives in `languages/English.md`,
+  read whenever player-facing text enters a repo (every consumer's CLAUDE.md
+  points there), not at translation time: a tell in the English ships in
+  every language. Its § 2 lists the tells generated English carries; the
+  checker enforces the mechanical ones (dashes, semicolons, "Whether"
+  openers, parenthetical asides) as `[player text]` warnings, errors under
+  `--strict`, so a release cannot ship them.
+- **Each target language has its own tells.** Every `languages/<Language>.md`
+  carries a "Generated-text tells" section: the English § 2 categories
+  instantiated for that language from its vanilla tar, plus calque (English
+  clause order under native words). A stub section means no pass has
+  catalogued them yet; the next pass in that language does so from the tar,
+  as part of its grounding read, and replaces the stub.
+- **The read.** After generating, re-read every free-prose sentence on its
+  own (descriptions, Workshop text, letters, FAQ; labels and verbatim
+  vanilla reuse are exempt) and ask whether a native writer would have built
+  it that way; rewrite with the meaning unchanged. A reader who has the
+  English beside the text anchors on it and misses the calque, so the read
+  is done by a fresh subagent that sees only the target text and the
+  language's tells section.
 
 ## Workflows
 
@@ -195,18 +227,24 @@ disagree (fr's curly apostrophes are almost entirely legacy Core
 3. Extract the vanilla tar for the target language into the scratchpad;
    build a term list for the grounded terms (Core + the mod's domain DLCs).
 4. Read `languages/<Language>.md` here before translating; it carries the
-   language's engine mechanics, style findings, and grounded common
-   vocabulary.
+   language's engine mechanics, style findings, grounded common vocabulary
+   and its "Generated-text tells". If that section is still a stub,
+   catalogue the tells from the tar now (see § Register) and commit them
+   upstream with the pass's other learnings.
 5. Translate via subagent(s) carrying: the glossary, the vanilla term list,
-   the EN-comment requirement, placeholder rules, and formatting rules.
-   Cover both Keyed and every DefInjected folder — a pass that only does
-   Keyed is incomplete for any mod with a DefInjected surface.
+   the language's tells, the EN-comment requirement, placeholder rules, and
+   formatting rules. Cover both Keyed and every DefInjected folder — a pass
+   that only does Keyed is incomplete for any mod with a DefInjected surface.
 6. Run the checker (`--strict` for new languages); fix everything, including
    any DefInjected folder the checker flags as missing or out of sync with
    the sidecar.
-7. Update `.steamworkshop/Description/<Language>.txt` per `workshop.md`, and
+7. The register read (§ Register): a fresh subagent per language reads only
+   the target-language free prose and the tells section, flags every
+   sentence a native writer would not have built, and the lead applies the
+   rewrites. Rerun the checker.
+8. Update `.steamworkshop/Description/<Language>.txt` per `workshop.md`, and
    the CONTRIBUTING.md roster row, in the same commit.
-8. Review the diff yourself before committing. Commit message and PR text
+9. Review the diff yourself before committing. Commit message and PR text
    must state machine-assisted origin and invite native review.
 
 ### Update pass (`/translate update`)
@@ -216,6 +254,8 @@ disagree (fr's curly apostrophes are almost entirely legacy Core
 2. Translate only that delta, refreshing each entry's EN comment. Keep each
    DefInjected def-type folder in sync with its English counterpart.
 3. Leave correct existing entries untouched. Re-run the checker.
+4. The register read (§ Register) over the delta's free prose; a stub
+   tells section is filled the same way as in an initial generation.
 
 ### Audit only (`/translate check`)
 
@@ -231,8 +271,9 @@ substitute for the checker.
 ## Recording new learnings
 
 Mod-independent findings (engine mechanics, a language's grammar rule, a
-corpus-derived style rule, a checker technique) land HERE — in
-`languages/<Language>.md`, `lessons.md`, or this file — never in a single
+corpus-derived style rule, a generated-text tell, a checker technique) land
+HERE — in `languages/<Language>.md` (English's register included), `lessons.md`,
+or this file — never in a single
 repo's skill, so every mod inherits them at its next pin bump (release or
 translation-pass start — pins are not bumped per upstream commit).
 Mod-specific findings (a coined term, a phrasing decision, a def-type quirk

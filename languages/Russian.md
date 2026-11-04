@@ -242,3 +242,12 @@ set-specific coinages each repo lists stay pending there.
 - The community pack (`OneCodeUnit/VanillaRussianExpanded`) is on GitHub;
   its shared 7th-generation paragraph exists in two variants (with and
   without a comma after «Также»), so pick one and record it in the glossary.
+
+## Generated-text tells
+
+Calque is catalogued above (the 2026-09-19 LocalMineralScanner complaint:
+stacked reflexive passives and participial phrases, noun chains carrying
+English clause order, abstract nouns where Russian reaches for a verb, and
+the native rewrites). The other categories of `English.md` § 2 are not yet
+catalogued for Russian; the next pass reads the tar for them and records
+them here (`process.md` § Register).

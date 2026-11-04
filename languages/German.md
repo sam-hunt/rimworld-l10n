@@ -300,3 +300,16 @@ lists stay pending there.
   Spriteinheit" until `WordInfo/Gender/Female.txt` lists `spriteinheit`
   (lowercase, no comment lines). Core's own `Giftladung` is in the table;
   see `lessons.md` for the mechanism.
+
+## Generated-text tells
+
+Not yet catalogued for German. The categories are `English.md` § 2 (the same
+sentence frame on every string, docstring openers, telegraphese, balanced
+tricolons and aphoristic closers, sentence-initial participles, coinages and
+possessive chains, semicolons and asides, repeated signature phrases,
+over-explanation, modder vocabulary) plus calque: English clause order and
+syntax under native words (`lessons.md`, the Russian complaint). The next
+pass in this language reads the vanilla tar for how each category shows up
+here and replaces this stub with the findings (`process.md` § Register);
+mirrored strings are exempt, descriptions and Workshop prose are the slots
+to read.

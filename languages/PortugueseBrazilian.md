@@ -286,3 +286,16 @@ are noted as coined in their rows; no glossary flags them as open.
   on GitHub; its VFE Pirates set names are adjectives (`catafrática`, `de
   risco`, `aérea`) and its shared 7th-generation paragraph carries em dashes
   and `plastoaço`, both to normalize (commas; the tar's `plastiaço`).
+
+## Generated-text tells
+
+Not yet catalogued for PortugueseBrazilian. The categories are `English.md` § 2 (the same
+sentence frame on every string, docstring openers, telegraphese, balanced
+tricolons and aphoristic closers, sentence-initial participles, coinages and
+possessive chains, semicolons and asides, repeated signature phrases,
+over-explanation, modder vocabulary) plus calque: English clause order and
+syntax under native words (`lessons.md`, the Russian complaint). The next
+pass in this language reads the vanilla tar for how each category shows up
+here and replaces this stub with the findings (`process.md` § Register);
+mirrored strings are exempt, descriptions and Workshop prose are the slots
+to read.

@@ -206,7 +206,9 @@ the originating passes.
   built it that way; rewrite with the meaning unchanged. Labels and verbatim
   vanilla reuse are exempt; descriptions, Workshop text and any FAQ or letter
   prose are the slots to check. Each language file records that language's
-  own tells as they are found (Russian's are in `languages/Russian.md`).
+  own tells under "Generated-text tells", instantiating the categories of
+  `languages/English.md` § 2 (Russian's are the worked case); the English
+  side of the same lesson is that file, read when the text is written.
 - **A `{X_plural}` slot resolves through `LanguageWorker.Pluralize`, and
   whether a mod can repair a bad plural depends on whether that worker
   consults the `plural` lookup table** (decompile-verified 2026-10-11 on

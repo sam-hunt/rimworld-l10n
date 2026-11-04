@@ -300,3 +300,16 @@ there.
   wins for a player-facing noun); downed = `incapacitado`
   (`DownedCannotCrawl`). Ordinals are Castilian `7.ª`, never the Latin
   American `7ta` a community pack may carry.
+
+## Generated-text tells
+
+Not yet catalogued for Spanish. The categories are `English.md` § 2 (the same
+sentence frame on every string, docstring openers, telegraphese, balanced
+tricolons and aphoristic closers, sentence-initial participles, coinages and
+possessive chains, semicolons and asides, repeated signature phrases,
+over-explanation, modder vocabulary) plus calque: English clause order and
+syntax under native words (`lessons.md`, the Russian complaint). The next
+pass in this language reads the vanilla tar for how each category shows up
+here and replaces this stub with the findings (`process.md` § Register);
+mirrored strings are exempt, descriptions and Workshop prose are the slots
+to read.

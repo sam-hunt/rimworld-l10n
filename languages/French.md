@@ -396,3 +396,16 @@ Gardien). The set-specific coinages each repo lists stay pending there.
   restants`; no WordInfo file can help, accept it or coin masculine.
 - `ToxicFallout` is `pluie toxique` on the GameConditionDef and IncidentDef
   and `retombée toxique` on the TaleDef; ground on the condition.
+
+## Generated-text tells
+
+Not yet catalogued for French. The categories are `English.md` § 2 (the same
+sentence frame on every string, docstring openers, telegraphese, balanced
+tricolons and aphoristic closers, sentence-initial participles, coinages and
+possessive chains, semicolons and asides, repeated signature phrases,
+over-explanation, modder vocabulary) plus calque: English clause order and
+syntax under native words (`lessons.md`, the Russian complaint). The next
+pass in this language reads the vanilla tar for how each category shows up
+here and replaces this stub with the findings (`process.md` § Register);
+mirrored strings are exempt, descriptions and Workshop prose are the slots
+to read.

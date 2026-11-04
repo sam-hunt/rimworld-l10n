@@ -15,7 +15,8 @@ consumes this repo as a git submodule (conventionally at `l10n/`).
 | --- | --- |
 | `process.md` | The family translation workflow: non-negotiables, file/format conventions, terminology grounding method, generation/update/audit workflows |
 | `lessons.md` | Cross-language lessons — techniques and engine findings that hold across languages |
-| `languages/<Language>.md` | Per-language mechanics: LanguageWorker behaviour, grammar rules, vanilla corpus style findings, grounded common vocabulary. Read ONLY the target language's file during a pass |
+| `languages/English.md` | The source register: what vanilla's English sounds like, the tells generated text leaves in it, recipes and length ceilings per text type. Read whenever player-facing text enters a repo (every consumer's CLAUDE.md points here), not at translation time |
+| `languages/<Language>.md` | Per-language mechanics: LanguageWorker behaviour, grammar rules, vanilla corpus style findings, grounded common vocabulary, and that language's generated-text tells. Read ONLY the target language's file during a pass |
 | `workshop.md` | Steam Workshop description/title localization conventions |
 | `checker/` | The `check-translations` engine. Each repo's `Scripts/check-translations.py` is a thin config shim importing it |
 | `refresh/` | The `refresh-translation-expectations` engine (drives the probe), consumed the same way |
@@ -29,6 +30,10 @@ consumes this repo as a git submodule (conventionally at `l10n/`).
   URL — resolves against the superproject's GitHub remote). Clone a mod repo
   with `git clone --recurse-submodules`; an existing clone runs
   `git submodule update --init`.
+- **CLAUDE.md**: each repo's CLAUDE.md sends any change to player-facing
+  text (def labels and descriptions, `Keyed/`, `About.xml`, the Workshop
+  page) to `l10n/languages/English.md` first; the checker's `[player text]`
+  warnings enforce the mechanical half of it.
 - **Skills**: each repo's `.claude/skills/translate/SKILL.md` holds the
   mod-specific facts and points here for process (`l10n/process.md`),
   lessons (`l10n/lessons.md`) and the target language
