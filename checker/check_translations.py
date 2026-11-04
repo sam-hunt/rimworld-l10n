@@ -62,6 +62,14 @@
 #                resolves in the def's own XML: tag segments by child, index
 #                segments by MayRequire-active <li>; unresolvable paths,
 #                and index paths or lists in ParentName defs, are skipped)
+#   Player text: the mechanical half of the family's English register guide
+#                (l10n/languages/English.md): no em/en dash, no semicolon,
+#                no "Whether" opener, no parenthetical aside in any English
+#                player-facing string (Keyed, the sidecar's required
+#                DefInjected English, About.xml's description, the English
+#                Workshop page), and no dash in a translation into a language
+#                whose vanilla data uses none (warnings; --strict makes the
+#                release gate fail on them, CI's non-strict run only reports)
 #   LoadFolders: every Defs/ or Languages/ root sits in a listed load folder,
 #                and only the roots the game loads on the sidecar's game
 #                version (meta.gameBuild) are checked: a repo that keeps a
@@ -1115,6 +1123,7 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report,
             continue
         text, en, _ = keyed[key]
         en_text = english_keyed[key][0]
+        check_translation_dash(lang, key, text, en_text, path, report)
         if isinstance(text, str) and isinstance(en_text, str):
             if placeholders(text) != placeholders(en_text):
                 report.error(path, f"<{key}> placeholders {sorted(placeholders(text))} "
@@ -1208,6 +1217,9 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report,
                     if placeholders(text) != placeholders(en_text):
                         report.error(path, f"<{key}> placeholders {sorted(placeholders(text))} "
                                            f"!= English {sorted(placeholders(en_text))}")
+                check_translation_dash(lang, key, text,
+                                       en_text if en_text is not None
+                                       else entry["english"], path, report)
                 if en is None:
                     report.warn(path, f"<{key}> has no EN: comment")
                 elif en_text is not None and norm(en) != norm(en_text):
@@ -1244,6 +1256,100 @@ def check_language(lang_dirs, english_keyed, sidecar, def_roots, report,
                                      f"missing <{key}.{i}> (EN: "
                                      f"{en_text!r}){where}")
     return found
+
+
+# --- Player text ---
+# The mechanical tells of generated prose that languages/English.md § 2
+# lists; the judgment tells (repeated frames, telegraphese, calque) stay a
+# read. Each is a WARNING, never an error, on purpose: CI runs the checker
+# non-strict so an unswept repo stays green, and the release skill's --strict
+# run refuses to ship them. Dashes are the one family-wide ban (every repo's
+# CLAUDE.md carries it); the rest are the shapes vanilla's own English never
+# takes in a tooltip or description.
+DASH_RE = re.compile("[\u2013\u2014\u2015]")           # en dash, em dash, horizontal bar
+WHETHER_RE = re.compile(r"\s*Whether\b")
+PAREN_RE = re.compile(r"\(([^()]*)\)")
+SENTENCE_RE = re.compile(r"[.!?](\s|$)")              # "1.5" is not a sentence end
+PAREN_ASIDE_MIN_WORDS = 3   # "(requires restart)", "(held by {3})" are labels, not asides
+
+# Languages whose vanilla text contains no dash at all, so a dash in a
+# translation can only be the generator's (process.md: "a dash the English
+# source does not have must not appear in a translation"). Measured over the
+# 1.7 Core tars on 2026-11-05, dashes per 100k characters of text values:
+# Spanish 0.0, PortugueseBrazilian 0.0, Korean 0.0; French 0.7 and Japanese
+# 3.4 (mirror-only, excluded); German 10.9, ChineseTraditional 9.8, Russian
+# 28.9, ChineseSimplified 38.9 (native punctuation: the language file's
+# register read is the gate there, not a count).
+DASH_FREE_LANGUAGES = {"Spanish", "PortugueseBrazilian", "Korean"}
+
+
+def player_text_findings(text):
+    # The tells one English string can carry, as messages; [] when clean.
+    msgs = []
+    if DASH_RE.search(text):
+        msgs.append("contains an em/en dash; reflow the sentence (no dashes "
+                    "in player text)")
+    bare = text
+    while True:   # inside-out: {lookup: {0}; Case; 1} nests a placeholder
+        stripped = PLACEHOLDER_RE.sub("", bare)
+        if stripped == bare:
+            break
+        bare = stripped
+    if ";" in bare:
+        msgs.append("contains a semicolon; split the sentence")
+    if WHETHER_RE.match(text):
+        msgs.append('opens with "Whether"; a toggle tooltip reads "When '
+                    'enabled, ... When disabled, ..."')
+    if SENTENCE_RE.search(bare):   # prose, not a label or suffix
+        for m in PAREN_RE.finditer(bare):
+            if len(m.group(1).split()) >= PAREN_ASIDE_MIN_WORDS:
+                msgs.append(f"parenthetical aside ({m.group(1).strip()}); "
+                            "make it a sentence or drop it")
+    return msgs
+
+
+def check_player_text(english_keyed, views, root, report):
+    # English only. Every surface the player reads, each once: Keyed values,
+    # the sidecar's required DefInjected English (every world's view, so a
+    # per-world variant is read too), About.xml's description. The Workshop
+    # page is read in check_workshop, which already parses it.
+    def scan(label, key, text):
+        for t in (text if isinstance(text, list) else [text]):
+            for msg in player_text_findings(t or ""):
+                report.warn(label, f"[player text] <{key}> {msg}")
+    for key, (text, _, path) in sorted(english_keyed.items()):
+        scan(path, key, text)
+    seen = set()
+    for view in views:
+        for def_type in sorted(view.def_types):
+            for key, entry in sorted(view.required(def_type).items()):
+                text = entry["english"]
+                mark = (def_type, key, json.dumps(text))
+                if mark in seen:
+                    continue
+                seen.add(mark)
+                scan(f"[English/DefInjected/{def_type}]", key, text)
+    about = root / "About" / "About.xml"
+    if about.is_file():
+        try:
+            desc = ET.parse(about).getroot().find("description")
+        except ET.ParseError as e:
+            report.error(about, f"not well-formed XML: {e}")
+            desc = None
+        if desc is not None:
+            scan(about, "description", desc.text or "")
+
+
+def check_translation_dash(lang, key, text, en_text, path, report):
+    # A dash the English has not got, in a language whose vanilla has none.
+    if lang not in DASH_FREE_LANGUAGES:
+        return
+    got = " ".join(text) if isinstance(text, list) else (text or "")
+    en = " ".join(en_text) if isinstance(en_text, list) else (en_text or "")
+    if DASH_RE.search(got) and not DASH_RE.search(en):
+        report.warn(path, f"[player text] <{key}> contains an em/en dash the "
+                          f"English does not; vanilla {lang} uses none, "
+                          f"reflow into the language's own punctuation")
 
 
 def check_workshop(root, languages, english_keyed, report):
@@ -1283,6 +1389,14 @@ def check_workshop(root, languages, english_keyed, report):
             report.error(path, "expected line 1 title, line 2 blank, then a "
                                "non-empty description")
             continue
+        # The dash ban covers the Workshop page too (English, and the
+        # languages whose vanilla has no dash); the page is prose with no
+        # EN comments, so it is read whole.
+        if lang == "English" or lang in DASH_FREE_LANGUAGES:
+            if DASH_RE.search("\n".join(lines)):
+                report.warn(path, "[player text] contains an em/en dash; "
+                                  "reflow the sentence (no dashes in player "
+                                  "text)")
         # Body as pasted into the edit UI: everything after the title +
         # blank separator, with the CRLF newlines a browser textarea submits.
         body_bytes = len("\r\n".join(lines[2:]).encode("utf-8"))
@@ -1502,6 +1616,9 @@ def main():
         else:
             print("No English Keyed strings found; nothing to check against.", file=sys.stderr)
             return 2
+
+    check_player_text(english_keyed, [ctx[name].view for name in worlds],
+                      args.root, report)
 
     found_by_lang = {}
     for lang, lang_dirs in sorted(languages.items()):

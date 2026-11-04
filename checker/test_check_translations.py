@@ -624,3 +624,138 @@ class MergeWorldsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+KEYED_PATH = "1.6/Languages/English/Keyed/Fixture.xml"
+
+
+def keyed_file(entries):
+    # entries: [(key, text)] -> an English Keyed file body.
+    lines = ['<?xml version="1.0" encoding="utf-8"?>', "<LanguageData>"]
+    lines += [f"  <{key}>{text}</{key}>" for key, text in entries]
+    return "\n".join(lines + ["</LanguageData>", ""])
+
+
+class PlayerTextTest(unittest.TestCase):
+    # The mechanical tells of languages/English.md § 2, as warnings only:
+    # CI's non-strict run stays green, the release skill's --strict run fails.
+
+    def check(self, files, strict=False):
+        fx = Fixture(files)
+        self.addCleanup(fx.close)
+        code, out = fx.run(strict=strict)
+        return code, [l for l in out.splitlines() if "[player text]" in l]
+
+    def files(self, keyed=(), english="A helmet.", about=None, extra=None):
+        files = {
+            "LoadFolders.xml": load_folders_xml(),
+            "1.6/Defs/Things.xml": DEFS.replace("A helmet.", english),
+            KEYED_PATH: keyed_file(keyed),
+            "Scripts/expected-injections.json": {
+                "meta": {"gameBuild": "1.6.test", "activeDlcs": ["Core"],
+                         "activeMods": BASE_MODS},
+                "defInjections": {"ThingDef": {
+                    "FX_Helmet.description": {"english": english,
+                                              "required": True},
+                    "FX_Helmet.label": {"english": "helmet",
+                                        "required": True}}}},
+        }
+        if about is not None:
+            files["About/About.xml"] = ("<ModMetaData><name>Fixture</name>"
+                                        f"<description>{about}</description>"
+                                        "</ModMetaData>\n")
+        files.update(extra or {})
+        return files
+
+    def test_clean_text_is_silent(self):
+        code, lines = self.check(self.files(keyed=[
+            ("FX_Pause", "Pause on load"),
+            ("FX_PauseDesc", "When enabled, the game will pause after "
+                             "loading. When disabled, it will keep running. "
+                             "Default: {0}."),
+            ("FX_RequiresRestart", "(requires restart)"),       # a suffix label
+            ("FX_HeldBy", "{0} (held by {3})"),                  # not prose
+            ("FX_Version", "Version 1.5 (the stable one). Nice."),  # 3 words, prose: flagged
+        ]))
+        self.assertEqual(code, 0)
+        self.assertEqual(len(lines), 1, lines)
+        self.assertIn("<FX_Version> parenthetical aside (the stable one)", lines[0])
+
+    def test_each_english_tell_warns_once(self):
+        code, lines = self.check(self.files(
+            keyed=[("FX_Dash", "Fast — and loud."),
+                   ("FX_Semi", "Walls stop it; floors do not."),
+                   ("FX_Whether", "Whether raiders bring medics."),
+                   ("FX_Lookup", "{lookup: {0}; Case; 1} stays.")],  # semicolons inside a placeholder are grammar, not prose
+            english="A helmet (the heavy kind, with a visor). It protects.",
+            about="A mod – with a dash."))
+        self.assertEqual(code, 0)
+        self.assertEqual(len(lines), 5, lines)
+        self.assertTrue(any("<FX_Dash> contains an em/en dash" in l for l in lines))
+        self.assertTrue(any("<FX_Semi> contains a semicolon" in l for l in lines))
+        self.assertTrue(any('<FX_Whether> opens with "Whether"' in l for l in lines))
+        self.assertTrue(any("[English/DefInjected/ThingDef]: [player text] "
+                            "<FX_Helmet.description> parenthetical aside "
+                            "(the heavy kind, with a visor)" in l for l in lines))
+        self.assertTrue(any("About.xml: [player text] <description> contains "
+                            "an em/en dash" in l for l in lines))
+        self.assertFalse(any("FX_Lookup" in l for l in lines))
+
+    def test_strict_fails_on_a_tell(self):
+        code, lines = self.check(self.files(keyed=[("FX_Dash", "Fast — loud.")]),
+                                 strict=True)
+        self.assertEqual(code, 1)
+        self.assertEqual(len(lines), 1)
+
+    def test_translation_dash_only_in_dash_free_languages(self):
+        def lang_files(lang, text):
+            return {
+                f"1.6/Languages/{lang}/Keyed/Fixture.xml":
+                    "\n".join(['<?xml version="1.0" encoding="utf-8"?>',
+                               "<LanguageData>", "  <!-- EN: Fast and loud. -->",
+                               f"  <FX_Plain>{text}</FX_Plain>",
+                               "</LanguageData>", ""]),
+                f"1.6/Languages/{lang}/DefInjected/ThingDef/Things.xml":
+                    language_file([("FX_Helmet.label", "helmet", "x"),
+                                   ("FX_Helmet.description", "A helmet.",
+                                    f"Un casco {text}")]),
+            }
+        keyed = [("FX_Plain", "Fast and loud.")]
+        code, lines = self.check(self.files(
+            keyed=keyed, extra=lang_files("Spanish", "Rápido — y ruidoso.")))
+        self.assertEqual(code, 0)
+        self.assertEqual(len(lines), 2, lines)   # Keyed and DefInjected, once each
+        self.assertTrue(all("the English does not; vanilla Spanish uses none"
+                            in l for l in lines))
+        code, lines = self.check(self.files(
+            keyed=keyed, extra=lang_files("Russian", "Быстро — и громко.")))
+        self.assertEqual(code, 0)
+        self.assertEqual(lines, [])
+
+    def test_translation_dash_mirroring_the_english_is_fine(self):
+        files = self.files(keyed=[("FX_Dash", "Fast — loud.")], extra={
+            "1.6/Languages/Spanish/Keyed/Fixture.xml":
+                "\n".join(['<?xml version="1.0" encoding="utf-8"?>',
+                           "<LanguageData>", "  <!-- EN: Fast — loud. -->",
+                           "  <FX_Dash>Rápido — ruidoso.</FX_Dash>",
+                           "</LanguageData>", ""]),
+            "1.6/Languages/Spanish/DefInjected/ThingDef/Things.xml":
+                language_file([("FX_Helmet.label", "helmet", "casco"),
+                               ("FX_Helmet.description", "A helmet.",
+                                "Un casco.")])})
+        code, lines = self.check(files)
+        self.assertEqual(code, 0)
+        self.assertEqual(len(lines), 1, lines)   # the English dash itself, nothing Spanish
+        self.assertIn("Keyed/Fixture.xml: [player text] <FX_Dash>", lines[0])
+        self.assertIn("English/Keyed", lines[0])
+
+    def test_workshop_page_dashes(self):
+        page = "Fixture\n\nA mod — with a dash.\n"
+        files = self.files(keyed=[("FX_Plain", "Plain.")], extra={
+            ".steamworkshop/Description/English.txt": page,
+            ".steamworkshop/Description/German.txt": page,
+            ".steamworkshop/Description/Korean.txt": page})
+        code, lines = self.check(files)
+        self.assertEqual(code, 0)
+        hit = sorted(l.split("Description/")[1].split(":")[0] for l in lines)
+        self.assertEqual(hit, ["English.txt", "Korean.txt"])
