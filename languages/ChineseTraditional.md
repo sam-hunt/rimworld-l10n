@@ -331,7 +331,7 @@ name, its Workshop title and its own coinages stay in that repo's glossary.
 | VFEP set names | 破襲型 (siegebreaker), 狂怒型 (brute), 聖盾型 (guardian), 空襲型 (aerial), 騎士型 (cataphract), 險境型 (hazard) | Derived from the zh-Hans pack; 騎士型 / 險境型 are the pack's `VFEP_Warcasket_Cataphract.label` 骑士型 and `VFEP_Warcasket_Hazard.label` 险境型 (險境 attested in the zh-Hant tars; Royalty's own cataphract armor is 全覆式裝甲, the set name follows the pack). 空襲型 is coined and shipped in Shipcracker Warcasket's Keyed; the zh-Hans section of its sibling file records the pack's aerial as 突击型, so 空襲型 deviates from the pack's wording (a 突擊型 conversion) and is unverified against the Traditional pack. Controller and sarcophagus: no glossary records the pack's rendering and the pack's files were not available to this pass, so they are unrecorded here; take them from the pack when a set needs them. |
 | 7th generation / 10th generation (VFEP's two chassis) | 第七代 / 第十代 | Shipcracker's and Toxin's shipped prose (Toxin 第七代戰棺 and 第十代戰棺), following the pack's paragraphs. |
 | Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | 特化型戰棺`<part>`，在增加機體重量的同時大幅提升了防護性。 | zh-Hans pack's Cataphract opener (进阶型→特化型); Toxin Warcasket's shipped `shortDescription`s (戰棺裝甲 / 護肩 / 頭盔). |
-| Specialized spacer-tech warcasket shell / pauldrons / helmet (VFEP's 10th-generation opener) | 特化型太空科技戰棺裝甲 / 護肩 / 頭盔 | zh-Hans pack's opening phrase for every 10th-generation part (特化型太空时代级别战棺…), with 太空科技 for the pack's 太空时代级别 (see the spacer-tech row in the main table); 特化型 from the pack's descriptions. Toxin ships 戰棺裝甲 for the shell where Shipcracker ships 戰棺外殼; the two are not reconciled, so settle the shell slot here before the next set ships. |
+| Specialized spacer-tech warcasket shell / pauldrons / helmet (VFEP's 10th-generation opener) | 特化型太空科技戰棺裝甲 / 護肩 / 頭盔 | zh-Hans pack's opening phrase for every 10th-generation part (特化型太空时代级别战棺…), with 太空科技 for the pack's 太空时代级别 (see the spacer-tech row in the main table); 特化型 from the pack's descriptions. Toxin ships 戰棺裝甲 for the shell where Shipcracker ships 戰棺外殼; Medic Warcasket (2026-11-05) ships 戰棺裝甲 too, matching the label pattern's body piece, so the shell slot of this opener is 裝甲 and Shipcracker's 戰棺外殼 follows at its next pass. |
 | ... with standard protection (the 10th-generation opener's tail) | ，在不增加機體重量的同時極大幅提升了防護性。 | zh-Hans pack's Siegebreaker / Controller / Sarcophagus openers (在不增加机体重量的同时极大幅提升了防护性), loose for "standard protection" as the pack is; Toxin Warcasket's shipped `TXWC_SpacerShortDescription_*`. Shipcracker's variant ends 強化了衝擊分散性能 for its "improved impact dispersion" (coined, close to the English; the pack's loose rendering was not adopted because it invents a weight claim). |
 | 7th-generation paragraph (VFEP's lore paragraph on the 7th-generation chassis) | 由於機體基本性能的強化陷入瓶頸，第七代戰棺的研發重心轉向了創新改進。… | zh-Hans pack's Hazard paragraph, its dash reflowed into ，; 玻璃钢→塑鋼 (zh-Hant Core `Plasteel`); shipped in Toxin Warcasket's descriptions. |
 | the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | 第十代戰棺有些特殊，它們是用從海盜那裡收繳的設備改造而成的。… | zh-Hans pack's paragraph (repeated on every spacer set; the Siegebreaker, Brute, Guardian, Sarcophagus and Controller descriptions share it), dash reflowed into ，; 兼容性→相容性 (Core `Incompatible` 不相容), 借助→藉助, quotes →「戰棺」. The full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/ChineseTraditional/`. |
@@ -345,6 +345,42 @@ and character-checked against the zh-Hant tars, but the actual Traditional pack
 could not be compared; the coined 空襲型, 太空級 and the adopted opener's 極大幅
 for "standard protection"; the shell slot (外殼 or 裝甲) in the openers. The
 set-specific coinages each repo lists stay pending there.
+
+## Grounded common vocabulary, medical, tending and ability domain (Core, with Royalty and Anomaly where named; Medic Warcasket, 2026-11-05)
+
+| English | Use | Why |
+|---|---|---|
+| mechanites (healing / drug sense) | 機械分子 | Core `MechSerumHealer`, `MechSerumResurrector`, `Luciferium*` descriptions (19 Core hits, 12 Biotech); 機械蟲 is only the two infection hediffs' descriptions (`FibrousMechanites`, `SensoryMechanites`, whose labels are 肌肉細胞機械化 / 感官細胞機械化). zh-Hans renders both senses 纳米机械, so a converted zh-Hans string gives the wrong word |
+| medicine (generic) / herbal / industrial / glitterworld | 藥品 / 草藥 / 醫療包 / 高科技藥品 | Core `ThingCategoryDef` `Medicine.label`, `MedicineHerbal`, `MedicineIndustrial`, `MedicineUltratech`. Industrial medicine's label is 醫療包 ("medical kit"), so any mod noun meaning "kit" or "medkit" must avoid 醫療包; zh-Hans's 医药 has no such collision |
+| go-juice / wake-up | 能量果飲 / 醒神劑 | Core `GoJuice.label`, `WakeUp.label` (zh-Hans 活力水 / 清醒丸: not convertible) |
+| heart attack | 心臟衰竭 | Core `HeartAttack.label` and `labelNoun` (zh-Hans 心脏病发作: an inversion; stage labels 痛苦 / 衰弱 / 致命) |
+| wound infection / missing body part | 傷口感染 / 缺少身體部位 | Core `WoundInfection.label`, `MissingBodyPart.label` |
+| tend (job) / tend (Keyed) / tend quality / medical tend quality / medical tend speed | 治療TargetA / 照護{0} / 治療品質 / 醫療品質 / 醫療速度 | Core `TendPatient.reportString`, Keyed `Tend`, `TendQuality`, `MedicalTendQuality.label`, `MedicalTendSpeed.label`; `TendingNotRequired` {0}不需要照護 |
+| tended (hediff state) | 已包紮 | Core `*.comps.HediffComp_TendDuration.labelTendedWell` |
+| doctor (work type) | 醫護 (label) / 醫生 (labelShort) / 照顧 (verb) / 治療 (gerund) | Core `Doctor.*`; caring work tag 照顧 (`WorkTagCaring`) |
+| patient | 患者 | Core `Doctor.description` 幫患者拿食物 |
+| manipulation / sight / consciousness | 操作 / 視力 / 意識 | Core capacity labels (操作能力 in prose, `ThrumboRoar.description`) |
+| pain / pain shock / unconscious | 疼痛 (Keyed `Pain` 傷痛) / 劇痛休克 / 失去意識 | Core prose, Keyed `PainShock`, `Unconscious` |
+| casting time / ability range / ability duration / cooldown | 施放時間 / 距離 / 持續時間 / 冷卻時間 | Core Keyed `AbilityCastingTime`, `Ability_Range.label`, `Ability_Duration.label`, Keyed `CooldownTime`; Keyed `Range` 射程 is the weapon slot |
+| enabled / disabled (state words) | 啟用 / 停用 | Core Keyed `Enabled`, `Disabled` |
+| Work tab (prose) | 「工作」面板 | Core `WorkTab.helpText` (`WorkTab.label` is 分配工作) |
+| combat medic / medic / surgeon / squadmate | 戰地醫護兵 / 醫療兵 / 外科醫生 / 戰友 | Core backstories `CombatMedtech59.title`, `CombatMedic82.title`, `GlitterworldSurgeon15.titleShort`, `OverwatchSniper42.description` |
+| adrenaline / injector / inject | 腎上腺素 / 注射器 / 注射{0} | Core `KingOfPirates25`, Royalty `VenomFangs`, Anomaly serum `ingestCommandString`; `X注射` as a hediff noun per Anomaly `MetalbloodInjection` 鐵血注射 |
+| Mote (inherited `MoteBase` label) | 塵土 | Core `Mote_*` labels, 52 of 64 |
+| colours Blue / Green / Pink | 藍色 / 綠色 / 粉紅色 | Core ColorDefs `Blue`, `Green`, `Pink` (Keyed `Blue` / `Green` are untranslated English) |
+| is hostile | {0}是敵對的。 | Core Keyed `ConfirmLandOnHostileFactionBase` |
+| x / y counts | {0}/{1}, slash set solid | Core Keyed `MassCarried` 負重：{0}/{1}公斤, `PregnantIconDesc` 懷孕({0}/{1}); the English spaces the slash |
+
+Reload-slot read-aloud for a `chargeNoun` (Core Keyed): `CommandReload_NoCharges`
+沒有{CHARGENOUN_plural}。, `Stat_Thing_ReloadChargesRemaining_Name`
+{CHARGENOUN_plural}剩餘, `Stat_Thing_ReloadMaxCharges_Desc` 這個物體最多能保持的{CHARGENOUN_plural}數量。,
+`Stat_Thing_ReloadPerCharge_Desc` 每裝填一{CHARGENOUN}需要消耗物品的數量。,
+`Stat_Thing_ReloadPerCharge_Name` 每{CHARGENOUN}裝填消耗,
+`Stat_Thing_ReloadDestroyOnEmpty_Desc` 這個道具會在最後一個{CHARGENOUN}使用完後消失。,
+`CommandReload_Cooldown` 需{COOLDOWNGERUND}{TIME}。 (so the family's
+`cooldownGerund` 冷卻 reads 需冷卻…), `ChargesRemaining` 剩餘充能. No
+`CHARGENOUN_gender` anywhere. The 一{CHARGENOUN} slot takes the noun with no
+classifier, which favours a noun that tolerates 一X (Medic ships 藥包 and 針劑).
 
 ## RulePackDef / name-generation grammar
 
@@ -378,13 +414,85 @@ mod:
 
 ## Generated-text tells
 
-Not yet catalogued for ChineseTraditional. The categories are `English.md` § 2 (the same
-sentence frame on every string, docstring openers, telegraphese, balanced
-tricolons and aphoristic closers, sentence-initial participles, coinages and
-possessive chains, semicolons and asides, repeated signature phrases,
-over-explanation, modder vocabulary) plus calque: English clause order and
-syntax under native words (`lessons.md`, the Russian complaint). The next
-pass in this language reads the vanilla tar for how each category shows up
-here and replaces this stub with the findings (`process.md` § Register);
-mirrored strings are exempt, descriptions and Workshop prose are the slots
-to read.
+Catalogued 2026-11-05 by Medic Warcasket's pass from the zh-Hant Core,
+Royalty, Ideology, Biotech, Anomaly and Odyssey tars (values only, comments
+stripped; 6026 `description` values, 11608 sentences). The categories are
+`English.md` § 2; mirrored vanilla strings are exempt, descriptions, settings
+tooltips and Workshop prose are the slots to read. **No entry has had native
+review.**
+
+1. **The same sentence frame on every setting.** Vanilla tooltips vary the
+   head: stat descriptions open on the subject (此生物…, 此人…, 這個物體…),
+   ability descriptions on the verb (發出強力咆哮…, 命令動物…). A Keyed file
+   whose every tooltip opens 駕駛員… or ends …的時間。 reads templated; vary the
+   head or merge two rows' sentences, and keep 預設值：{0}。 as the only fixed tail.
+2. **是否 openers.** The docstring "Whether…" arrives as 是否…: only 7 vanilla
+   values open on 是否, all of them yes/no dialog prompts (是否確定要取消訂閱).
+   Toggles take 啟用時，…。停用時，…。 (Shipcracker) or Core's 如果禁用此功能，…
+   frame, never a 是否 description.
+3. **Telegraphese.** Vanilla spends the aspect and modal words: 會 runs 58.6
+   per 10k description chars, and consequences are written 會/可以/也會
+   (`Apparel_ShieldBelt` 如果被 EMP 衝擊到會無法運作). Bare four-character
+   chains with no verb word (藥效消退，疲勞加速) are the clipped-English tell;
+   so is dropping 了 on a completed event the English states in the past
+   (vanilla 了。 closes 13.4 per 10k).
+4. **Balanced tricolons and aphoristic closers.** Vanilla uses 成語 freely
+   in single slots (`Tough` 鋼筋鐵骨, `Nimble` 十面埋伏也能安然無恙), so an
+   idiom alone is not the tell. The tell is three parallel four-character
+   phrases stacked with 、 (only 33 of 6026 vanilla descriptions have one) or a
+   closing epigram after the description has said what the thing does
+   (…卻是最後一道防線). Vanilla closes item descriptions on use or origin
+   (`Apparel_ArmorRecon` 帝國偵查兵、閃耀世界警察常常使用這種裝甲。) and stops.
+5. **Sentence-initial participles and fronted frames.** English participle and
+   prepositional openers come through as 作為…，/ 隨著…，/ 透過…，/ 憑藉…，;
+   vanilla opens with them rarely (作為 18, 隨著 10, 透過 19, 憑藉 3 of 11608
+   sentences) and prefers 如果 (142), 雖然 (130), 當 (146) or the bare subject.
+   Move the frame after the subject or make it its own clause.
+6. **Coinages and possessive chains.** 的 chains of four or more in a short
+   sentence (X的Y的Z的W) appear in only 54 vanilla sentences, almost all
+   backstory narration; in a label or tooltip they are the English
+   "the suite's gauge's colour" read straight. Name the visible item
+   (藥品儀表的顏色, not 系統的儀表的顏色). Hyphenated English compounds become
+   long attributive stacks (太空級戰鬥醫療型…); vanilla's longest labels are
+   two nouns.
+7. **Semicolons, colon pivots and asides.** Description prose holds 19 ；
+   and 37 ： across 280k characters; a ； or a ： pivot mid-description is
+   generated. Parentheses are ASCII and set solid (`PregnantIconDesc`
+   懷孕({0}/{1})) and appear in labels and suffixes, not as prose asides.
+   Em dashes are mirrored from the English only (13.5 per 100k value chars,
+   Odyssey's ——).
+8. **Signature phrases across surfaces.** A rendering of one English pet
+   phrase repeated in the descriptions, the ability text and the Workshop
+   (就地, 多撐一會兒, 遲鈍又緩慢) reads as a template. Say it once; elsewhere
+   say it plainly.
+9. **Over-explanation.** Vanilla tooltips state the effect and stop
+   (`Ability_CastingTime.description` 施放這個能力需要花費的時間。). Spelling out
+   units the row already shows (以秒為單位) or restating the slider's value is
+   the tell.
+10. **Modder vocabulary.** 定義 / 定義檔 for "definitions", 系統 or 模組 for an
+    internal subsystem the player never sees labelled, 數值 where vanilla says
+    the stat's own name. 模組設定 and 內建數值 (Shipcracker) are the family's
+    accepted settings words.
+
+**Calque** (English syntax under native words), the zh-Hant forms:
+
+- **Article calque.** 一個 / 一種 open vanilla item descriptions on purpose
+  (一種力場裝置。, 290 and 235 sentence openers), but inside a sentence an
+  English "a/an" rendered as 一個 before every noun (注射一個劑量的…) is the
+  tell; vanilla counts with the real classifier or drops it (一劑, 一針).
+- **Pronoun subjects.** English "it/they" as 它/它們 at every sentence head;
+  vanilla does use sentence-initial 它 (237 times, mostly item descriptions
+  continuing from a noun opener), but Chinese drops the subject once the
+  topic is clear. Two 它 sentences in a row is the tell.
+- **Agentive abstractions.** An English abstract subject kept as the agent
+  (計畫發現…, 該系統讓…). Vanilla goes subjectless (後來發現…) or names a person.
+- **與 for "and".** Vanilla description prose runs 和 1145 to 與 434; a text
+  where 與 joins every noun pair reads as formal written translation. Keep
+  與 for fixed frames (與…相同, 與…並肩作戰) and the sibling-shipped
+  CE/SOS2 lines.
+- **被 passives.** Vanilla uses 被 often (32 per 10k, itself a translation
+  habit), so a passive alone is not the tell; stacked passives with an
+  English "by" agent (被駕駛員所…) are.
+- **Mainland vocabulary.** The Taiwan register list in the style section
+  (設定, 預設值, 計畫 147:3 over 計劃, 水準 26:1 over 水平, 模組, 內建) is part of the
+  read: a mainland form in free prose is the same tell as a calque.
