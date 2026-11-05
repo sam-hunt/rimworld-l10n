@@ -81,6 +81,12 @@ consistently across all four source repos unless noted):
   guidance to imitate.
 - Some vanilla zh files carry a BOM; a mod's own translated files should
   never add one.
+- **Vanilla's own toggle frame is 如果禁用此选项，…将…。** (Royalty's
+  quest-reward toggles: 如果禁用此选项，{FACTION_name}将提供其他类型的奖励。),
+  and only 4 of 1,877 vanilla tooltips open with 是否. The family's shipped
+  启用后，… 禁用后，… (Shipcracker `SCWC_VacuumBurnDesc`) reads naturally and
+  stays; this records the vanilla alternative so nobody reaches for 是否.
+  (Medic Warcasket, 2026-11-05)
 
 ## Grounded common vocabulary
 
@@ -203,6 +209,24 @@ reinforces market value above.
   `CubeMaterialScrap`, `ScenPart_Error`, `OpenLogOnWarnings`,
   `SaveGameDataFolder`)
 
+### Medical, tending and ability vocabulary (Core, with Royalty, Anomaly and Combat Extended where named; Medic Warcasket, 2026-11-05)
+
+| English | Use | Never | Why |
+|---|---|---|---|
+| mechanite(s) | 纳米机械 | 机械体, 机械微粒 | Core `FibrousMechanites.label` 肌纤维纳米机械感染, `SensoryMechanites.label` 感官纳米机械感染 (Medic Warcasket, 2026-11-05) |
+| medicine labels (herbal / industrial / glitterworld) | 草药 / 医药 / 闪耀世界医药 | 医药 for generic medicine in prose | Core `MedicineHerbal`, `MedicineIndustrial`, `MedicineUltratech`; 医药 is the industrial item's own label, so generic "medicine" in prose reads as 药品 (Medic Warcasket) |
+| go-juice / wake-up / heart attack / infection | 活力水 / 清醒丸 / 心脏病发作 / 感染 | | Core `GoJuice`, `WakeUp`, `HeartAttack`, `WoundInfection` labels |
+| tend (action) / tend quality / tend speed | 治疗 / 治疗质量 / 治疗速度 | 质量 alone | Core `TendPatient.reportString` 治疗TargetA。, `MedicalTendQuality`, `MedicalTendSpeed`, Keyed `TendQuality`; the float-menu verb is 照料 (`Tend` 照料{0}, `TendingNotRequired` 不需要照料) |
+| doctor (work type) / caring work tag / Work tab | 医生 / 医疗工作 / 「工作」面板 | | Core `Doctor.labelShort`, Keyed `WorkTagCaring`, `WorkTab.helpText` |
+| manipulation / sight / pain / pain shock / downed | 操作能力 / 视觉能力 / 疼痛 / 因疼痛而休克 / 倒地不起 | 击倒 for the pawn state | Core `Manipulation`, `Sight`, Keyed `Pain`, `PainShock`, `Wait_Downed.reportString`, `DownedCannotCrawl`; 击倒 is the `TaleDef` `Downed.label`, not the pawn state, so a `Downed.label` grep misleads |
+| casting time / range / requires line of sight | 释放时间 / 射程 / 目标必须可视 | | Core Keyed `AbilityCastingTime`, `Range`, `AbilityRequiresLOS` |
+| severity | 严重程度 | 严重性 | Core Keyed `ConfigurableSeverity` 严重程度：{0} |
+| Mote (a mote def's inherited label) | 特效 | 微粒 | Core `Mote_Clean`, `Mote_Stun` and most other `Mote_*` labels (a few sparks are 尘埃) |
+| Blue / Green / Red (Keyed color words) | 蓝 / 绿 / 红 | | Core Keyed `Blue`, `Green`, `Red`; Core has no `Pink` key (粉 follows `Structure_Pink` 淡粉, `Hair_Pink` 粉发) |
+| injector / injection serum | 注射器 / 注射针剂 | | Royalty `VenomFangs.description`, Anomaly serum descriptions |
+| trait description pawn tokens | keep `{PAWN_nameDef}`, `{PAWN_pronoun}`, `{PAWN_objective}` in place | | Core `Wimp` (一点小伤小疼就能让{PAWN_objective}晕过去), `Tough` |
+| suppressability (Combat Extended) | 压制敏感度 | | CE's own zh-Hans `Suppressability.label` |
+
 ## Grounded common vocabulary, VFE Pirates warcasket domain (q847633684/Vanilla-Expanded-ZH pack + Core, 2026-10-28)
 
 VFE Pirates ships English only; its terms are grounded against the community
@@ -316,13 +340,70 @@ pending there.
 
 ## Generated-text tells
 
-Not yet catalogued for ChineseSimplified. The categories are `English.md` § 2 (the same
-sentence frame on every string, docstring openers, telegraphese, balanced
-tricolons and aphoristic closers, sentence-initial participles, coinages and
-possessive chains, semicolons and asides, repeated signature phrases,
-over-explanation, modder vocabulary) plus calque: English clause order and
-syntax under native words (`lessons.md`, the Russian complaint). The next
-pass in this language reads the vanilla tar for how each category shows up
-here and replaces this stub with the findings (`process.md` § Register);
-mirrored strings are exempt, descriptions and Workshop prose are the slots
-to read.
+Catalogued 2026-11-05 by Medic Warcasket's first zh pass, from the Core,
+Royalty, Ideology, Biotech, Anomaly and Odyssey `ChineseSimplified (简体中文).tar`
+values with comments stripped (47,586 values, 1.15M characters; rates are per
+100k characters). Each item is the `English.md` § 2 category as it shows up in
+Chinese, with the vanilla evidence. Mirrored strings are exempt; descriptions,
+settings tooltips and Workshop prose are the slots to read.
+
+1. **One frame on every tooltip.** Vanilla stat descriptions open with a
+   bare noun-phrase definition (`MedicalTendSpeed` 此人作为一名医生治疗伤患和病人的速度。),
+   so that opener is native; the tell is the same opener plus the same
+   trailing consequence clause (……，超出部分会被清除。) on every row. Vary or
+   cut the second sentence.
+2. **是否 openers.** The "Whether" calque. Only 4 of 1,877 vanilla `*Desc` /
+   `*Tip` / `*Info` tooltips open with 是否 (Royalty's quest-reward toggles).
+   Toggles take 启用后，… 禁用后，… (the family frame) or vanilla's own
+   如果禁用此选项，…将…。 (Royalty `*Desc` reward toggles), never 是否.
+3. **Telegraphese.** Clipped clauses with no 会 / 可以 / 能 / 也: 技能定节奏。
+   Vanilla descriptions spend the modal (会 538, 可以 246 per 100k in item,
+   ability and hediff descriptions) and write consequences as 会…, so a
+   string with no modal anywhere reads as a spec sheet.
+4. **Stacked four-character closers.** The tricolon-and-aphorism tell in
+   Chinese is a lore paragraph that ends on two or three parallel 四字格 phrases
+   (攻守兼备，进退自如。). Vanilla uses idioms singly and mid-sentence (Royalty
+   `Apparel_ArmorLocust` 差强人意 … 首屈一指, the one hit for 首屈一指 in the
+   whole corpus) and ends on a plain statement of use (像这样的装甲通常由执行快速突击任务的太空陆战队员使用。).
+5. **当…时 and 随着… openers on every sentence.** The participle-clause
+   calque. Vanilla has them (当 810 and 随着 135 hits overall) but spread
+   thin; two in one tooltip, or one opening each sentence of a paragraph, is
+   the tell. A bare topic or a 时 / 后 clause (启用后，释放期间，) is shorter.
+6. **的-chains and stacked modifiers.** A …的…的…的 run inside one clause
+   occurs 8 times per 100k in vanilla descriptions. English hyphen compounds
+   and possessives ("the shoulders' injector", "medicine-laden") come out as a
+   long pre-noun modifier; name the visible item (护肩的肾上腺素注射器 → 肾上腺素注射器)
+   or move the modifier into its own clause.
+7. **Semicolons, dashes and parenthetical asides.** Vanilla runs ； at 2,
+   —— at 36 and （ at 64 per 100k overall, （ at 15 in item/ability/hediff
+   descriptions (most of them label qualifiers such as 锻造台（燃料）). A
+   ； or a （…） aside in a description or tooltip is a tell; split the
+   sentence or use ，. A 冒号 pivot inside prose (……：……) is rare outside
+   `默认：{0}。` and list headers.
+8. **Repeated signature phrases.** The same coined phrase (就地, 多撑一阵,
+   迟钝缓慢) in the descriptions, the ability text, the settings and the
+   Workshop page. Say it once and plainly elsewhere.
+9. **Over-explanation.** A tooltip restating what the row's value or a
+   vanilla stat already shows. Vanilla tooltips stop after one or two
+   sentences (mean sentence 23.7 characters, 0.59 commas per sentence in
+   descriptions); a sentence over about 40 characters with three or more ，
+   is worth splitting.
+10. **Modder vocabulary.** 定义 (defs) appears in vanilla only in the
+    custom-difficulty and transporter UI (27 hits, none about game content),
+    and never 子系统, def or 套件 for an internal subsystem. Name what the
+    player sees: the item's label, 计量表, 「工作」面板.
+11. **Calque: English clause order under Chinese words.** The pass's own
+    misses, each a native word on an English skeleton:
+    - an abstract agent doing a person's verb: 计划发现…… ("the program
+      found"); Chinese gives the verb to people (项目组发现……);
+    - a trailing English participle or adverbial tacked on after the main
+      clause: 就地治疗其伤口，从最严重的伤口开始。; Chinese puts the manner
+      before the verb (就地从最严重的伤口开始逐一治疗。);
+    - "any other way" kept as a modifier: 无法以其他方式继续服役;
+      a native writer says 除此之外再也无法服役;
+    - pronouns the English needs and Chinese drops (他们, 它, 其 every
+      clause): vanilla 他们/它们 runs at 204 per 100k in descriptions,
+      mostly where the subject changes;
+    - 一个 / 一名 before every count noun as an English article: vanilla
+      opens item descriptions with 一套 / 一种 once (一套标准动力装甲),
+      not on every noun.
