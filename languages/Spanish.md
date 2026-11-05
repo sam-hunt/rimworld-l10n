@@ -31,7 +31,13 @@ string-rewrite to trip over — but also no runtime agreement help. The
 `Pluralize(def.label)` or `{X_labelPlural}` turns "sarcófago de criptosueño
 antiguo" into "sarcófago de criptosueño antiguos" (decompile-verified
 2026-10-18 on 1.7.4981): phrase the string around the singular label
-("ningún ejemplar ... de {0}"). Spanish's
+("ningún ejemplar ... de {0}"). The same rule appends to the whole string
+with the accent kept (after the lookup: a final vowel takes `s`, `í`/`ú`
+take `es`, a final `l r n d j s x` or `ch` takes `es`, `z` becomes `ces`,
+anything else `s`), so `kit` → `kits` is safe but `inyección` →
+`inyecciónes` and `dosis` → `dosises`: any `-ión` or `-sis` noun a mod
+pluralizes needs its own `plural.txt` line even as one word (Medic
+Warcasket, 2026-11-05). Spanish's
 difficulty is gender, not case, and it shows up in two independent places:
 
 - **Contractions are not automatic and must be hand-written.**
@@ -221,6 +227,30 @@ strings unless noted):
 | Using ability: {0} (VEF `AbilityDef.jobReportString`) | usando habilidad: {0}. | | VEF ships English only; a subject-less gerund with the terminal period, like Core's `JobDef.reportString`s (see the style section) (Shipcracker Warcasket, shipped since 2026-09-26) |
 | on cooldown (a reloadable comp's `cooldownGerund`) | en enfriamiento | | Core Keyed `ShieldOnCooldown` = `En enfriamiento`; the field is vanilla's `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker Warcasket) |
 
+### Medical, tending and ability vocabulary (Core and Odyssey; Medic Warcasket, 2026-11-05)
+
+| English | Use | Never | Why |
+|---|---|---|---|
+| medic | médico (`médico de combate`) | sanitario, paramédico (a backstory title only) | Core backstories `CombatMedic82.title`, `MedicSoldier54.title`, `SpaceMarineMedic10` |
+| doctor (work type) / Work tab | médico, `trabajar como médico`, `asignado como médico` / la pestaña "Trabajo" | | Core `Doctor.labelShort`, Keyed `NeedDoctorDesc`, `WorkTabChangeAllColonists` |
+| work type / caring (work tag) | tipo de trabajo / cuidados | | Core Keyed `WorkTabChangeAllColonists`, `WorkTagCaring` |
+| trait (cited in prose) | `el rasgo "X"` | característica | Core Keyed `TraitLabelWithDesc` `rasgo {TRAITLABEL}` |
+| casting time / line of sight | Tiempo de lanzamiento / línea de visión (`Línea de visión requerida`) | | Core Keyed `AbilityCastingTime`, `AbilityRequiresLOS`, `AbilityCannotHitTarget` |
+| tend / tend quality / tend speed / has nothing to tend | tratar, atender (`Atender {0}`) / calidad del tratamiento / velocidad de tratamiento médico / {0} no necesita atención | curar (for a tend) | Core `TendPatient.reportString`, Keyed `Tend`, `TendQuality`, `MedicalTendSpeed.label`, `TendingNotRequired` |
+| medicine labels | hierbas medicinales / medicina / medicina mundobrillante | | Core `MedicineHerbal`, `MedicineIndustrial`, `MedicineUltratech`; the herbal label is plural, so a `{0}` fed a medicine label needs a number-neutral frame (`No hay {0} ...`, `Sin {0}`, `kits de {0}`) |
+| medicine kit | kit (m., pl. kits by rule) | | Core `MedicineIndustrial.description` "Un kit de equipo médico" |
+| go-juice / wake-up | neurozumo / despertar | | Core `GoJuice.label`, `WakeUp.label` |
+| X in the bloodstream (drug hediff description opener) | X en el torrente sanguíneo. | | every Core drug high (`GoJuiceHigh`, `WakeUpHigh`, `Anesthetic`) |
+| drug high (hediff noun) / wearing off / woozy | subidón / desvaneciéndose / atontado | | Core `GoJuiceHigh.label`, `FlakeHigh.label`; `Anesthetic.stages.wearing_off.label`, `.woozy.label` |
+| heart attack / infection / missing body part | ataque cardíaco / infección / parte del cuerpo faltante | | Core `HeartAttack.label`, `WoundInfection.label`, `MissingBodyPart.label` |
+| mechanites | mecanitas | mecanites | Core `FibrousMechanites.label` (mecanitas fibrosos) and its description (mecanitas aumentadoras): vanilla mixes the gender, prose leans feminine |
+| severity (in prose) | gravedad | severidad (stat labels only) | Core Keyed `Stat_Thing_Drug_AddictionSeverityPerDose_Desc` vs `AddictionSeverityInitial` |
+| pain shock / unconscious / manipulation / sight | en shock por el dolor / inconsciente / manipulación / vista | | Core Keyed `PainShock`, `Unconscious`, `Manipulation.label`, `Sight.label` |
+| Mote (an inherited mote label) | Mota | | Core `Mote_*` labels |
+| Pink (an option label) | rosa | rosado | No Core `Pink` Keyed; `Hair_Pink.label` pelo rosa (`Structure_Pink` is rosa pastel) |
+| gauge | indicador | | Core Keyed `VisibleMoodDesc` "un indicador visual"; Toxin `TXWC_TankCapacityDesc` |
+| suppressability (Combat Extended) | supresibilidad | | CE's own es `Suppressability.label` |
+
 ## Grounded common vocabulary, VFE Pirates warcasket domain (Cito2310 community pack + Core, 2026-10-28)
 
 VFE Pirates ships English only. The terms here are grounded against the
@@ -300,16 +330,92 @@ there.
   wins for a player-facing noun); downed = `incapacitado`
   (`DownedCannotCrawl`). Ordinals are Castilian `7.ª`, never the Latin
   American `7ta` a community pack may carry.
+- **Range: Core Keyed `Range` is `Rango`** (the ability gizmo tooltip,
+  `AbilityOutOfRange` "fuera de rango"), while Toxin's and Shipcracker's
+  settings rows ship `Alcance` (Core's weapon-stat wording,
+  `Stat_Thing_Weapon_Range_Desc` "El alcance máximo"); Medic follows the
+  siblings. A family decision at the next pass that touches a settings
+  window settles which the rows use (Medic Warcasket, 2026-11-05).
 
 ## Generated-text tells
 
-Not yet catalogued for Spanish. The categories are `English.md` § 2 (the same
-sentence frame on every string, docstring openers, telegraphese, balanced
-tricolons and aphoristic closers, sentence-initial participles, coinages and
-possessive chains, semicolons and asides, repeated signature phrases,
-over-explanation, modder vocabulary) plus calque: English clause order and
-syntax under native words (`lessons.md`, the Russian complaint). The next
-pass in this language reads the vanilla tar for how each category shows up
-here and replaces this stub with the findings (`process.md` § Register);
-mirrored strings are exempt, descriptions and Workshop prose are the slots
-to read.
+Catalogued in Medic Warcasket's 2026-11-05 pass from the Core + Odyssey
+Castilian tars (comments stripped; "desc" = every DefInjected `.description`
+outside `BackstoryDef`, about 348k characters in 2830 entries; "Keyed" about
+708k characters, with `{...}` and `[...]` constructs removed before counting
+punctuation). Each category of `English.md` § 2, as it shows up in Spanish,
+then calque.
+
+1. **The same sentence frame on every setting.** Vanilla tooltip openers
+   are noun-led and few: `La cantidad ...` (23), `El valor ...`, `Cuánto
+   tiempo ...` (6), `Multiplicador que ...` (5), `La probabilidad ...` (5),
+   `El número ...` (4), plus the toggle frames below. A `Tiempo que ...` /
+   `Número de ...` / `Distancia ...` opener is native and may repeat; the tell
+   is a second identical clause appended to every tooltip (what happens to an
+   in-flight value, an `incluso si ...` rider).
+2. **"Si ... o no" / "Indica si" openers (Whether).** `Determina si` opens 4
+   Keyed strings (`PackAnimalExplanation`, the auto-refuel and autoload
+   gizmos) and no description; `Indica si` never appears. A settings
+   toggle takes `Si está activado, ... Si está desactivado, ...` or `Cuando
+   está activado, ...` (Core Keyed `CommandAutoRearmDesc`, `CommandReleaseAnimalsDesc`,
+   `AutoBuildTransportPodDesc`, `AutoHackDesc`), with the consequence in the future tense (`se reemplazará`,
+   `construirán`).
+3. **Telegraphese.** Castilian vanilla is short but complete: descriptions
+   average 10.4 words per sentence (median 9), 0.6% of sentences exceed 30
+   words. Verbless noun-phrase openers are native in item descriptions (`Un
+   dispositivo de repulsión de proyectiles.`, `Una pata de palo implantada.`)
+   and `Puede ...` / `Permite ...` open 129 description sentences. The tell
+   is the other way: an English-length sentence carried over whole with two
+   relative clauses and a trailing gerund.
+4. **Balanced tricolons and aphoristic closers in lore.** `no solo ... sino`
+   occurs twice in all descriptions; three-noun lists are common (96) but as
+   plain inventories (`fármacos, herramientas y dispositivos`), never as
+   three parallel clauses. Lore ends on a fact, never on a pointed line.
+5. **Sentence-initial participle clauses.** `Equipado con`, `Diseñado
+   para`, `Fabricado con`, `Hecho de` open 7 description sentences, all of
+   them the second sentence of a bionic-part or shield-belt entry right after
+   a noun-phrase opener (`Un dispositivo de repulsión de proyectiles.
+   Diseñado para detener ...`). A participle opening a mod's first sentence,
+   or opening a settings tooltip (0 in Keyed), is the tell. Postposed
+   participles after the noun (`equipado con ...` after a comma, as the VFEP
+   openers have it) are native.
+6. **Coinages and `de` chains.** Hyphenated words are rare (10 per 100k in
+   descriptions, 2.8 in Keyed), so an English hyphen compound becomes a `de`
+   phrase or an adjective. Three stacked `de` phrases run 4.9 per 100k in
+   descriptions; a mod's own nouns stack fast (`los efectos del vendaje de
+   mecanitas de la armadura`), so keep to two and name the visible item.
+7. **Semicolons, colon pivots and parenthetical asides.** In descriptions
+   3.2 semicolons, 7.5 colons and 4.0 opening parentheses per 100k (Keyed
+   prose 10.4 semicolons, its parentheses are almost all UI units and
+   `(anteproyecto)`-style tags). No em or en dash anywhere (0.0 in both
+   tars; the checker's `DASH_FREE_LANGUAGES`). A `, lo que ...` pivot is
+   native (6.9 per 100k in descriptions: `Las garras se pueden retraer, lo
+   que la hace tan útil ...`), once per text, not per sentence.
+8. **Signature phrases repeated across surfaces.** Vanilla repeats only
+   formulas (`en el torrente sanguíneo`, `Por defecto: {0}.`). A coined
+   phrase such as `en el acto` or `un poco más` should appear once across
+   descriptions, ability text and the Workshop page.
+9. **Over-explanation.** Core tooltips state the mechanic in one sentence
+   and stop (`Velocidad a la que el personaje trata heridas y
+   enfermedades.`); a second sentence teaching what the row's value already
+   shows is the tell.
+10. **Modder vocabulary.** `definición` appears in Keyed only in
+    `RestartAfterImportingLegacyBackstoryTanslations`, a translator-facing
+    notice, and never in descriptions; `def`, an internal
+    subsystem's own name, and English loanwords for UI parts (`gauge`,
+    `tooltip`) never reach player text. Core says `indicador`, `objeto`,
+    `personaje` (for a pawn).
+
+**Calque.** The English skeleton under Castilian words shows as: a trailing
+`, + gerund` result clause on most sentences (vanilla has 24.7 per 100k in
+descriptions, mostly in narrative prose: `La víctima colapsa, quedando
+inconsciente.`; in a tooltip it reads translated); `ser + participle + por`
+passives (7.2 per 100k) where vanilla prefers the `se` form (129 per 100k);
+explicit subject pronouns (`Él` / `Ella` never open a sentence in either
+corpus); stacked `su`/`sus` (Spanish drops the possessive for one's own body
+and equipment: `en pie`, `la armadura`, never `sus pies`); English adjective
+order (`única arma`); and `tú` drifting to `usted` (vanilla is decisively
+`tú`). Rebuild the sentence from the subject the Spanish reader expects:
+`Al ver que perdía casi tantos cirujanos ..., el programa creó el Médico`
+rather than `El Médico se construyó para ..., después de que el programa
+descubriera que ...`.

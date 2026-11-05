@@ -246,7 +246,9 @@ the originating passes.
   in four shipped languages unless that language's `WordInfo` plural table
   lists the exact label: French appends `s`/`x` to the last word only
   ("caisson d'hypersommeil antique" becomes "...antiques"), Spanish's rule
-  fallback does the same ("sarcófago de criptosueño antiguos"), German
+  fallback does the same ("sarcófago de criptosueño antiguos") and keeps a
+  final accent, so even a one-word `-ión` or `-sis` noun needs a
+  `plural.txt` line (`inyección;inyecciones`; Medic Warcasket 2026-11-05), German
   delegates to the English worker ("antike Kryptoschlafkapsels"; Core's
   `plural.txt` lacks it) and pt-BR, with no override, gets the singular
   back unchanged. Russian is fine whenever Core's `WordInfo/Plural.txt`
