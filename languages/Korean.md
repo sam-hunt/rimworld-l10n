@@ -187,6 +187,25 @@ strings unless noted):
 | Using ability: {0} (VEF `AbilityDef.jobReportString`) | {0} 능력 사용 중 | | VEF ships English only; Shipcracker Warcasket's rendering, shipped by Shipcracker and Toxin Warcasket (no trailing period) |
 | on cooldown (a reloadable comp's `cooldownGerund`) | 재사용 대기 중 | | Core Keyed `ShieldOnCooldown` = `재사용 대기 중`; the field is vanilla's `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker and Toxin Warcasket) |
 
+### Medical, tending and ability vocabulary (Core and Odyssey; Medic Warcasket, 2026-11-05)
+
+| English | Use | Never | Why |
+|---|---|---|---|
+| herbal / industrial / glitterworld medicine | 생약 / 약품 / 번화계 약품 | | Core `MedicineHerbal`, `MedicineIndustrial`, `MedicineUltratech` labels; all three consonant-final, so a marker after an injected medicine label resolves to the 이 / 을 / 으로 side |
+| medicine (the category) | 의약품 | 약품 for the generic | Core ThingCategory `Medicine.label`; 약품 is the industrial medicine's own label |
+| go-juice / wake-up / heart attack | 고주스 / 웨이크업 / 심근경색 | | Core labels |
+| mechanites | 기계입자 | | Core `FibrousMechanites` (근섬유질 기계입자), `SensoryMechanites`, `MechSerumResurrector` |
+| tend / tend quality / tend speed / medical skill | 치료 / 치료 품질 / 치료 속도 / 의학 | | Core Keyed `Tend`, `TendQuality`, `MedicalTendQuality`, `MedicalTendSpeed`, `Medicine.skillLabel` |
+| doctor (work type) / caring (work tag) | 치료 / 치료 | | Core `Doctor.labelShort` and Keyed `WorkTagCaring` are the same word, so "doctor work" and "caring work" render alike |
+| infection / disease / missing body part / wound | 감염 / 질병 / 신체 누락 / 상처 | | Core `WoundInfection.label`, `Disease_*` letters, `MissingBodyPart.label`, `WoundInfection.description` |
+| pain (stat) / pain shock | 통증 / 고통에 의한 실신 | | Core Keyed `Pain`, `PainShock`; Core's `Pain` hediff stages say 고통 (가벼운 고통), so both words are vanilla |
+| downed / hostile | 쓰러짐 (쓰러진) / 적대 | | Core `Downed.label`, Keyed `Hostile` |
+| casting time / range / line of sight required | 시전 시간 / 사거리 / 시야 필요 | | Core Keyed `AbilityCastingTime`, `Range`, `AbilityRequiresLOS` |
+| power armor (in prose) | 동력 갑옷 | 파워 아머 | Core `Apparel_PowerArmor.description`; the item's label is 해병대 갑옷 |
+| Mote (an inherited `MoteBase` label) | 모트 | | Odyssey `Mote_*` labels, 7 of 7; Core leaves all 59 of its `Mote_*` labels in English, so Odyssey's is the only Korean form vanilla ships |
+| trait description tokens | `{PAWN_nameDef}(은)는` / `{PAWN_pronoun}는` / `{PAWN_objective}` bare | | Core trait descriptions; Grammar `ProhimObj` = 그를, so `{PAWN_objective}` already carries its 를 and takes no particle |
+| Blue / Green / Pink | 파란색 / 녹색 / 분홍색 | | Core Keyed `Blue`, `Green`; no `Pink` key, `Hair_Pink.label` (분홍색 머리카락) |
+
 ## Grounded common vocabulary, VFE Pirates warcasket domain (RimWorldKorea RMK pack + Core, 2026-10-28)
 
 VFE Pirates ships English only. The community translation these terms were
@@ -263,16 +282,95 @@ phrase; the set-specific coinages each repo lists stay pending there.
   so follow them (2026-10-13, Toxin Warcasket).
 - ko Keyed never switches on `CHARGENOUN_gender`, so no `WordInfo/Gender`
   file is ever needed.
+- **Toggle frame, family versus vanilla** (Medic Warcasket, 2026-11-05): the
+  warcasket family ships `켜면 …. 끄면 …. 기본값: 켜짐.` (Shipcracker
+  `SCWC_VacuumBurnDesc`, Toxin, Medic). Vanilla Core/Odyssey tooltips use
+  `활성화하면 …. 비활성화하면 ….` (`RespectSystemScaling_Tooltip`,
+  `SmoothCameraJumpsDesc`; 활성화하면 18 and 비활성화하면 11 hits against 켜면 1,
+  끄면 0), and Core's state words are `Enabled` 활성화됨 / `Disabled` 사용 안 함
+  (`On` 켜기 and `Off` 끄기 are toggle verbs). The family frame reads natively,
+  so nothing is broken; a native review should rule whether the family moves
+  to vanilla's frame. If it does, the change is made here first and every
+  warcasket set's toggles follow.
 
 ## Generated-text tells
 
-Not yet catalogued for Korean. The categories are `English.md` § 2 (the same
-sentence frame on every string, docstring openers, telegraphese, balanced
-tricolons and aphoristic closers, sentence-initial participles, coinages and
-possessive chains, semicolons and asides, repeated signature phrases,
-over-explanation, modder vocabulary) plus calque: English clause order and
-syntax under native words (`lessons.md`, the Russian complaint). The next
-pass in this language reads the vanilla tar for how each category shows up
-here and replaces this stub with the findings (`process.md` § Register);
-mirrored strings are exempt, descriptions and Workshop prose are the slots
-to read.
+Catalogued 2026-11-05 by Medic Warcasket's first ko pass, from the Core and
+Odyssey `Korean (한국어).tar` values with comments stripped (25,968 values,
+729k characters; 3,971 description and tooltip values, 285k characters).
+Rates are per 100k characters of description and tooltip values unless
+noted. Each item is the `English.md` § 2 category as it shows up in Korean,
+with the vanilla evidence. Mirrored strings are exempt; descriptions,
+settings tooltips and Workshop prose are the slots to read.
+
+1. **One frame on every tooltip.** Vanilla tooltips open on the thing
+   itself and close on `-입니다.` (`PainShockThreshold` 심한 고통으로 정신을
+   잃는 한계입니다.), so a noun-phrase definition is native. The tell is the
+   same definition plus the same trailing consequence sentence on every row
+   (…초과분은 사라집니다. on each slider). Vary or cut the second sentence.
+2. **여부 openers.** The "Whether" calque is `~할지 여부를 설정합니다`. Vanilla
+   has 12 `여부` hits in the whole corpus, 2 of them in toggle tooltips
+   (`CommandFireAtWillDesc` 사격 여부를 설정합니다., `CommandToggleAllowAutoRefuelDesc`).
+   Vanilla toggles state the effect: `활성화하면 …합니다. 비활성화하면 …합니다.`
+   (`RespectSystemScaling_Tooltip`, `SmoothCameraJumpsDesc`; 활성화하면 18,
+   비활성화하면 11 hits against 켜면 1). The warcasket family ships `켜면 …. 끄면 ….`
+   for the same frame; either reads native, a 여부 opener does not.
+3. **Telegraphese.** Two shapes. Nominal endings (`-함.`, `-음.`, `-됨.`)
+   in a tooltip or description: vanilla has 0 of 690 Keyed tooltip sentences
+   in that form and 0 `함.` in any description; it belongs to battle-log
+   `rulesStrings` and stage labels only. And sentences with the modal
+   stripped: vanilla spends `수 있습니다` (199) and `것입니다` (25), so a
+   paragraph of bare `-합니다.` statements with no `수 있습니다`, `도` or
+   `-게 됩니다` reads as a spec sheet.
+4. **Chained clauses and aphoristic closers.** The Korean tricolon is a
+   sentence that strings three `-고,` / `-며,` clauses before one `-습니다.`
+   (vanilla descriptions average 34.9 characters and 0.24 commas per
+   sentence; a sentence over about 60 characters with two or more commas is
+   worth splitting). The closer is a `~야말로 ~입니다` or `~그 자체입니다` line
+   (야말로 4, 그 자체 1 in all of vanilla's descriptions). Vanilla ends on a
+   plain statement of use.
+5. **Sentence-initial adverbial clauses.** The participle calque is a
+   `~하면서,` / `~함으로써,` / `~한 채,` opener hung on a short abstract
+   subject (vanilla: 하면서, 3.9, 함으로써 2.1, 한 채 2.1). `~면` and `~ㄹ 때`
+   (82.6) are the native openers; use them, or start on the subject.
+6. **의-chains and stacked modifiers.** English possessives and hyphen
+   compounds come out as `A의 B의 C` (vanilla 8.1 per 100k for a 의…의 run)
+   or a long pre-noun relative clause. Name the visible item (어깨의
+   아드레날린 주입기, not 어깨에 장착된 워캐스킷의 주입기) or give the modifier its
+   own sentence.
+7. **Semicolons, dashes and asides.** Vanilla descriptions have 0 `;`, 0
+   em or en dashes, and 13.4 non-josa `(` per 100k (most are unit or label
+   qualifiers such as 독감 (동물)); the `(이)가`-style markers are 325 and are
+   not asides. A `;`, a dash or a `(…)` aside in prose is a tell; split the
+   sentence or use `,`. A colon pivot inside prose is rare outside `기본값: {0}.`
+   and list heads.
+8. **Repeated signature phrases.** The same coined phrase (그 자리에서,
+   조금 더 오래, 둔하고 느려지며) in the descriptions, ability text, settings
+   and Workshop page. Say it once and plainly elsewhere.
+9. **Over-explanation.** A tooltip restating what the row's value or a
+   vanilla stat already shows. Vanilla tooltips stop after one or two
+   sentences.
+10. **Modder vocabulary.** `정의` (definitions) appears in vanilla 15 times,
+    never about game content; `def`, `시스템` or `스위트` for an internal
+    subsystem never. Name what the player sees: the item's label, 게이지,
+    작업 탭.
+11. **Calque: English clause order under Korean words.**
+    - pronouns the English needs and Korean drops: 그의/그녀의 run at 1.9
+      and 그것 at 3.8 per 100k overall, almost all in backstories;
+      `그들이 살려야 할`, `그것은`, `당신의` in item or settings prose are
+      English subjects carried over. Vanilla's "your" is 내 (34 per 100k in
+      descriptions) or nothing;
+    - an abstract agent doing a person's verb (이 계획은 …을 알게 되었습니다
+      for "the program found"); Korean gives the verb to people (사업단은
+      …을 깨달았습니다);
+    - English "has" and "through" kept as verbs: `가지고 있습니다` (5.1) and
+      `~을 통해` (7.3) where vanilla says `~이 있습니다` or uses the
+      instrumental `~(으)로`;
+    - `에 의해` passives (6.7) for an English by-agent; vanilla prefers the
+      active verb with the agent as subject;
+    - plural `들` on every count noun as an English plural (병사들, 부상자들);
+      Korean marks plurality only where it matters, and a number or 모두
+      already does;
+    - `그리고` mid-sentence after a comma to join two conditions (높을수록,
+      그리고 …하면): an English "and"; Korean splits the sentence or uses `-고`
+      / `-며`.
