@@ -34,6 +34,10 @@ mechanism for each.
   always take genitive singular in Russian anyway), which also sidesteps
   `float.TryParse` returning `""` on a culture mismatch. And a bare Latin
   unit never needs it: vanilla writes `{0} ч`, `{0} с`, `{0} Вт`.
+  A count after `до` takes the genitive in every form, so its triple is
+  `{N_numCase ? аптечки : аптечек : аптечек}` (`до 1 аптечки`, `до 2
+  аптечек`, `до 5 аптечек`), not the nominative one: the triple depends on
+  the governing word (Medic Warcasket, 2026-11-05).
 - **`{lookup: {N}; Case; I}` — case declension, and it works in plain Keyed
   strings.** `GrammarResolverSimple` parses a `{name: args}` span as a
   *function* call and hands it to `LanguageWorker.ResolveFunction`, which
@@ -150,6 +154,26 @@ strings unless noted):
 | Using ability: {0} (VEF `AbilityDef.jobReportString`) | применяет способность «{0}» | | VEF ships English only; third-person present like Core's `JobDef.reportString`s, no trailing period, guillemets around the label (Shipcracker Warcasket, shipped since 2026-09-26) |
 | on cooldown (a reloadable comp's `cooldownGerund`) | перезаряжается | | Shipcracker Warcasket's rendering of vanilla's `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it; Core's nearest string, Keyed `ShieldOnCooldown`, is `Восстанавливается`, so a native reviewer may prefer it |
 
+### Medical, tending and ability vocabulary (Core, with the VEF pack and Combat Extended where named; Medic Warcasket, 2026-11-05)
+
+| English | Use | Never | Why |
+|---|---|---|---|
+| mechanite(s) | механиты | | Core `FibrousMechanites.label` `волоконные механиты`, `SensoryMechanites.label` |
+| medicine labels (herbal / industrial / glitterworld) | лекарственные травы / медикаменты / передовые медикаменты | | Core `MedicineHerbal`, `MedicineIndustrial`, `MedicineUltratech`; all three are plural and listed in Core `WordInfo/Case.txt`, so `{lookup: {0}; Case; 1}` / `Case; 4` declines a medicine label passed as `{0}` (a modded one stays nominative) |
+| go-juice / wake-up / heart attack / infection | Go-сок / бодрин / сердечный приступ / заражение | | Core labels; all four in `Case.txt` |
+| tend / tend quality / tend speed | лечить / качество лечения / скорость лечения | | Core `TendPatient.reportString`, Keyed `TendQuality`, `MedicalTendQuality`, `MedicalTendSpeed` |
+| has no wounds to tend / does not need tending | У {0} нет ран, требующих лечения. / {0} не требует лечения. | | Core Keyed `AbilityCannotCastNoHealableInjury`, `TendingNotRequired`; `У {0}` takes an undeclined name, as vanilla does |
+| dressed (an injury's tended state) | перевязано | | Core `HediffComp_TendDuration.labelTendedWell` on every injury |
+| doctor (work type) / caring / Work tab | врач / уход / вкладка «Работа» | | Core `Doctor.labelShort`, Keyed `WorkTagCaring`, `Work.label` (`WorkTab.helpText` cites it in guillemets) |
+| a trait cited in prose | черта «{label}» | | Core Keyed `TraitLabelWithDesc` `черта «{TRAITLABEL}»` |
+| manipulation / sight / pain shock / downed | работа / зрение / болевой шок / выведен из строя | | Core `Manipulation.label` (the capacity really is `работа`, so cite it in guillemets in prose), `Sight.label`, Keyed `PainShock`, `Doctor.description` and `Wimp` |
+| casting time / line of sight | Время для подготовки / Требуется прямая видимость | | Core Keyed `AbilityCastingTime`, `AbilityRequiresLOS` |
+| Mote (a mote def's inherited label) | частица | | Core `Mote_*` labels |
+| Blue / Green | синий / зелёный | | Core Keyed `Blue`, `Green`; Core has no `Pink` |
+| autocast (VEF abilities) | автоприменение | | VEF community pack Keyed `VFEA.RClickToAuto` / `VFEA.RClickToNoAuto` (`Правый клик включит автоприменение.`) |
+| suppressability (Combat Extended) | чувствительность к подавлению | | CE's own ru `Suppressability.label` |
+| trait description pawn tokens | `{PAWN_objective}` is dative (`ему`/`ей`), `{PAWN_possessive}` genitive/accusative (`его`/`её`, `у н{PAWN_possessive}` after a preposition), `{PAWN_pronoun}` nominative | | Core `Bloodlust` (`{PAWN_objective} нравится`), `Ascetic` (`У н{PAWN_possessive}`), `Wimp` |
+
 ## Grounded common vocabulary, VFE Pirates warcasket domain (OneCodeUnit/VanillaRussianExpanded pack + Core, 2026-10-28)
 
 VFE Pirates ships English only. The community Russian translation of it,
@@ -181,6 +205,7 @@ and its own coinages stay in that repo's glossary.
 | the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | Броня мертвеца десятого поколения была создана на основе образцов, найденных на захваченных пиратских судах. ... с меньшими потерями производительности. | Pack verbatim (its Siegebreaker / Guardian / Controller / Sarcophagus / Brute descriptions, `VFEPirates.WarcasketDef/Apparel_Various.xml`); of its two variants (comma after `подчиняющихся правительству` or not) the one with the comma, which closes the participial phrase, and the pack's `привело` (for a compound subject) is kept verbatim. The full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/Russian/`. |
 | pilot (the wearer) | пилот | Pack (`Пилот может с комфортом...`); Shipcracker's prose; shipped in both sets. |
 | spacer armor and insulation / shield bubble / spacer components (what a spacer-tier set carries) | защита и изоляция космического уровня / силовой щит / продвинутые компоненты | Core `Insulation_Cold` (`Изоляция`) and `ComponentSpacer.label`; `силовой щит` is the pack's word (Shipcracker's ranged shield), and Core's shield-belt tutor text frames it as stopping ranged attacks. |
+| warcasket (VFEP's trait label) and its description opener | броня мертвеца; `{PAWN_nameDef} находится внутри брони мертвеца.` | Pack `VFEP_WarcasketTrait.degreeDatas.0.label` / `.description` (NewCommon `DefInjected/TraitDef/Traits_Singular.xml`, fetched 2026-11-05). The pack's description drops the English `{PAWN_objective}`; a set whose own trait description keeps that token renders the pain clause with the dative (`Никакая боль {PAWN_objective} не страшна`). |
 
 Pending native review for the whole family: nothing in the pack-grounded rows
 is open. Family coinages not checked against the pack: `воздушная` (aerial,
@@ -248,6 +273,70 @@ set-specific coinages each repo lists stay pending there.
 Calque is catalogued above (the 2026-09-19 LocalMineralScanner complaint:
 stacked reflexive passives and participial phrases, noun chains carrying
 English clause order, abstract nouns where Russian reaches for a verb, and
-the native rewrites). The other categories of `English.md` § 2 are not yet
-catalogued for Russian; the next pass reads the tar for them and records
-them here (`process.md` § Register).
+the native rewrites). The other `English.md` § 2 categories below were
+catalogued 2026-11-05 by
+Medic Warcasket's first Russian pass from the Core and Odyssey `Russian
+(Русский).tar` values with comments stripped (29,169 values, 1.48M
+characters; rates per 100k characters). "Descriptions" below means the
+DefInjected `*.description` values outside `BackstoryDef` (2,622 values,
+308k characters, 5,030 sentences). Mirrored strings are exempt; descriptions, settings tooltips and Workshop
+prose are the slots to read.
+
+1. **One frame on every tooltip.** Vanilla tooltips do open with `Сколько
+   ...`, `Насколько ...` and `Как ...` (8, 9 and 10 of 616 Keyed
+   `*Desc`/`*Tip`/`*Info`), so the opener is native; the tell is the same
+   opener plus the same second sentence on every row of a settings window.
+   Vary the second sentence or cut it.
+2. **`... ли` openers.** The "Whether" calque. Vanilla has 11 of 616, all
+   stat or def-property descriptions closed with a period (`Является ли это
+   сооружение видом ограды.`, `Предотвращается ли возникновение заражения.`);
+   a settings toggle never opens that way. Toggles take vanilla's `Если
+   включено, ... будет ... Если выключено/отключено, ...` (Core camera and
+   placement options, Odyssey `Если отключено, гравикорабли будут взлетать
+   и садиться мгновенно.`), with the consequence in the future tense.
+3. **Telegraphese.** Clipped present-tense fragments with no `будет`,
+   `может`, `можно` or `также`. Vanilla descriptions spend them (`будет`/
+   `будут` 53, `может`/`могут`/`можно` 97, `также` 18 per 100k), and toggles
+   state the consequence as `будет ...`. A tooltip of bare nominal fragments
+   reads as a spec sheet.
+4. **Tricolons and aphoristic closers.** Three parallel short-form
+   adjectives or verbs and a closing maxim at the end of a lore paragraph.
+   Vanilla item descriptions end on what the thing is for or how it is used
+   (Core `Apparel_ShieldBelt`: `Не позволяет выстрелить самому владельцу
+   щита и мгновенно отключается от ЭМИ.`); a closing line built for rhythm is
+   the tell.
+5. **Gerund and participle openers.** A sentence-initial деепричастие clause
+   (`Находясь ...,`, `Стремясь ...,`) is common in vanilla backstories but
+   rare elsewhere; in item, ability and settings text it is the English
+   participle calque. Participial phrases after the noun are native in
+   moderation (`-ющий`/`-вший` 165, passive `-нный` 362 per 100k in
+   descriptions), but two stacked in one clause, or a `который` clause
+   (73 per 100k) on every sentence, is the tell. Split it into two finite
+   sentences.
+6. **Hyphenated coinages and genitive chains.** English compounds and
+   possessives ("the shoulders' injector", "field-medicine manipulators")
+   come out as three or four genitives in a row (`система перевязки ран
+   пациента механитами брони`). Name the visible item (`инъектор в
+   наплечниках`) and move the rest into a verb. Abstract `-ние`/`-ция`
+   nouns run at 520 per 100k in vanilla descriptions, so one is fine; a
+   sentence whose every slot is one is the noun-chain calque above.
+7. **Semicolons, colon pivots and parenthetical asides.** Vanilla
+   descriptions run `;` at 5.5, `(` at 7.8 and `:` at 38 per 100k, against
+   65, 128 and 242 over the whole corpus, where they sit in Keyed UI
+   templates and label qualifiers. In prose, a `;` or a `(...)` aside is a
+   tell; a colon is native only before a list or an explanation (`Это
+   привело к ...:`). Em dashes are the one mark vanilla prose uses more than
+   UI text (54 per 100k in descriptions), which is exactly why a pass must
+   not add them (the no-new-dashes rule above).
+8. **Repeated signature phrases.** The same coined phrase (`прямо на месте`,
+   `ещё немного продержаться`, `вялый и медлительный`) in the descriptions,
+   the ability text, the settings and the Workshop page. Say it once and
+   plainly elsewhere.
+9. **Over-explanation.** Vanilla description sentences average 60
+   characters and 0.59 commas; a tooltip sentence past about 120 characters
+   with three or more commas, or one restating what the row's value shows,
+   is worth splitting or cutting.
+10. **Modder vocabulary.** `определения`, `дефы`, `подсистема` or an internal
+    system name the player never sees labelled. Vanilla names what is
+    on screen: the item's label, `вкладка «Работа»`, `шкала`, and a trait as
+    `черта «{TRAITLABEL}»` (Core `TraitLabelWithDesc`).
