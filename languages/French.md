@@ -311,6 +311,31 @@ alternative and why.
 | Using ability: {0} (VEF `AbilityDef.jobReportString`) | utilise la capacité : {0}. | | VEF ships English only; third-person present like Core's `JobDef.reportString`s, French-spaced colon, trailing period kept (Shipcracker Warcasket, shipped since 2026-09-26) |
 | on cooldown (a reloadable comp's `cooldownGerund`) | rechargement | | Shipcracker Warcasket's rendering of vanilla's `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it |
 
+### Medical, tending and ability vocabulary (Core and Odyssey; Medic Warcasket, 2026-11-05)
+
+| English | Use | Never | Why |
+|---|---|---|---|
+| medic | médecin (`médecin de combat`, `médecin militaire`) | infirmier (a backstory title for "nurse"), aide-soignant | Core backstory `titleShort` for every "medic" (`CombatMedic82`, `MedicSoldier54`, `InfantryMedic6`, `SpaceMarineMedic10`); `VatgrownMedic53.description` `médecin de combat` |
+| doctor (work type) / doctor work | Médecin, `labelShort` médecin / la tâche de médecin, `travailler comme médecin` | | Core `Doctor.label`, `Doctor.labelShort`, Keyed `NeedDoctorDesc` |
+| caring (work tag) / childcare | soins et surveillance / nourrice (`labelShort`) | | Core Keyed `WorkTagCaring`, Biotech `Childcare.labelShort` |
+| Work tab / unassigned | l'onglet « Travail » / non affecté | | Core `Work.label` `travail`, `WorkTab.helpText` `l'onglet TRAVAIL`, Keyed `NotAssigned` |
+| trait (cited in prose) | `le trait X` | caractéristique | Core Keyed `TraitLabelWithDesc` `trait {TRAITLABEL}` |
+| casting time / line of sight | Temps de réalisation / Ligne de vue requise | | Core Keyed `AbilityCastingTime`, `AbilityRequiresLOS` |
+| tend / tend quality / medical tend speed | soigner (`Soigner {0}`) / qualité des soins (stat), Qualité du traitement (Keyed `TendQuality`) / vitesse des soins médicaux | | Core Keyed `Tend`, `TendQuality`, `MedicalTendQuality.label`, `MedicalTendSpeed.label` |
+| medicine labels | herbe médicinale (f.) / médicament / médicament avancé | | Core `MedicineHerbal`, `MedicineIndustrial`, `MedicineUltratech`; the herbal label is feminine and h-initial (h muet, so the worker's `d'herbe` is right), so a `{0}` fed a medicine label needs a gender-neutral frame (`ne contient pas de {0}`, `Plus de {0}`, `kits de {0}`) |
+| medicine (category) | médicaments | | Core `ThingCategoryDef` `Medicine.label` |
+| go-juice / wake-up | Go-Juice / Wake-up, capitalised in prose too | | Core `GoJuice.label`, `WakeUp.label`, `GoJuiceAddiction.description` (`au Go-Juice`) |
+| X in the bloodstream (drug hediff description opener) | X dans la circulation sanguine. | | Core `GoJuiceHigh.description`, `WakeUpHigh.description` |
+| wearing off (hediff stage) / woozy | se dissipe / vaseux | | Core `Anesthetic.stages.wearing_off.label`, `.woozy.label` |
+| heart attack / infection / missing body part | attaque cardiaque / infection / partie manquante | | Core `HeartAttack.label`, `WoundInfection.label`, `MissingBodyPart.label` |
+| mechanites / medical skill | mécanites (f.) / compétence en médecine | | Core `FibrousMechanites.label` `mécanites fibreuses`, `SensoryMechanites.label`; `Medicine.skillLabel` `médecine`, prose pattern `compétence en recherche` |
+| pain shock / unconscious / manipulation / sight | état de choc à cause de la douleur / inconscient / manipulation / vue | | Core Keyed `PainShock` `Choqué à cause de la douleur`, `Unconscious`, `Manipulation.label`, `Sight.label` |
+| raider / ally | pillard / allié | | Core backstories (`RaiderKing38`), Keyed `AllyLower` |
+| dose (medical) | dose (f.) | | Core `MechSerumHealer.description` `Une super-dose de mécanites`, Biotech `une dose de sérum` |
+| Mote (an inherited mote label) | Particule | | Core `Mote_*.label` (62 entries); Odyssey's own motes ship the English `Mote`, a vanilla inconsistency, so ground on Core |
+| colour option labels | bleu / vert; no Core `Pink`, `rose` is plain French | | Core Keyed `Blue`, `Green` |
+| Enabled / Disabled (Keyed) | Activé / Désactivé | | Core Keyed `Enabled`, `Disabled` |
+
 ## Grounded common vocabulary, VFE Pirates warcasket domain (coined in Shipcracker Warcasket's 2026-09-26 pass, extended by Toxin Warcasket's 2026-10-13 and 2026-10-22 passes; 2026-10-28)
 
 VFE Pirates ships English only, and no community French translation survives
@@ -348,6 +373,13 @@ title and its own coinages stay in that repo's glossary.
 Pending native review for the whole family: `fonderie de warcaskets`,
 `épaulières`, and the set-name capitalization pattern (Brise-siège, Brute,
 Gardien). The set-specific coinages each repo lists stay pending there.
+
+Sibling conflict (Medic Warcasket, 2026-11-05): the `warcasket` row keeps the
+word invariable as a modifier, and Toxin ships `Épaulières warcasket
+spécialisées`, but Shipcracker's shoulders `shortDescription` and
+`description` ship `Épaulières warcaskets spécialisées de technologie
+spatiale`; Medic follows this table, and Shipcracker's French follows at its
+next pass.
 
 ## Pitfalls and lessons
 
@@ -396,16 +428,109 @@ Gardien). The set-specific coinages each repo lists stay pending there.
   restants`; no WordInfo file can help, accept it or coin masculine.
 - `ToxicFallout` is `pluie toxique` on the GameConditionDef and IncidentDef
   and `retombée toxique` on the TaleDef; ground on the condition.
+- **Vanilla's own multi-word charge nouns prove the single-word rule**
+  (Medic Warcasket, 2026-11-05): Core and Biotech French ship `charge de
+  mousse` (`Apparel_FirefoampopPack`) and `charge de brûleur`
+  (`Gun_Incinerator`, `BioferriteBurner`) as `chargeNoun`s, so
+  `{CHARGENOUN_plural}` prints `charge de mousses` and `charge de brûleurs`
+  in vanilla itself (`pack tox` survives only because a final `x` is left
+  alone). A vanilla precedent is not a reason to ship a multi-word noun.
+- **Vanilla French charge nouns are freely feminine** (`charge`, `grenade`,
+  `fusée`, against masculine `saut`, `obus`, `bouclier`), and fr Keyed never
+  switches on `CHARGENOUN_gender`, so a feminine noun's `restants` / `son
+  dernier` mismatch in two reload strings is vanilla's own look, not a mod
+  defect. Medic ships `dose` (f.) on that basis (2026-11-05).
+- **`cooldownGerund` varies by DLC**: Core and Royalty `rechargement`,
+  Anomaly and Odyssey `en cours de recharge` / `en recharge`. The family row
+  (`rechargement`) matches Core. And Core Keyed `CooldownTime` (the ability
+  gizmo's own stat line) is `Délai de refroidissement`, while the family's
+  `temps de recharge` comes from `FlightCooldown`; a string shown beside the
+  gizmo's cooldown line should know the gizmo says `Délai de
+  refroidissement` (Medic Warcasket, 2026-11-05).
 
 ## Generated-text tells
 
-Not yet catalogued for French. The categories are `English.md` § 2 (the same
-sentence frame on every string, docstring openers, telegraphese, balanced
-tricolons and aphoristic closers, sentence-initial participles, coinages and
-possessive chains, semicolons and asides, repeated signature phrases,
-over-explanation, modder vocabulary) plus calque: English clause order and
-syntax under native words (`lessons.md`, the Russian complaint). The next
-pass in this language reads the vanilla tar for how each category shows up
-here and replaces this stub with the findings (`process.md` § Register);
-mirrored strings are exempt, descriptions and Workshop prose are the slots
-to read.
+Catalogued in Medic Warcasket's 2026-11-05 pass from the Core + Odyssey French
+tars (comments stripped, `{...}` and `[...]` constructs replaced before
+counting; "desc" = every DefInjected `.description` outside `BackstoryDef`,
+about 333k characters in 2590 entries; "Keyed" about 238k characters). Each
+category of `English.md` § 2, as it shows up in French, then calque.
+
+1. **The same sentence frame on every setting.** Vanilla tooltip openers are
+   noun-led and few: `Le nombre ...` (24), `La quantité ...` (18), `Ajuste la
+   ...` (12), `La valeur ...` (8), `Le type ...` (8). A `Le nombre de` / `La
+   quantité de` / `Le temps que` opener is native and may repeat across a
+   settings window (the family's `Par défaut : {0}.` closer is a formula, not
+   a tell); the tell is a second identical clause appended to every tooltip.
+2. **"Que ce soit" / "Détermine si" openers (Whether).** `Détermine si` or
+   `Indique si` opens 5 Keyed strings and no description; `Que ce soit`
+   appears 10 times in all, almost always mid-sentence and in narrative
+   prose (`que ce soit lors du premier essai ...`), and opens a sentence once
+   (`Que ce soit dans la salle d'audience des rois ...`). A toggle takes `Si
+   activé, ...` (8) or `Lorsqu'activé, ...` (5) in vanilla Keyed, with the
+   consequence in the future (`le piège sera remplacé`, `construiront`); the
+   family's `Si cette option est activée, ... Si elle est désactivée, ...` is
+   the same frame spelt out.
+3. **Telegraphese.** French vanilla is short but complete: descriptions
+   average 11.0 words per sentence (median 10), 0.9% of sentences exceed 30
+   words. Verbless indefinite noun-phrase openers are the native item frame
+   (`Un/Une ...` opens 676 of 931 Core + Odyssey `ThingDef` descriptions:
+   `Une armure motorisée.`, `Une super-dose de mécanites à usage unique ...`),
+   and a drug hediff opens `X dans la circulation sanguine.` The tell is the
+   other way: an English-length sentence carried over whole, with two
+   relative clauses and a trailing participle.
+4. **Balanced tricolons and aphoristic closers in lore.** `non seulement ...
+   mais` occurs 0 times in either corpus and `à la fois` 11; three-noun lists
+   are plain inventories, never three parallel clauses. `véritable` as an
+   intensifier runs 1.5 per 100k in descriptions; more than one per text,
+   or a closing line built on it, is the tell. Lore ends on a fact.
+5. **Sentence-initial participle clauses.** `Conçu pour`, `Équipé de`, `Doté
+   de`, `Fabriqué en`, `Utilisé pour` open 9 description sentences (2.7 per
+   100k), most of them the second sentence of an item or bionic entry
+   (`Fabriquée en os biosynthétique, ...`, `Utilisée pour raffiner ...`), and
+   2 Keyed strings. The `en + -ant` gérondif never opens a description (0)
+   and trails one only twice. A participle or gérondif opening a mod's first
+   sentence, or a settings tooltip, is the tell; a postposed `, offrant ...`
+   / `équipé de ...` after the noun (as the VFEP openers have it) is native.
+6. **Coinages and `de` chains.** Hyphen compounds are common in French (90 per
+   100k, mostly lexical: `celui-ci`, `au-dessus`, `lance-roquettes`), so the
+   tell is not the hyphen but an English noun stack rendered `X de Y de Z
+   de W`: three chained `de` phrases run 10.2 per 100k in descriptions; a
+   mod's own nouns stack fast (`le système de pansement de mécanites de
+   l'armure`), so keep to two and let a relative clause or a possessive carry
+   the rest.
+7. **Semicolons, colon pivots and parenthetical asides.** In descriptions 2.7
+   semicolons, 7.5 spaced colons and 9.3 opening parentheses per 100k (Keyed
+   0.8 semicolons; its 140.6 colons are UI `Label : valeur` lines and its
+   parentheses are almost all units and `(e)` gender splits). Em and en
+   dashes run 1.8 per 100k in descriptions and 2.9 in Keyed (1.76 over the
+   whole Core + Odyssey value set). `, ce qui ...` is the native result pivot
+   (9.9 per 100k in descriptions), once per text, not per sentence.
+8. **Signature phrases repeated across surfaces.** Vanilla repeats only
+   formulas (`dans la circulation sanguine`, `Par défaut : {0}.`, `Ligne de
+   vue requise`). `permet de` is common (24.0 per 100k in descriptions) but
+   is the phrase a generated text leans on in every sentence; a coined
+   phrase such as `sur place` or `un peu plus longtemps` should appear once
+   across descriptions, ability text and the Workshop page.
+9. **Over-explanation.** Core tooltips state the mechanic in one sentence and
+   stop (`La résistance de cette créature aux effets négatifs du vide
+   spatial.`); a second sentence teaching what the row's value already shows
+   is the tell.
+10. **Modder vocabulary.** `définition` never reaches a description; `def`,
+    a subsystem's own name and English loanwords for UI parts (`tooltip`,
+    `gizmo`) never reach player text. Core says `indicateur` (Keyed
+    `VisibleMoodDesc`), the family `jauge`; `objet`, `colon`, `personne`
+    (for a pawn), `onglet « Travail »`.
+
+**Calque.** The English skeleton under French words shows as: a trailing `,
++ participe présent` result clause on most sentences (vanilla's gérondif
+trails 0.6 per 100k in descriptions); `être + participe + par` passives (8.4
+per 100k) where vanilla also uses `on` (12.0) and the active voice; a sentence
+opened by `Il est` / `Elle est` (23.1 per 100k, native in item descriptions,
+but not as a dummy `Il est important de ...`); English adjective-before-noun
+order; `tu` (0 in both corpora: vanilla is decisively `vous`); and an English
+`after X found that Y` clause kept in English order. Rebuild the sentence from
+the subject the French reader expects: `Comme il perdait presque autant de
+chirurgiens que de soldats ..., il a conçu le modèle médecin pour ...` rather
+than `Le Médecin a été construit pour ..., après que le programme a découvert
+que ...`.
