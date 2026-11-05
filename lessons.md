@@ -288,10 +288,12 @@ the originating passes.
   resolves the gender from `WordInfo/Gender/{Male,Female,Neuter}.txt` in
   every active language directory, mods included (`LanguageWordInfo.LoadFrom`,
   lowercased lookup, masculine on a miss), and Core's tables list vanilla's
-  own nouns (`giftladung`) but never a mod's. So a feminine or neuter coined
-  noun ships `1.6/Languages/<Language>/WordInfo/Gender/Female.txt` (one
-  lowercased noun per line, no comment lines: `TryLoadFromFile` registers
-  every non-empty line verbatim). French, Portuguese, Russian, Korean,
+  own nouns (`giftladung`) but never a mod's. So a feminine coined noun
+  ships `1.6/Languages/<Language>/WordInfo/Gender/Female.txt` and a neuter
+  one `Neuter.txt` (one lowercased noun per line, no comment lines:
+  `TryLoadFromFile` registers every non-empty line verbatim; Neuter maps to
+  the third option of a three-way switch, so de prints `ein Medizinkit`,
+  Medic Warcasket 2026-11-05). French, Portuguese, Russian, Korean,
   Japanese and both Chinese Keyed never switch on it (grep
   `CHARGENOUN_gender` over the tar's Keyed before deciding), so no file helps
   there; pt-BR's frames hard-code masculine (`um {CHARGENOUN}`), so prefer a

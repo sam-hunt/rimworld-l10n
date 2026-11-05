@@ -22,7 +22,7 @@ RimWorld's language folder is `German` (tar: `German (Deutsch).tar`).
 class's `obj is string` branch, which supports `{0_gender ? m : f : n}`,
 `{0_definite}`, `{0_indefinite}`, `{0_plural}` on a plain string, resolving
 gender **from the word itself** via `LoadedLanguage.ResolveGender` →
-`WordInfo/Gender/{Male,Female,Neuter,Other}.txt` (~2450 nouns in Core), with
+`WordInfo/Gender/{Male,Female,Neuter}.txt` (`LanguageWordInfo.LoadFrom` reads only those three; Core's `Other.txt` and `new_words.txt` are never loaded, decompile-verified on 1.7 by Medic Warcasket, 2026-11-05) (~2450 nouns in Core), with
 no arg metadata required. `WithDefiniteArticle`/`WithIndefiniteArticle`
 return **nominative only** (der/die/das, ein/eine).
 
@@ -223,6 +223,27 @@ strings unless noted):
 | Using ability: {0} (VEF `AbilityDef.jobReportString`) | setzt Fähigkeit '{0}' ein. | | VEF ships English only; third-person present like Core's `JobDef.reportString`s, trailing period kept (Shipcracker Warcasket, shipped since 2026-09-26) |
 | on cooldown (a reloadable comp's `cooldownGerund`) | klingt gerade ab | | Vanilla's default for `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker Warcasket) |
 
+### Medical, tending and ability vocabulary (Core and Odyssey; Medic Warcasket, 2026-11-05)
+
+| English | Use | Never | Why |
+|---|---|---|---|
+| line of sight | freie Sicht (`Freie Sicht erforderlich`, `Keine freie Sicht auf das Ziel.`) | Sichtlinie | Core Keyed `AbilityRequiresLOS`, `AbilityCannotHitTarget`, `Apparel_PsychicShockLance.description` "erfordert aber freie Sicht auf das Ziel". Shipcracker's `SCWC_VacuumBurnDesc` ships `in Sichtlinie`; switch it at its next pass. |
+| casting time | Wirkzeit | | Core Keyed `AbilityCastingTime` |
+| medic | Sanitäter / Sanitäterin | Medic, Mediziner | Core backstories `Paramedic45.titleShort`, `SpaceMarineMedic10.title` (Space-Marine-Sanitäter) |
+| work type / assigned | Arbeitstyp (`den Arbeitstyp 'Arzt'`) / zugeteilt | Arbeitsart | Core Keyed `NeedDoctorDesc` and its siblings |
+| trait (cited in prose) | Merkmal (`Merkmal: {TRAITLABEL}`) | Eigenschaft | Core Keyed `Traits` Merkmale, `TraitLabelWithDesc` |
+| caring (work tag) | Fürsorge | | Core Keyed `WorkTagCaring` |
+| mechanites / tend / tend quality / tend speed | Mechaniten / behandeln / Behandlungsqualität / Behandlungsgeschwindigkeit | | Core `FibrousMechanites.label` (Fasermechaniten), `TendPatient.reportString` `behandelt TargetA.`, Keyed `TendQuality`, `MedicalTendSpeed.label` |
+| medicine labels (herbal / industrial / glitterworld) | Kräutermedizin / Medizin / Glitzerweltmedizin | | Core `MedicineHerbal`, `MedicineIndustrial`, `MedicineUltratech`; all feminine |
+| go-juice / wake-up / heart attack / wound infection / missing body part | Go-Juice / Muntermacher / Herzinfarkt / Wundinfektion / fehlender Körperteil | | Core labels |
+| doctor (work type) / manipulation / sight / pain shock | Arzt / Arbeiten / Sehen / Schmerzschock | | Core `Doctor.labelShort`, `Manipulation.label`, `Sight.label`, Keyed `PainShock` |
+| wearing off (hediff stage) / dull | klingt ab / benommen | | Core `Anesthetic.stages.wearing_off.label`, `.woozy.label` |
+| X in the bloodstream (drug hediff description opener) | X im Blutkreislauf. | | every Core drug high (`GoJuiceHigh`, `WakeUpHigh`, `AlcoholHigh`) |
+| skill named in prose | `{Skill}-Fertigkeit` (Medizin-Fertigkeit) | Fertigkeit 'Medizin' | Core Keyed `SkillRequiredToBuild` `{0}-Fertigkeit benötigt`, `SocialSkillIs` |
+| Mote (an inherited mote label) | Mote | Partikel | Core `Mote_*` labels are untranslated in de |
+| Blue / Green / Pink | Blau / Grün / Rosa | | Core Keyed `Blue` blau, `Green` grün (capitalised as option labels like `Aus`); Core has no `Pink`, rosa from its descriptions (`Flamingo`) |
+| trait description pawn tokens | `{PAWN_objective}` is the accusative (ihn / sie), `{PAWN_pronoun}` the nominative | | Core `Abrasive`, `BodyPurist` descriptions |
+
 ## Grounded common vocabulary, VFE Pirates warcasket domain (coined in Shipcracker Warcasket's 2026-09-26 pass, extended by Toxin Warcasket's 2026-10-13 and 2026-10-22 passes; 2026-10-28)
 
 VFE Pirates ships English only, and no community German translation could be
@@ -298,18 +319,94 @@ lists stay pending there.
   and `Stat_Thing_ReloadDestroyOnEmpty_Desc` switch on `{CHARGENOUN_gender}`
   and a table miss is masculine, so `Spriteinheit` prints "einen
   Spriteinheit" until `WordInfo/Gender/Female.txt` lists `spriteinheit`
-  (lowercase, no comment lines). Core's own `Giftladung` is in the table;
+  (lowercase, no comment lines). A neuter noun goes in `Neuter.txt` the same
+  way: the loader maps it to `Gender.None`, which `ResolveGenderSymbol` sends
+  to the third option, so `{CHARGENOUN_gender ? einen : eine : ein}` prints
+  `ein Medizinkit` (Medic Warcasket, 2026-11-05). Core's own `Giftladung` is in the table;
   see `lessons.md` for the mechanism.
+- **Unresolved: `{0_gender ? m : f : n}` on a plain string** (Medic
+  Warcasket, 2026-11-05). The engine paragraph above says a string arg
+  resolves its gender from the word; `lessons.md` says the construct resolves
+  only for a Def, Pawn or Gender arg and logs "Could not resolve symbol" on a
+  positional string. The 1.7 `GrammarResolverSimple` has a `case "gender"`
+  in its `obj is string` branch, which supports this file, so the lessons
+  claim may concern how a positional `{0}` is named rather than the string
+  branch. One in-game check settles it; until then no family string relies
+  on the construct.
 
 ## Generated-text tells
 
-Not yet catalogued for German. The categories are `English.md` § 2 (the same
-sentence frame on every string, docstring openers, telegraphese, balanced
-tricolons and aphoristic closers, sentence-initial participles, coinages and
-possessive chains, semicolons and asides, repeated signature phrases,
-over-explanation, modder vocabulary) plus calque: English clause order and
-syntax under native words (`lessons.md`, the Russian complaint). The next
-pass in this language reads the vanilla tar for how each category shows up
-here and replaces this stub with the findings (`process.md` § Register);
-mirrored strings are exempt, descriptions and Workshop prose are the slots
-to read.
+Catalogued in Medic Warcasket's 2026-11-05 pass from the Core + Odyssey de
+tars (comments stripped; "desc" = every DefInjected `.description` outside
+`BackstoryDef`, about 335k characters; "Keyed" about 236k characters with
+`{...}` grammar constructs removed before counting punctuation). Each
+category of `English.md` § 2, as it shows up in German, then calque.
+
+1. **The same sentence frame on every setting.** Vanilla's tooltip openers
+   do vary, but within a small set of plain frames: `Passe die ...` (17),
+   `Die Menge ...` (12), `Ein Multiplikator ...` (11), `Wenn aktiviert,` (10),
+   `Wie viel ...` (8), `Die Anzahl ...`, `Wie oft ...`, `Wie lange ...`,
+   `Wie stark ...`. A `Wie ...` / `Die ...` opener is native; the tell is a
+   second identical clause appended to every tooltip (what happens to an
+   in-flight value, a "selbst wenn" rider).
+2. **"Ob ..." openers (Whether).** 1.1 per 100k in Keyed, 0.3 in
+   descriptions; `Ob dieses ...` opens only four yes/no info-card
+   explanations (`Stat_Thing_Fence_Desc`, `PackAnimalExplanation`). A
+   settings toggle takes `Wenn aktiviert, ... Wenn deaktiviert, ...` (ten
+   vanilla Keyed tooltips).
+3. **Telegraphese.** German vanilla is itself terse: descriptions average
+   9.6 words per sentence, under 1% of sentences exceed 25 words, and
+   subjectless verb-first fragments are native (`Kann ...` opens 116
+   description sentences, `Benötigt ...`, `Ermöglicht ...`, `Erzeugt ...`).
+   So a clipped verb-first sentence is not a tell here. The tell is the
+   opposite: long English-length sentences carried over whole, with two
+   relative clauses and a `denn` / `daher` / `dank` pivot (see calque).
+4. **Balanced tricolons and aphoristic closers in lore.** Vanilla lore ends
+   on a fact (`Diese Art von Rüstung wird häufig von ... getragen.`), never a
+   pointed closing line. `nicht nur ..., sondern auch ...` occurs twice in
+   all Core DefInjected, both in backstories.
+5. **Sentence-initial participle clauses.** `Ausgestattet mit ...`,
+   `Entwickelt für ...`, `Gebaut, um ...` and their kin open no vanilla
+   sentence at all (0 in descriptions, 1 in Keyed). Vanilla starts with the
+   noun: `Eine Powerrüstung mit mehrlagigen Plastahlplatten, die ...`; 39% of
+   descriptions open with `Ein` / `Eine`.
+6. **Hyphenated coinages and genitive chains.** Hyphenated compounds run 39
+   per 100k in descriptions (82 in Keyed, mostly `{0}-Fertigkeit`-style UI
+   compounds); a warcasket set's label pattern alone pushes a mod's text to
+   several times that, so every prose compound beyond the labels should be a
+   closed compound (`Trägermechaniten`, like Core's `Fasermechaniten`) or
+   phrased out (`System für Mechanitenverbände`). Stacked genitives
+   (`die Farbe der Effekte des Verbands der Rüstung`) run 3.3 per 100k in
+   descriptions; keep to one genitive per noun phrase.
+7. **Semicolons, colon pivots and parenthetical asides.** In descriptions
+   2.1 semicolons, 9.9 colons and 6.3 opening parentheses per 100k. Keyed
+   uses colons and parentheses freely in UI frames (`Krankheit: {0}`,
+   `(noch {TIME})`) but almost never a semicolon in prose (28.8 per 100k,
+   nearly all in list-like dev strings). En dashes are rare (16.6 per 100k
+   in descriptions, em dashes 0). Join clauses with a comma and `und`.
+8. **Signature phrases repeated across surfaces.** The connective pivots are
+   the German instance: in the vanilla descriptions `dank` runs 1.8 per
+   100k, `daher` 4.5, `denn` 2.1, `sobald` 1.2, `sowie` 1.2, `jedoch` 6.5,
+   `sorgt für` 3.5, `ermöglicht` 4.1; this pass's first draft ran `dank`,
+   `daher` and `denn` at about 20 to 27 per 100k. One pivot per text block,
+   and `deshalb` or a new sentence over a chain of them.
+9. **Over-explanation.** Vanilla tooltips state the stat and stop; the
+   `Hinweis:` rider exists (`Difficulty_RaidLootPointsFactor_Info`,
+   `BillRequiresMayVary`) but only where a rule would truly surprise.
+10. **Modder vocabulary.** Vanilla names the player's concepts: `Arbeitstyp`
+    (Keyed `NeedDoctorDesc`: `Weise einem Kolonisten den Arbeitstyp 'Arzt'
+    zu.`), `Merkmal` for a trait (`TraitLabelWithDesc`), `zugeteilt` for a
+    work assignment. `Definition`, `Def`, `Comp` never appear in player text.
+
+**Calque** (English clause order under German words). The signs in this
+language: a relative clause hung on every noun where vanilla starts a new
+sentence (vanilla `der/die/das` relatives 245 per 100k, `welche` only 1.2:
+`welche` as a relative pronoun is itself a translation tell); the English
+"after X found that Y" order kept as `..., nachdem ... festgestellt hatte,
+dass ...` instead of German's cause-first order (`Das Programm verlor ...
+Deshalb wurde ...`); `um ... zu` purpose clauses used less than vanilla
+(61 per 100k) because the English "to" was rendered with a relative clause;
+English possessives rendered with `von` (`die Wunden von TargetA`, 18.5 per
+100k in vanilla, mostly with proper names) where a possessive pronoun or a
+genitive reads natively; formal `Sie` (zero in the whole tar; player prose is
+`du`, 43 per 100k in descriptions, 194 in Keyed).
