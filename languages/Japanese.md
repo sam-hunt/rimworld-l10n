@@ -134,6 +134,10 @@ Odyssey's `AncientHatch` for `CompHackable` hack-progress/hacked strings; and
 Odyssey's `SpaceSettlement.description` for orbital-settlement flavor text.
 Checking these before drafting analogous strings has repeatedly turned up
 verbatim-reusable sentences.
+- **No space after the ASCII `.` and `,`** (Medic Warcasket, 2026-11-05):
+  vanilla writes 8,129 `.` and 12,136 `,` directly before kana or kanji,
+  against 131 and 69 followed by a space; the family's shipped Keyed already
+  does the same.
 
 ## Grounded common vocabulary
 
@@ -184,11 +188,36 @@ family and are safe defaults for new work.
 | ability | 能力 | | Royalty Keyed (この能力を獲得しますか) |
 | Off / On (settings) | Off / On | | Core Keyed `Off`, `On` (vanilla keeps On/Off in Latin script); Default is the row above |
 | cooldown / cells | クールダウン / タイル | | Core Keyed `StatsReport_Cooldown`, `AbilityOnCooldown`; `RoomRequirementArea` ({0}タイル) counts map cells as タイル, no space before the unit (vanilla also uses セル in one Keyed string, pending native review) |
-| range / hours (settings slider captions) | 範囲 (タイル) / クールダウン (時間) | | The shipped Shipcracker Warcasket Keyed forms (`SCWC_JumpRange`, `SCWC_Cooldown`); (時間) could read as "(time)", pending native review |
+| range / hours (settings slider captions) | 範囲 (タイル) / クールダウン (時間) | | The shipped Shipcracker Warcasket Keyed forms (`SCWC_JumpRange`, `SCWC_Cooldown`); (時間) could read as "(time)", pending native review. 範囲 is the area or jump-distance word; an ability's reach is Core Keyed `Range` = 射程, the word vanilla's ability tooltip prints (Medic Warcasket ships 射程, 2026-11-05) |
 | Odyssey (DLC name) | Odyssey | | Core `ExpansionDef` `Odyssey.label` keeps the Latin name; DLC names stay in Latin script (style section above) |
 | (requires Odyssey) / (default) suffixes (settings window) | ` (Odysseyが必要)` / ` (デフォルト)` | | ASCII parens with a leading space, as in vanilla Keyed (`使用できない (太陽フレア)`, `{1_label} (死亡)`); が必要 from Core Alerts (`医者が必要`) |
 | Using ability: {0} (VEF `AbilityDef.jobReportString`) | 能力を使用中: {0} | | VEF ships English only; progressive 〜中 form with no trailing period, per the reportString rule above (Shipcracker Warcasket, shipped since 2026-09-26) |
 | on cooldown (a reloadable comp's `cooldownGerund`) | クールダウン中 | | Vanilla's default for `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker Warcasket) |
+
+### Medical, tending and ability vocabulary (Core and Odyssey; Medic Warcasket, 2026-11-05)
+
+| English | Use | Never | Why |
+|---|---|---|---|
+| herbal / industrial / glitterworld medicine | 薬草 / 医薬品 / 最先端医薬品 | | Core `MedicineHerbal`, `MedicineIndustrial`, `MedicineUltratech` labels |
+| medicine (the category) / medicine kit | 薬 / 薬のキット | 医薬品 for the generic | Core ThingCategory `Medicine.label`; 医薬品 is the industrial medicine's own label; キット per Core `MedicineIndustrial.description` (医薬品キット) |
+| go-juice / wake-up / heart attack | ゴージュース / ウェイクアップ / 心筋梗塞 | | Core labels |
+| mechanites (the particles) | メカナイト | 機械化症 | Core `FibrousMechanites.description`, `SentienceCatalyst.description`; 機械化症 is the hediff (disease) label only |
+| tend / tend quality / tend speed / medical skill | 看護 / 看護品質 / 看護速度 / 医術 | | Core Keyed `Tend`, `WorkTagCaring`, `MedicalTendQuality` (看護・品質), `MedicalTendSpeed` (看護・速度), `Medicine.skillLabel`; Keyed `TendQuality` alone says 看病品質 |
+| treat (disease) / doctor (work type) | 治療 / 医者 | | Core `Doctor.verb`, `Doctor.gerundLabel` (治療), `Doctor.labelShort` (医者) |
+| infection / disease / missing body part / wound | 感染症 / 病気 / 身体欠損 / 傷 | | Core `WoundInfection.label` (傷からの感染症), `Disease_*` letters, `MissingBodyPart.labelNoun`, `WoundInfection.description` |
+| pain / pain shock | 痛み / 痛みでショック | | Core Keyed `Pain`, `PainShock`; `PainShockThreshold.description` 痛みによって失神する |
+| downed | 倒れた / 倒れている | 失神 in prose | Core `Wait_Downed.reportString`; `Downed.label` 失神 reads as fainting |
+| hostile | 敵対 / {0}は敵対しています. | | Core Keyed `Hostile` |
+| casting time / range / line of sight required | 詠唱時間 / 射程 / 視線が通ることが必要 | | Core Keyed `AbilityCastingTime`, `Range`, `AbilityRequiresLOS` |
+| enabled / disabled (state words) | 有効 / 無効 | | Core Keyed `Enabled`, `Disabled` |
+| reload (a reloadable comp) | 充填 | | Core Keyed `Reload` ({GEAR_labelShort} に {AMMO_label}を充填する), `CommandReload_NoAmmo`; verbs' descriptions say 再装填 (`LaunchFragGrenade`) |
+| traits (the Bio tab section) | 才能・性格 | 特性 for a pawn trait | Core Keyed `Traits`; 特性 is the unique-weapon trait (`WeaponTraits`) |
+| Work tab | 「優先順位」タブ | | Core `WorkTab.helpText`; MainButtonDef `Work.label` 優先順位 |
+| veteran(s) | 退役軍人 | | Core `MechWarVeteran77.title` |
+| Mote (an inherited `MoteBase` label) | 塵 | | Core `Mote_*` labels, 64 of 64 |
+| trait description tokens | `{PAWN_nameDef}は` / `{PAWN_pronoun}が` (or は) / `{PAWN_objective}` bare | | Core trait descriptions; Grammar `ProhimObj` = 彼を, so `{PAWN_objective}` already carries its を and takes no particle |
+| Blue / Green / Pink | 青 / 緑 / ピンク | | Core Keyed `Blue`, `Green`; no `Pink` key, `Hair_Pink.label` (ピンク色の髪) |
+| "X in the bloodstream." (drug hediff opener) | 血中にXが浸透しています. | | Core `GoJuiceHigh.description`, `WakeUpHigh.description` |
 
 ## Grounded common vocabulary, VFE Pirates warcasket domain (coined in Shipcracker Warcasket's 2026-09-26 pass, extended by Toxin Warcasket's 2026-10-13 and 2026-10-22 passes; 2026-10-28)
 
@@ -212,7 +241,8 @@ name, its Workshop title and its own coinages stay in that repo's glossary.
 | pauldrons / shoulders / shoulder pads | ショルダーアーマー | Coined; no vanilla shoulder piece exists. Chosen over bare ショルダー (reads as the body part or a bag) and ショルダーパッド (evokes suit or sports padding). Used for the label, the description and the Workshop "shoulder pads"; the resulting label length is pending native review. |
 | warcasket shell | ウォーキャスケット外殻 | Coined; plain word for "shell". |
 | warcasket foundry | ウォーキャスケット鋳造台 | Coined; also "foundries" in prose as 鋳造台. The Korean community uses 주조대, the same "casting bench" idea. Unattested in Japanese. |
-| entomb | 封入 | Proposed coinage; not used in any shipped string of the family's mods. Unattested. |
+| entomb | 封入 | Coinage, unattested. Shipped by Shipcracker (Workshop) and Medic (trait description, `MDWC_WorkDesc`, Workshop); Toxin's Workshop says 溶接されている間 for the same line and follows at its next pass. Entombing a pawn is 封入; building at the foundry is the next row's 溶接, so the two no longer share one word (Medic Warcasket, 2026-11-05). |
+| build / weld at the foundry | ウォーキャスケット鋳造台で溶接 | VFEP's own `VFEP_DoWelding` work giver (verb "weld at", label "welding at warcasket foundry"); both siblings' Workshop FAQ and Medic's. |
 | spacer warcaskets / specialised warcaskets (VFEP research labels, cited in prose) | 「宇宙世紀のウォーキャスケット」 / 「特殊なウォーキャスケット」 | Coined; 宇宙世紀 is Core `TechLevel_Spacer` (main table). 「」 for a label cited in descriptive prose, per the quoting rule above. The first is shipped in Toxin Warcasket's Keyed (研究「宇宙世紀のウォーキャスケット」), both appear on its Workshop page. |
 | VFEP set names | シージブレーカー (siegebreaker), ブルート (brute), ガーディアン (guardian), エアリアル系 (aerial), カタフラクト (cataphract), ハザード (hazard; ハザード・ウォーキャスケット) | Katakana per the set-name habit; シージブレーカー is attested in Vanilla Armour Expanded's Japanese, the others coined to match, pending native review, except カタフラクト (Royalty `Apparel_ArmorCataphract.label` = カタフラクトアーマー). controller and sarcophagus have no Japanese rendering recorded yet. |
 | 7th generation / 10th generation (VFEP's two chassis) | 第7世代 / 第10世代 | Plain generation numbering. VFEP's dashed aside on the 7th generation is reflowed as "パーツの互換性は保ちつつ,". |
@@ -267,16 +297,95 @@ it. The set-specific coinages each repo lists stay pending there.
 - The ja tree carries an untranslated `ToxicFallout.label` ("toxic fallout",
   a different def type) beside the real `死の灰`, so a bare grep returns
   both; pick by def type.
+- **Map distance: セル in def stats, タイル in the family captions** (Medic
+  Warcasket's register read, 2026-11-05): vanilla's def stats measure map
+  distance in セル (`ShootingAccuracyFactor_*` 40セル / 25セル,
+  `PackRadius.formatString` {0}セル; 11 hits), while タイル appears in Keyed
+  `RoomRequirementArea` and in a world-tile string (2 hits). The family's
+  `範囲 (タイル)` caption stands until a native review rules; a pass writing
+  a def stat description should use セル.
 
 ## Generated-text tells
 
-Not yet catalogued for Japanese. The categories are `English.md` § 2 (the same
-sentence frame on every string, docstring openers, telegraphese, balanced
-tricolons and aphoristic closers, sentence-initial participles, coinages and
-possessive chains, semicolons and asides, repeated signature phrases,
-over-explanation, modder vocabulary) plus calque: English clause order and
-syntax under native words (`lessons.md`, the Russian complaint). The next
-pass in this language reads the vanilla tar for how each category shows up
-here and replaces this stub with the findings (`process.md` § Register);
-mirrored strings are exempt, descriptions and Workshop prose are the slots
-to read.
+Catalogued 2026-11-05 by Medic Warcasket's first ja pass, from the Core and
+Odyssey `Japanese (日本語).tar` values with comments stripped (26,843 values,
+827k characters). Rates are per 100k characters of description and tooltip
+values with backstories excluded (3,178 values, 163k characters, 6,013
+sentences averaging 26.8 characters and 0.68 commas) unless noted. Each item
+is the `English.md` § 2 category as it shows up in Japanese, with the vanilla
+evidence. Mirrored strings are exempt; descriptions, settings tooltips and
+Workshop prose are the slots to read.
+
+1. **One frame on every tooltip.** Vanilla tooltips open on the thing and
+   close on a noun plus `です.` (`PainShockThreshold` 痛みによって失神する値です.,
+   `InjuryHealingFactor` 傷の治る速度に適用される掛け率です.), so a definition
+   ending `〜時間です.` is native. The tell is the same definition plus the
+   same consequence sentence on every row, or every sentence of a paragraph
+   ending on the same verb: vanilla's sentence ends spread over します (654),
+   ります (534), います (525), ません (376) and きます (319).
+2. **かどうか openers.** The "Whether" calque is `〜かどうかを設定します`:
+   3 hits in the whole corpus (`CommandToggleAllowAutoRefuelDesc`), 23
+   `かどうか` in all. Vanilla toggles state the effect,
+   `有効にすると,…ようになります.無効にすると,….` (`RespectSystemScaling_Tooltip`,
+   `SmoothCameraJumpsDesc`; 有効にすると 7, 無効にすると 10, with オンにすると 5 /
+   オフにすると 3 on map gizmos such as `CommandAutoRearmDesc`). The
+   warcasket family ships 有効にすると / 無効にすると.
+3. **Telegraphese.** Descriptions and tooltips are polite です/ます (です. 1,015,
+   ます. 1,573); plain である (22.6) and だ. (66.1) live in thoughts and
+   backstories. A tooltip sentence cut to a noun stop (体言止め) or a plain
+   form reads as a spec sheet; only labels, gizmo labels, floating texts and
+   `reportString`s drop the verb and the period. The opposite tell is the
+   stiff `〜することができます` on every sentence: vanilla says it 124 times
+   against 163 bare `できます`, so vary it.
+4. **Chained clauses and aphoristic closers.** The Japanese tricolon is a
+   sentence chaining three `〜し,` / `〜て,` clauses, or a list closed by
+   `そして` (34.9; vanilla lists join with `,` and と / や). Only 106 of 6,013
+   vanilla sentences run past 60 characters with two or more commas; split
+   one that does. The closer is a `〜こそ` (1.8), `まさに` (3.1), `真の` (1.8)
+   or `〜と言えるでしょう` (0.6) line; vanilla ends on a plain statement of use.
+5. **Sentence-initial participles.** The "-ing," opener comes out as
+   `〜しながら,` (0.6 in descriptions; its 71 corpus hits are battle logs and
+   backstories) or `〜することで,` (22.6) hung on a short abstract subject.
+   Native openers are conditions and causes: `〜と,` (108), `〜ため,` (54.5),
+   `〜ば,` (41), `〜とき` (41.6), `〜場合,` (34.3).
+6. **Coinages and possessive chains.** English possessives and hyphen
+   compounds come out as `AのBのCの` runs (71 per 100k for three の inside
+   eight characters each) or as a long relative clause split from its head
+   noun by a comma (`…送り込む,メカナイト処置装置`), which vanilla never does:
+   it keeps the modifier tight or gives it its own sentence. Katakana
+   modifier plus katakana compound takes `・` (187 tree-wide). Two `を` in one
+   clause (`装備を…アーマーを中心に`) is an English object order; reflow it.
+7. **Semicolons, dashes and asides.** Descriptions carry 3.1 `;` and 2.4
+   em dashes per 100k, mostly one rule-pack idiom; no en dash, no `―`, no
+   `。` `、` `？` `！` or full-width space anywhere in the tree. ASCII `(` (42.8)
+   is a unit or label qualifier (インフルエンザ(動物)), not an aside. ASCII `.`
+   and `,` take no following space (8,129 `.` and 12,136 `,` directly before
+   kana or kanji, against 131 and 69 with a space). A `(…)` aside, a dash or
+   a `;` in prose is a tell.
+8. **Repeated signature phrases.** The same coined phrase (その場で, もう少し
+   長く, 頭が鈍り) in the descriptions, ability text, settings and Workshop page.
+   Say it once and plainly elsewhere.
+9. **Over-explanation.** A tooltip restating what the row's value or a
+   vanilla stat already shows. Vanilla tooltips stop after one or two
+   sentences.
+10. **Modder vocabulary.** `定義` appears once in the whole tree, never about
+    game content; `システム` (17.7) only names in-world machinery; `def`,
+    `スイート` or `コンプ` never. Name what the player sees: the item's label,
+    ゲージ, 「優先順位」タブ, 才能・性格 (Core `Traits`).
+11. **Calque: English clause order under Japanese words.**
+    - pronouns the English needs and Japanese drops: 彼 / 彼女 run at 7.3 and
+      sentence-initial これは / それは at 16.3 / 15.5 per 100k of item
+      descriptions; a `その` or `それ` for every English "it" or a `彼らの` for
+      "their" is the English skeleton. Vanilla repeats the noun or drops it.
+      "Your" is あなたの sparingly (14.1, mostly letters), or nothing;
+    - an abstract agent doing a person's verb (`計画は…に気づきました` for "the
+      program found"); vanilla goes agentless (`〜ことが分かりました`) or gives
+      the verb to people;
+    - English "has" kept as `〜を持っています` (28 corpus hits) where vanilla
+      says `〜があります` (219) or `〜を備えています` / `〜を搭載しています`;
+    - `たち` / `達` on every plural count noun (兵士たち, 入植者たち): vanilla
+      marks plurality on people only where it matters, and a number or
+      全員 already does;
+    - a head-final sentence rebuilt in English order, the main clause first
+      and a `〜ため` or `〜ので` reason trailing after it: vanilla puts the
+      reason first (`〜ため,…`, 54.5).
