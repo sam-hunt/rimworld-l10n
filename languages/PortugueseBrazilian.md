@@ -215,6 +215,24 @@ mod-coined, and several are independently corroborated by more than one repo.
 | Using ability: {0} (VEF `AbilityDef.jobReportString`) | usando habilidade: {0}. | | VEF ships English only; subject-less lowercase gerund with the trailing period kept, like Core's `JobDef.reportString`s (Shipcracker Warcasket, shipped since 2026-09-26) |
 | on cooldown (a reloadable comp's `cooldownGerund`) | em recarga | | Vanilla's default for `CompProperties_ApparelReloadable.cooldownGerund`, which a mod's DefInjected carries whenever the probe lists it (Shipcracker Warcasket) |
 
+### Medical, tending and ability vocabulary (Core and Odyssey; Medic Warcasket, 2026-11-05)
+
+| English | Use | Never | Why |
+|---|---|---|---|
+| When enabled, ... When disabled, ... (toggle tooltip frame) | Quando ativado, ... Quando desativado, ... | Se ativado as the house frame | Core Keyed `VisibleMoodDesc`, `SmoothCameraJumpsDesc`, `RememberDrawStyle_Tooltip`, `CommandAllowSowDesc` (7 `Quando ativado` / 4 `Quando desativado` against 1 `Se ativado`). Shipcracker ships `Se ativado`, the minority vanilla form; it can follow at its next pass |
+| enabled / disabled (a box's default word) | ativado / desativado | | Core Keyed `Enabled` "Ativado(s)", `Disabled` "Desativado(s)", singular in a `Padrão: {0}.` slot |
+| herbal / industrial / glitterworld medicine | medicina natural / medicina / medicina de glitterworld | remédio | Core `MedicineHerbal`, `MedicineIndustrial`, `MedicineUltratech` labels; the category noun in prose is `medicamento` (Core `ThingCategoryDef` `Medicine.label`) |
+| mechanites | mecanitos (m.) | mecanites, nanitas | Core `FibrousMechanites.label` "mecanitos fibrosos", `SensoryMechanites.label` |
+| go-juice / wake-up | suco-turbo / despertar | | Core `GoJuice.label`, `WakeUp.label` |
+| heart attack / infection / missing body part | ataque cardíaco / infecção / parte ausente do corpo | | Core `HeartAttack`, `WoundInfection`, `MissingBodyPart` labels |
+| tend / tend quality / medical tend speed | tratar (`Tratar de`) / qualidade do tratamento / velocidade de cuidado médico | | Core `Doctor.verb`, Keyed `TendQuality`, `MedicalTendSpeed.label`; Core also uses `cuidar de` (`Medicine.description`, `TendPatient.reportString`) |
+| wound / injury / severity | ferida / ferimento / gravidade | | Core `Medicine.description` "feridas e doenças", Keyed `UntendedInjury` "ferimento não tratado", `ConfigurableSeverity` "Gravidade: {0}" |
+| doctor work / caring | medicina (`Doctor.labelShort`) / cuidar (`WorkTagCaring`) | | Core; Biotech `Childcare.labelShort` is `cuidador(a)`, so a `trabalhos de {0}` frame over a work-type list does not survive: use a colon frame |
+| Work tab / trait (the noun, in prose) | aba de Trabalho / traço | característica | Core `Work.label` "Trabalho", `WorkTab.helpText`; Keyed `Traits` "Traços" |
+| downed / pain shock / casting time | abatido / em choque / Tempo de invocação | | Core `Downed.label`, Keyed `PainShock`, `AbilityCastingTime` |
+| Mote (a mote def's inherited label) | Partícula | | Core `Mote_*.label`, every one |
+| `{PAWN_objective}` | dele / dela, so only after a `de` frame (`no corpo {PAWN_objective}`, `gostarem [PAWN_objective]`) | `sobre {PAWN_objective}` | Core Keyed Grammar `ProhimObj` "dele", `ProherObj` "dela"; Core `Beauty.degreeDatas.pretty.description`. Core's trait descriptions hedge participles with a literal `(a)` and never use `PAWN_gender` |
+
 ## Grounded common vocabulary, VFE Pirates warcasket domain (RafaelNaymaier/Traducao-Vanilla-Expanded-PT-BR pack + Core, 2026-10-28)
 
 VFE Pirates ships English only. A community pt-BR translation exists and was
@@ -286,16 +304,113 @@ are noted as coined in their rows; no glossary flags them as open.
   on GitHub; its VFE Pirates set names are adjectives (`catafrática`, `de
   risco`, `aérea`) and its shared 7th-generation paragraph carries em dashes
   and `plastoaço`, both to normalize (commas; the tar's `plastiaço`).
+- **The community VFEP pack's trait description renders the English
+  singular "them" as `eles`** ("Nenhuma quantidade de dor terá efeito sobre
+  eles" for one pawn): a pack error to correct, not copy, beside its em
+  dashes and `plastoaço`. Vanilla writes the pawn tokens or hedges with
+  `(a)` (Medic Warcasket, 2026-11-05).
 
 ## Generated-text tells
 
-Not yet catalogued for PortugueseBrazilian. The categories are `English.md` § 2 (the same
-sentence frame on every string, docstring openers, telegraphese, balanced
-tricolons and aphoristic closers, sentence-initial participles, coinages and
-possessive chains, semicolons and asides, repeated signature phrases,
-over-explanation, modder vocabulary) plus calque: English clause order and
-syntax under native words (`lessons.md`, the Russian complaint). The next
-pass in this language reads the vanilla tar for how each category shows up
-here and replaces this stub with the findings (`process.md` § Register);
-mirrored strings are exempt, descriptions and Workshop prose are the slots
-to read.
+Catalogued from the Core and Odyssey tars (2026-11-05, Medic Warcasket's
+first pt-BR pass; counts over values with comments stripped: Core 27k values,
+3.3k descriptions, about 6.1k description sentences, median 10 words). Each
+`English.md` § 2 category as it shows up in pt-BR, plus calque. Mirrored
+vanilla strings are exempt; descriptions, settings tooltips and Workshop prose
+are the slots to read.
+
+1. **The same frame on every tooltip.** Vanilla's Keyed tooltips open with
+   a handful of noun heads (`A quantidade de ...` 19, `O valor`, `Um
+   multiplicador`, `O número de ...`, `A chance de ...`, `Quanto tempo ...`)
+   and then vary the rest. A file where every tooltip runs `X ... Padrão:
+   {0}.` with the same second sentence ("Isso afeta ...", "O valor atual
+   ...") is the tell; vary the opener among those heads and drop a second
+   sentence that only restates the first.
+2. **Docstring openers.** `Define se ...` / `Determina se ...` /
+   `Indica se ...` are the pt-BR "Whether": one instance in all of Core.
+   Toggles take vanilla's frame, **`Quando ativado, ... Quando desativado,
+   ...`** (7 and 4 Keyed hits: `VisibleMoodDesc`, `SmoothCameraJumpsDesc`,
+   `CommandAllowSowDesc`, `AutoHackDesc`), with the participle in the
+   masculine for the unnamed setting. `Se ativado` appears once
+   (`AutoBuildTransportPodDesc`); it is not wrong, but `Quando ativado` is
+   the house frame.
+3. **Telegraphese.** Clipped present-tense fragments with no verb of
+   capacity or consequence ("Cura feridas. Mais rápido com habilidade.").
+   Vanilla states consequences in the synthetic future (`plantarão`,
+   `ficará`, `reabastecerão`; about 180 `-rá`/`-rão` forms in Core
+   descriptions against 7 `vai`/`irá` + infinitive) and spends `pode` /
+   `podem` freely (300+). Use the synthetic future in tooltips and
+   descriptions, `vai` + infinitive only in chatty Workshop prose.
+4. **Balanced tricolons and aphoristic closers.** Vanilla lists three nouns
+   often (`X, Y e Z`, 140+ in descriptions) but never three parallel
+   clauses capped by a maxim. A closing sentence of the shape `Onde ... ,
+   ela ...` or `... e nada mais.` in lore is the tell; vanilla's own lore
+   ends on a fact or, at most, a dry aside (`Alguns veem isto como uma
+   desvantagem; outros veem como um benefício.`, `GoJuice.description`,
+   the one semicolon idiom worth knowing).
+5. **Sentence-initial participle and gerund clauses.** pt-BR vanilla does
+   open with them, but almost only in backstories (`Trabalhando para um
+   monarca tirânico ...`, `Tendo crescido em ...`, `Nascido em ...`: about
+   140 of 6.1k description sentences, 126 of them in backstories). In item,
+   ability and settings text they read translated. A trailing gerund
+   hanging off a short abstract subject (`..., cansando mais rápido o tempo
+   todo`, `..., tornando-o ...`) is the commoner leak: turn it into a
+   coordinated finite verb (`e se cansa mais rápido`).
+6. **Coinages and possessive chains.** English noun stacks come out as
+   `de` chains (`o medidor do kit do sistema da armadura`); Core has about
+   50 triple `de` chains in 3.3k descriptions, almost all fixed vanilla
+   names. Name the visible item once and let the sentence carry it. Hyphenated
+   coinages are rare and lexical in vanilla (`suco-turbo`, `obra-prima`,
+   `matéria-prima`, enclitics like `tornou-se`); never hyphenate a mod
+   coinage (`medicina-carregada`). A head noun repeated from the label
+   inside its own description (`Carcaça de guerra ... da carcaça de
+   guerra`) is the same tell.
+7. **Semicolons, colon pivots and asides.** 18 semicolons and 36 mid-text
+   colons over 3.3k Core descriptions, mostly lists and fixed letter
+   frames; zero em or en dashes in Core, 2 en dashes in Odyssey. Split an
+   English semicolon into two sentences, reflow an English dash into a
+   comma or a new sentence, and keep parentheses for vanilla's own uses
+   (gender hedges `(a)`, units, `(padrão)`-style suffixes).
+8. **Signature phrases repeated across surfaces.** `ali mesmo`, `o tempo
+   todo`, `logo em seguida`, `por mais algum tempo`, `em capacidade total`:
+   each reads fine once and generated the third time. Say it once per
+   surface, plainly elsewhere.
+9. **Over-explanation.** Vanilla tooltips state what the value is and,
+   at most, one consequence (`O número máximo de {CHARGENOUN_plural} que
+   este objeto possui.`). Teaching the mechanic behind the number, or
+   restating the row's unit (`em segundos` after a value already shown as
+   `5s`), is the tell.
+10. **Modder vocabulary.** `definições`, `defs`, `def`, `subsistema`,
+    `módulo de dressing`, English loan nouns the UI never shows. Vanilla
+    says `configurações` for settings, `o mod` for the mod, and names
+    things by their in-game label (Core Keyed `Traits` = `Traços` for a
+    trait, `Work.label` = `Trabalho` for the work tab).
+
+**Calque (English syntax under native words).** The tells specific to
+pt-BR, each found in machine output and absent from vanilla's own prose:
+
+- **Overt subject pronouns.** pt-BR is pro-drop; only 86 of about 6.1k
+  Core description sentences open with `Ele`/`Ela`/`Eles`. A pronoun at the
+  head of every second sentence, or `ele` restated after the subject is
+  already clear, is English under Portuguese.
+- **`eles` for the English singular "they".** The community VFEP pack's
+  trait text ships `Nenhuma quantidade de dor terá efeito sobre eles` for
+  one pawn. Vanilla writes the pawn tokens (`{PAWN_pronoun}` = ele/ela,
+  `{PAWN_objective}` = dele/dela after a `de` frame: `gostarem
+  [PAWN_objective]`, `Beauty.degreeDatas.pretty.description`) or hedges
+  with `(a)` (`solicitado(a)`, `atraído(a)`), never a plural pronoun.
+- **English clause order.** Main clause first and the cause trailing in a
+  `depois que` / `após` tail (`A série foi criada para X, depois que o
+  programa percebeu Y`) is the English shape; native lore leads with the
+  circumstance (`Quando o programa percebeu Y, criou a série para X`).
+- **Possessive overuse.** `seu`/`sua` before every body part and owned
+  item (English "his arm", "their wounds"); vanilla uses the article where
+  the owner is obvious (`trata as feridas`, not `trata suas feridas`, once
+  the patient is the subject of the sentence).
+- **Passive with `ser` + participle where pt-BR uses the active or `se`.**
+  Core does use the `é` + participle passive (about 400 in descriptions),
+  but mostly in stat definitions; stacked passives in a lore paragraph
+  (`foi criada ... foi equipada ... é usada`) read as translated.
+- **Literal "Default: X" and English capitalisation of injected nouns.**
+  Vanilla writes `Padrão: {0}.` and lowercase def labels mid-sentence; a
+  Title Case set or item name mid-sentence copies the English.
