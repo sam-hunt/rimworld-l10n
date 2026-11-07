@@ -272,6 +272,7 @@ title and its own coinages stay in that repo's glossary.
 | `<set>` warcasket / shoulders / helmet (label pattern) | ataúd de guerra `<set>` / hombreras `<set>` de ataúd de guerra / casco `<set>` de ataúd de guerra | Community VFEP label pattern (`ataúd de guerra bruto`, `hombreras bruto de ataúd de guerra`, `casco bruto de ataúd de guerra`); the set name stays invariable in apposition. |
 | warcasket shell / pauldrons (shoulders) / helmet | armazón / hombreras / casco | Community VFEP (`Un armazón de ataúd de guerra...`, `VFEP.Shoulderpads`, `VFEP.Helmet`). |
 | warcasket foundry | forja de ataúd de guerra | Community VFEP `VFEP_WarcasketFoundry.label`. |
+| warcasket slugthrower | lanza-postas para ataúd de guerra | Community VFEP `VFEP_WarcasketGun_Slugthrower.label` (Cito2310, fetched 2026-11-07); the hyphen is the pack's. |
 | entomb / welded into | sepultar / sepultado en | Community VFEP `VFEPirates.EntombingWarning` ("Sepultar colonos en un ataúd de guerra"). |
 | specialised warcaskets (VFEP research label) | ataúdes de guerra especializados | Community VFEP `VFEP_SpecialisedWarcaskets.label`. |
 | spacer warcaskets (VFEP research label, cited in prose) | "ataúdes de guerra de la era espacial" (ASCII quotes) | Shipcracker's Workshop FAQ wording, quoted as vanilla quotes research names (`proyectos de investigación: "{RESEARCH}"`). Not the pack's `ataúdes de guerra espacial`, which is ungrammatical. |

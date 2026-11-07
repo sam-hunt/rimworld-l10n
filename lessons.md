@@ -134,6 +134,17 @@ the originating passes.
   nested `{lookup: {2}; Case; 3}` compares correctly only because the regex
   finds the inner `{2}`, while `{lookup: [some_symbol]; Case; 1}` reads as one
   invented placeholder and fails. Restructure rather than fight it.
+- **A caller can pass an argument its English never prints, and only the
+  `[...]` form of it gets past the checker.** A mod that swaps a vanilla
+  letter's text through a Keyed string (Medic Warcasket's gender-free
+  stranger in black letter, formatted by `IncidentWorker_WandererJoin` with
+  `pawn.Named("PAWN")`, label and text alike) has an English with no
+  `PAWN` token, so `{PAWN_pronoun}` in a translation fails as an invented
+  argument placeholder while `[PAWN_pronoun]` and `[PAWN_kind]` pass
+  uncompared; the game resolves both forms the same. Use them only once the
+  call site is confirmed to pass the argument. A `{PAWN_gender ? … : …}`
+  construct passes as a grammar construct and is the cleaner choice where
+  only agreement is needed (de, ru, fr and es did so).
 - When an English string is reworded, refresh the EN comments in every
   language **in the same commit** — the checker reports the mismatch as
   STALE either way, but batching avoids churn.

@@ -229,6 +229,7 @@ glossary.
 | helmet (warcasket helmet) | 워캐스킷 헬멧 | RMK `VFEP_WarcasketHelmet_*.label`. |
 | warcasket shell | 워캐스킷 (no separate word) | RMK drops "shell" (see the warcasket row); the torso piece reads as the bare 워캐스킷, and Toxin's shipped prose says `워캐스킷의 탱크` where it must tell the shell from the set. |
 | warcasket foundry | 워캐스킷 주조대 | RMK `VFEP_WarcasketFoundry.label`; bare "foundries" in lore is `주조대`. |
+| warcasket slugthrower | 워캐스킷 산탄총 | RMK `VFEP_WarcasketGun_Slugthrower.label` (fetched 2026-11-07); 산탄총 is also Core `Gun_PumpShotgun`. |
 | entomb / weld on | 안치 (워캐스킷에 안치) | RMK `VFEPirates.EntombInWarcasket`; the Workshop's "welded into" / "weld it on" both use 안치. |
 | spacer warcaskets / specialised warcaskets (VFEP research labels, cited in prose) | 우주시대 워캐스킷 / 전문화 워캐스킷 | 전문화 워캐스킷 is RMK `VFEP_SpecialisedWarcaskets.label`; 우주시대 워캐스킷 is Shipcracker's Workshop wording (Core `TechLevel_Spacer` = `우주`). Cited as `'우주시대 워캐스킷' 연구` in ASCII single quotes per this file's research-citation rule. |
 | VFEP set names (siegebreaker / brute / guardian / cataphract / hazard / aerial) | 돌격 / 야수 / 수호 / 중무장 / 재해 / 충격 (each as the bare prefix: `돌격 워캐스킷`) | RMK set prefixes (`VFEP_Warcasket_Cataphract.label`, `_Hazard`, `_Aerial`). Aerial is `충격` and Shock is `강습`, which read swapped against their meaning but are what players see in-game; Royalty's `근위대 갑옷` is the vanilla Cataphract armor, not the VFEP set. Controller and sarcophagus are not rendered in any family glossary yet; take RMK's labels when one is needed. |
