@@ -15,6 +15,11 @@ whatever the public mod-roster display name calls the language.
 
 ## Engine mechanics (LanguageWorker)
 
+**`{0_indefinite}` returns the label unchanged** (base worker, Keyed `IndefiniteForm` = `{0}`,
+no `IndefiniteArticle` defined, no English fallback; decompile-verified on 1.7). Joiner:
+Core `ToCommaListAnd` = `{0}和{1}` (`AndLower` = `和` is a separate key); the head items are
+joined by a hard-coded ASCII `", "`, so three items read `A, B和C`.
+
 - **Folder-name resolution (UWU, decompile-verified against
   `Verse.LoadedLanguage`):** the constructor derives `legacyFolderName` by
   cutting the display name at the `(` character, and `AllDirectories`
@@ -254,7 +259,7 @@ Workshop title and its own coinages stay in that repo's glossary.
 | 7th generation / 10th generation (VFEP's two chassis) | 第七代 / 第十代 | Shipcracker's and Toxin's shipped prose (第七代战棺, 第十代太空时代机体), following the pack's paragraphs. |
 | Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | 特化型战棺`<part>`，在增加机体重量的同时大幅提升了防护性 | Community pack: superior = 大幅 (Shock), worse weight = 增加机体重量 (Barrage); Toxin Warcasket's shipped `shortDescription`s. |
 | Specialized spacer-tech warcasket shell / pauldrons / helmet (VFEP's 10th-generation opener) | 特化型太空时代级别战棺装甲/护肩/头盔 | Community pack's opening phrase for every 10th-generation part, verbatim (Shipcracker and Toxin Warcasket, shipped). |
-| ... with standard protection (the 10th-generation opener's tail) | ，在不增加机体重量的同时极大幅提升了防护性 | Community pack's Siegebreaker / Controller / Sarcophagus openers, every "standard protection" part (loose, as the pack is); Toxin Warcasket's shipped `TXWC_SpacerShortDescription_*`. |
+| ... with standard protection (the 10th-generation opener's tail) | ，在不增加机体重量的同时极大幅度提升了防护性 | Community pack's Siegebreaker / Controller / Sarcophagus openers, every "standard protection" part (loose, as the pack is), with the pack's 极大幅 completed to 极大幅度 as Biotech's `Apparel_MechlordSuit.description` writes it (极大幅 alone is not a word); Toxin Warcasket's shipped `TXWC_SpacerShortDescription_*`. |
 | 7th-generation paragraph (VFEP's lore paragraph on the 7th-generation chassis) | 由于机体基本性能的强化陷入瓶颈，第七代战棺的研发重心转向…… | Community pack's Hazard/Barrage/Shock text verbatim, its —— reflowed to a comma; shipped in Toxin Warcasket's descriptions. |
 | the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | 第十代战棺有些特殊，它们是用从海盗那里收缴的设备改造而成的…… | Community pack's Siegebreaker text verbatim (loose, as the pack is; the pack's Siegebreaker / Brute / Guardian / Sarcophagus / Controller descriptions share it), its —— reflowed to a comma; the full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/ChineseSimplified/`. |
 | spacer tier / spacer (armor, costs) | 太空时代级别 | Community pack's 10th-gen opener (特化型太空时代级别…); vanilla `TechLevel_Spacer` = 太空时代. Toxin's toggle 毒素型战棺升级为太空时代级别 is declarative like 险境型战棺可抵御真空. |

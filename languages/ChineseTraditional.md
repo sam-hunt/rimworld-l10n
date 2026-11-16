@@ -52,6 +52,11 @@ have been wrong in its most-repeated strings.
 
 ## Engine mechanics (LanguageWorker)
 
+**`{0_indefinite}` returns the label unchanged** (base worker, Keyed `IndefiniteForm` = `{0}`;
+`IndefiniteArticle` = `一個` exists but is only used when `IndefiniteForm` is absent, so it
+never appears; decompile-verified on 1.7). Joiner: Core `ToCommaListAnd` = `{0}和{1}`
+(`AndLower` = `和` is a separate key); head items are joined by a hard-coded ASCII `", "`.
+
 - **No `LanguageWorker_ChineseTraditional` type exists** (typedef enumeration
   of Assembly-CSharp, 2026-08-19 — the full `LanguageWorker_*` list has no
   Chinese entry of either script), and the zh-Hant `LanguageInfo.xml` declares
@@ -333,7 +338,7 @@ name, its Workshop title and its own coinages stay in that repo's glossary.
 | 7th generation / 10th generation (VFEP's two chassis) | 第七代 / 第十代 | Shipcracker's and Toxin's shipped prose (Toxin 第七代戰棺 and 第十代戰棺), following the pack's paragraphs. |
 | Specialized warcasket shell / pauldrons / helmet with superior protection and worse weight (VFEP's 7th-generation opener) | 特化型戰棺`<part>`，在增加機體重量的同時大幅提升了防護性。 | zh-Hans pack's Cataphract opener (进阶型→特化型); Toxin Warcasket's shipped `shortDescription`s (戰棺裝甲 / 護肩 / 頭盔). |
 | Specialized spacer-tech warcasket shell / pauldrons / helmet (VFEP's 10th-generation opener) | 特化型太空科技戰棺裝甲 / 護肩 / 頭盔 | zh-Hans pack's opening phrase for every 10th-generation part (特化型太空时代级别战棺…), with 太空科技 for the pack's 太空时代级别 (see the spacer-tech row in the main table); 特化型 from the pack's descriptions. Toxin ships 戰棺裝甲 for the shell where Shipcracker ships 戰棺外殼; Medic Warcasket (2026-11-05) ships 戰棺裝甲 too, matching the label pattern's body piece, so the shell slot of this opener is 裝甲 and Shipcracker's 戰棺外殼 follows at its next pass. |
-| ... with standard protection (the 10th-generation opener's tail) | ，在不增加機體重量的同時極大幅提升了防護性。 | zh-Hans pack's Siegebreaker / Controller / Sarcophagus openers (在不增加机体重量的同时极大幅提升了防护性), loose for "standard protection" as the pack is; Toxin Warcasket's shipped `TXWC_SpacerShortDescription_*`. Shipcracker's variant ends 強化了衝擊分散性能 for its "improved impact dispersion" (coined, close to the English; the pack's loose rendering was not adopted because it invents a weight claim). |
+| ... with standard protection (the 10th-generation opener's tail) | ，在不增加機體重量的同時極大地提升了防護性。 | zh-Hans pack's Siegebreaker / Controller / Sarcophagus openers (在不增加机体重量的同时极大幅提升了防护性), loose for "standard protection" as the pack is, with the pack's 极大幅, not a word in either script, written 極大地 as Biotech's zh-Hant `Apparel_MechlordSuit.description` has it; Toxin Warcasket's shipped `TXWC_SpacerShortDescription_*`. Shipcracker's variant ends 強化了衝擊分散性能 for its "improved impact dispersion" (coined, close to the English; the pack's loose rendering was not adopted because it invents a weight claim). |
 | 7th-generation paragraph (VFEP's lore paragraph on the 7th-generation chassis) | 由於機體基本性能的強化陷入瓶頸，第七代戰棺的研發重心轉向了創新改進。… | zh-Hans pack's Hazard paragraph, its dash reflowed into ，; 玻璃钢→塑鋼 (zh-Hant Core `Plasteel`); shipped in Toxin Warcasket's descriptions. |
 | the 10th-generation paragraph (VFEP's lore paragraph shared by every spacer-tier description) | 第十代戰棺有些特殊，它們是用從海盜那裡收繳的設備改造而成的。… | zh-Hans pack's paragraph (repeated on every spacer set; the Siegebreaker, Brute, Guardian, Sarcophagus and Controller descriptions share it), dash reflowed into ，; 兼容性→相容性 (Core `Incompatible` 不相容), 借助→藉助, quotes →「戰棺」. The full text is Toxin Warcasket's shipped Keyed `TXWC_SpacerLoreGeneration` in `1.6/Languages/ChineseTraditional/`. |
 | pilot (the wearer) | 駕駛員 | zh-Hant Core/Odyssey `Shuttle.description` (駕駛員的生物特徵); Shipcracker's and Toxin's shipped prose. |
@@ -343,8 +348,7 @@ Pending native review for the whole family: every "derived" term above (護肩,
 裝甲主體, 戰棺鑄造廠, 破襲型 / 狂怒型 / 聖盾型, 特化型, 騎士型 / 險境型 /
 「特化型戰棺」 and the 7th-generation paragraph), converted from the zh-Hans pack
 and character-checked against the zh-Hant tars, but the actual Traditional pack
-could not be compared; the coined 空襲型, 太空級 and the adopted opener's 極大幅
-for "standard protection"; the shell slot (外殼 or 裝甲) in the openers. The
+could not be compared; the coined 空襲型 and 太空級; the shell slot (外殼 or 裝甲) in the openers. The
 set-specific coinages each repo lists stay pending there.
 
 ## Grounded common vocabulary, medical, tending and ability domain (Core, with Royalty and Anomaly where named; Medic Warcasket, 2026-11-05)

@@ -13,6 +13,12 @@ in-line as still awaiting one.
 
 ## Engine mechanics (LanguageWorker)
 
+**`{0_indefinite}` returns the label unchanged** (no worker type, so the base
+worker returns Keyed `IndefiniteForm` = `{0}`; no `IndefiniteArticle` is defined,
+so no English fallback; decompile-verified on 1.7). Joiner: Core `ToCommaListAnd` = `{0}と{1}`
+(`GenText.ToCommaList(useAnd: true)`; `AndLower` = `と` is a separate key), with the head
+items joined by a hard-coded ASCII `", "`.
+
 **There is no `LanguageWorker_Japanese`, and that absence is the finding that
 shapes everything else.** Verified 2026-08-10 against the 1.6 assembly's full
 typedef list: workers ship for Catalan, Czech, Danish, Default, Dutch,

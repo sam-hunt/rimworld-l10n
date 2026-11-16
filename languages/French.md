@@ -14,6 +14,13 @@ on Core, Royalty, Ideology, Anomaly, Biotech and Odyssey.
 
 ## Engine mechanics (LanguageWorker)
 
+**`{0_indefinite}` on a label with no gender entry:** the overridden worker
+picks `une ` only for Female and `un ` otherwise, a miss defaulting Male, so an
+adjective label from a `MechWeightClassDef` reads `un léger`, `un moyen`,
+`un lourd`, `un ultra-lourd` (decompile-verified on 1.7,
+`LanguageWorker_French.WithIndefiniteArticle`; Keyed `IndefiniteForm` is not read).
+Joiner: Core `ToCommaListAnd` = `{0} et {1}`.
+
 **`LanguageWorker_French` rewrites every finished string, and this is the
 finding that shapes everything else** (decompile-verified) — including plain
 `.Translate()` Keyed output, not just rulepacks. Its `PostProcessed` runs five

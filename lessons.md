@@ -110,6 +110,30 @@ the originating passes.
   rather than erroring, so the mechanism is safe to use and degrades to
   nominative — but a mod-coined label is never in the table, so
   restructuring is still right when the injected value is mod-owned.
+- **What `{0_indefinite}` does to a label with no gender entry** (decompile-verified
+  on 1.7, `GrammarResolverSimple.TryResolveSymbol`, `LanguageWorker`). A plain
+  string and a `Def` (its `label`) both call the two-argument
+  `WithIndefiniteArticle(str)`, which resolves gender with
+  `ResolveGender(str)`, and a word in no `WordInfo/Gender` list comes back
+  **Male** (the default). The result is then the worker's: French, German,
+  Spanish and pt-BR override `WithIndefiniteArticle` and prepend a masculine
+  article to the bare label (their Keyed `IndefiniteForm` is never read);
+  the other five run the base worker, which returns Keyed
+  `IndefiniteForm` (`{0}` in zh-Hans, zh-Hant, Japanese, Korean and Russian), so the
+  label comes out **unchanged** and the `IndefiniteArticle` value is never
+  used. No language falls back to an English article. An adjective label such
+  as a `MechWeightClassDef` label ("light") therefore reads "un léger", "ein
+  leicht", "un liviano", "um leve" in the four article languages, which only
+  suits a slot that wants a masculine noun phrase; for any other shape,
+  restructure around the bare label instead of `{0_indefinite}`.
+- **The list joiner is `ToCommaListAnd`, not `AndLower`.**
+  `GenText.ToCommaList(useAnd: true)` joins everything but the last item with a
+  hard-coded `", "` (not translatable), then calls
+  `"ToCommaListAnd".Translate(head, last)`; `ToCommaListOr` is the `or` twin and
+  `NoneLower` the empty case. Core defines `ToCommaListAnd` in all nine
+  languages (values per language file), so none falls back to English; the
+  hard-coded `", "` is why Chinese and Japanese lists still carry an ASCII comma
+  between three or more items.
 - **A `lookup` miss does not degrade identically across languages — check
   whether the worker overrides `TryLookUp`** (decompile-verified 2026-08-10).
   The base implementation lowercases only its internal probe key and returns

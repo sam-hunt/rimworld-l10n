@@ -11,6 +11,10 @@ direction. RimWorld's language folder is `Russian` (tar:
 
 ## Engine mechanics (LanguageWorker)
 
+**`{0_indefinite}` returns the label unchanged** (base worker: Keyed `IndefiniteForm` = `{0}`,
+decompile-verified on 1.7; no Russian `IndefiniteArticle` is defined, so no English
+fallback), so `лёгкий` stays `лёгкий`. Joiner: Core `ToCommaListAnd` = `{0} и {1}`.
+
 **`LanguageWorker_Russian` overrides no `PostProcessed`** (decompile-verified)
 — no elision, no contraction, no `'s` rewriting, and `WithDefiniteArticle` /
 `WithIndefiniteArticle` fall through to the base (Core `Keyed/Grammar.xml`
@@ -149,6 +153,7 @@ strings unless noted):
 | plasteel / uranium / chemfuel | пласталь / уран / химтопливо | | Core; short form as in Odyssey and the community VFEP pack (`химтоплива`) |
 | Off / Default: {0}. / (default) / When enabled (settings) | Выкл / По умолчанию: {0}. / (по умолчанию) / Если включено | | Core Keyed `Off`, `Default`, `default`; `Если включено` per Core's tooltips (Toxin's glossary), `Если отключено` as shipped; the "Default: on" value reads `По умолчанию: включено.` / `выключено.` |
 | cooldown / range / cells and hours (settings units) | перезарядка / дальность / `(в клетках)`, `(в часах)`, `(%)` | | Core Keyed `CooldownTime`, `Range`; counts are written to avoid numeral agreement (`Клеток ...: {1}`) |
+| cell count, possibly decimal (settings) | `{0} кл` | `{0} клеток` needs numeral agreement | Core `MoveSpeed.formatString` and `CrawlSpeed.formatString` = `{0} кл/с` (a decimal cells-per-second stat), so the `кл` abbreviation is agreement-free for any number; Biotech `CellsPerDay` = `{0} клеток в день` is the spelled-out form and only safe for whole counts |
 | Odyssey (DLC name) / (requires Odyssey) | Odyssey / (требуется Odyssey) | | Core `ExpansionDef` keeps `Odyssey` in Latin; `требуется` as in Core `SkillNeededForConstructing` |
 | quantities with a named resource, tank capacity (settings) | `{0} ед. ({1})`, `Ёмкость бака ({0})` | | Core uses `{0} ед.` for mass quantities (`LowMedicineDesc`, `StatsReport_ReloadMarketValue`); the resource name stays nominative in parentheses, so no numeral or case agreement is needed |
 | Using ability: {0} (VEF `AbilityDef.jobReportString`) | применяет способность «{0}» | | VEF ships English only; third-person present like Core's `JobDef.reportString`s, no trailing period, guillemets around the label (Shipcracker Warcasket, shipped since 2026-09-26) |

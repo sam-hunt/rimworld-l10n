@@ -18,6 +18,12 @@ languages share one worker.
 
 ## Engine mechanics (LanguageWorker)
 
+**`{0_indefinite}` on a label with no gender entry:** `uma ` only for Female, else
+`um `, a miss defaulting Male, so a `MechWeightClassDef` label reads `um leve`,
+`um médio`, `um pesado`, `um ultra pesado` (decompile-verified on 1.7,
+`LanguageWorker_Portuguese.WithIndefiniteArticle`; the Keyed `IndefiniteForm`
+is not read). Joiner: Core `ToCommaListAnd` = `{0} e {1}`.
+
 **The worker does almost nothing, and that is the finding that shapes
 everything else** (decompile-verified across all four repos). It overrides
 **only** `WithIndefiniteArticle` and `WithDefiniteArticle` (prepending `o `/
@@ -298,6 +304,16 @@ are noted as coined in their rows; no glossary flags them as open.
   hard-code masculine** (`um {CHARGENOUN}`, `seu último {CHARGENOUN}`), so a
   feminine charge noun reads "um unidade" and no `WordInfo/Gender` line can
   fix it: prefer a masculine coinage (2026-10-13, Toxin Warcasket).
+- **Vanilla pt-BR defects, do not copy** (vgrep-confirmed on 1.7): Core
+  `Apparel_PsychicShockLance.comps.CompApparelReloadable.chargeNoun` =
+  `carregar`, a verb where a noun belongs (the same value sits on the other
+  reloadables, `Apparel_PsychicInsanityLance`, `OrbitalTargeterBombardment`,
+  `OrbitalTargeterPowerBeam`, `TornadoGenerator`), so coin a noun (`carga`
+  is feminine, see above) rather than mirroring it. Biotech Keyed
+  `MechResurrectionCharges` = `cargas de ressureição` misspells the word;
+  the correct spelling is `ressurreição`. Biotech `RepairMech.reportString`
+  = `reparando TargeyA.` carries a broken token (`RepairMechRemote` has the
+  right `TargetA`).
 - `Miscellaneous` has no vanilla key; the nearest is `MiscRecordsCategory` =
   `Outros`. Core's `Vent` building is `saída de ventilação` (the temperature
   vent), so a gas vent should not reuse it (`válvulas` there).

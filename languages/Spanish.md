@@ -19,6 +19,12 @@ across; it needs its own grounding pass.
 
 ## Engine mechanics (LanguageWorker)
 
+**`{0_indefinite}` on a label with no gender entry:** `una ` only for Female,
+else `un `, a miss defaulting Male, so a `MechWeightClassDef` label reads `un liviano`,
+`un mediano`, `un pesado`, `un ultrapesado` (decompile-verified on 1.7,
+`LanguageWorker_Spanish.WithIndefiniteArticle`; the Keyed `IndefiniteForm` with its
+`{0_gender ? un : una : unos: unas}` is not read). Joiner: Core `ToCommaListAnd` = `{0} y {1}`.
+
 **`LanguageWorker_Spanish` is decompile-verified and imposes no hidden
 authoring requirement** — no `PostProcessed` override (unlike German), no
 particle system (unlike Korean). It overrides only `WithIndefiniteArticle`

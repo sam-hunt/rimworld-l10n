@@ -18,6 +18,12 @@ folder is `Korean` (tar: `Korean (한국어).tar`); decompile-verified
 
 ## Engine mechanics (josa markers and LanguageWorker)
 
+**`{0_indefinite}` returns the label unchanged:** `LanguageWorker_Korean` does not
+override `WithIndefiniteArticle`, so the base worker returns Keyed `IndefiniteForm` = `{0}`
+(the `IndefiniteArticle` = `이것` is never used; decompile-verified on 1.7). Joiner: Core
+`ToCommaListAnd` = `{0}, 그리고 {1}` (the key is not `AndLower`, which is a separate `그리고`);
+three or more items read `A, B, 그리고 C`, the head joined by the hard-coded `", "`.
+
 **Josa (particle) markers are the one hard mechanical rule Korean adds, and
 nothing else in this skill family has an equivalent — and it applies to any
 Keyed string, not just combat or rulepack text.** Korean particles are

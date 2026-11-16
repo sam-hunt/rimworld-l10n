@@ -14,6 +14,25 @@ RimWorld's language folder is `German` (tar: `German (Deutsch).tar`).
 
 ## Engine mechanics (LanguageWorker)
 
+**`{0_indefinite}` on a label with no gender entry** (decompile-verified on 1.7:
+`LanguageWorker_German.WithIndefiniteArticle`, `LoadedLanguage.ResolveGender`).
+The German worker never reads the Keyed `IndefiniteForm`. A word absent from
+`Male/Female/Neuter.txt` resolves **Male**, so it gets `ein ` prepended and no
+inflection: a `MechWeightClassDef` label gives `ein leicht`, `ein mittel`,
+`ein schwer`, `ein ultraschwer`, none of them in the gender tables. A
+**Neuter** word returns the bare string with no article at all (the `_ => str`
+arm), so a neuter noun in `{0_indefinite}` loses its `ein`. For an accusative
+or dative slot, wrap it: `{replace: {0_indefinite}; "ein leicht"-"einen leichten"; ...}`.
+`replace` is a function span, its nested `{0_indefinite}` is resolved first
+into the argument buffer, args split on `;` and are space-trimmed, and
+`ResolveReplace` returns on the **first** `old` the text contains (so order
+overlapping prefixes longest first), the text unchanged if none matches.
+Core ships the same shape (`PsychicDrone.description`:
+`{replace: {0_plural}; "männlichs"-"Männer"; "weiblichs"-"Frauen"}`). It covers
+only the labels you list, so a modded weight class passes through as `ein <label>`.
+Core's German weight class labels are `leicht`, `mittel`, `schwer`,
+`ultraschwer`. Joiner: Core `ToCommaListAnd` = `{0} und {1}`.
+
 **Case is the German landmine, not gender** (decompile-verified:
 `Verse.GrammarResolverSimple`, `LanguageWorker_German`, `LanguageWordInfo`).
 `"key".Translate(args)` — i.e. any ordinary Keyed string — reaches
