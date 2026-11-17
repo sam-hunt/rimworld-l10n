@@ -365,11 +365,14 @@ the originating passes.
   3609835606/`), pt-BR `RafaelNaymaier/Traducao-Vanilla-Expanded-PT-BR`
   (`VGE_Chapter1_*.xml`), and `LordMordelon/RML` for SpanishLatin only (no
   Castilian pack). German, French and Japanese have none; Chinese has a
-  Workshop-only pack ("Vanilla Gravship Expanded - 简&繁中文汉化包") that
-  `q847633684/Vanilla-Expanded-ZH` does not mirror. Their gravjumper / pilot
-  cockpit: ru гравипрыжковый корабль / кабина пилота, ko 중력도약선 / 콕핏
-  콘솔, pt-BR gravisaltador / cockpit do piloto, es gravisaltador / cabina de
-  pilotaje. **Find packs with GitHub code search on a def key, not the
+  Workshop-only pack ("Vanilla Gravship Expanded_zh", id 3627299714, both
+  scripts under `Cont/Chapter 1/Languages/`) that
+  `q847633684/Vanilla-Expanded-ZH` does not mirror, so it is readable only
+  from a local subscription; its page forbids reposting, so cite terms, never
+  text. Their gravjumper / pilot cockpit: ru гравипрыжковый корабль / кабина
+  пилота, ko 중력도약선 / 콕핏 콘솔, pt-BR gravisaltador / cockpit do piloto,
+  es gravisaltador / cabina de pilotaje, zh-Hans 逆重飞梭 / 驾驶座舱, zh-Hant
+  重力梭 / 駕駛座艙. **Find packs with GitHub code search on a def key, not the
   Workshop:** `gh api -X GET search/code -f q='"VGE_PilotCockpit.label"'`
   lists every indexed repo translating that key in one request, where
   `steamcommunity.com/workshop/browse` answered scripted requests with HTTP
