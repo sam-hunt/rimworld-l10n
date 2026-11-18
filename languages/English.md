@@ -11,7 +11,7 @@ language's own "Generated-text tells" section follows, because a tell in the
 English ships in every translation.
 
 The mechanical tells (dashes, semicolons, "Whether" openers, parenthetical
-asides) are enforced by the checker (`check_translations.py`, "player text"
+asides, single line breaks between sentences) are enforced by the checker (`check_translations.py`, "player text"
 warnings; errors under `--strict`, so a release cannot ship them). The
 judgment tells below are a read, done when the text is written and again at
 release over the strings that changed since the last tag.
@@ -72,7 +72,11 @@ words), under "Generated-text tells".
    tooltips of the shape "A suite already holding more than this loses the
    excess" / "A shot already given keeps its own clock". Vanilla never
    documents what happens to in-flight state when an option changes. Cut them
-   all; keep at most one where the behavior would truly surprise.
+   all; keep at most one where the behavior would truly surprise. The
+   recipe frames of section 3 are exempt, because they are vanilla's own
+   repetition: "When enabled, ... When disabled, ..." on every toggle and
+   "Default: {0}." on every row are correct, not a tell. The tell is a frame
+   the mod invented.
 2. **"Whether ..." tooltip openers.** That is docstring voice. Toggles take
    vanilla's frame: "When enabled, X will Y. When disabled, Z."
 3. **Telegraphese.** Clipped present-tense fragments with no "will", "can" or
@@ -104,6 +108,19 @@ words), under "Generated-text tells".
 10. **Modder vocabulary.** "definitions", "defs", "caring work types",
     internal subsystem names ("the suite", "the stream") that the player
     never sees labeled anywhere.
+11. **A line break after every sentence, or a paragraph per caveat.** A
+    single `\n` between sentences is a hard break with no gap, so it cannot
+    be told from a wrapped line and the tooltip's right edge goes ragged.
+    Vanilla runs a tooltip's sentences together as one paragraph, and puts a
+    blank line (`\n\n`) between the parts of a longer description. Of 996
+    tooltip-style strings in the game's English Keyed files (measured
+    2026-11-18), 214 carry `\n\n` and 4 put a single `\n` between two
+    sentences. The checker warns on the single break. The fix is to join the
+    sentences, not to promote each break to a blank line. A blank line sets
+    off at most one closing note per tooltip, and only a note that survived
+    the cut order of section 4: scope notes and edge cases are cut before
+    they are given a paragraph, and the same note on several settings is
+    tell 1 again with more room.
 
 ## 3. Recipes by text type
 
@@ -209,7 +226,8 @@ recipe's shape, run the checker. Reviewing a mod's existing text:
 
 - [ ] No tooltip opens with "Whether".
 - [ ] Every toggle tooltip reads "When enabled ... When disabled ...".
-- [ ] No sentence frame repeats across more than two strings.
+- [ ] No sentence frame repeats across more than two strings (the section 3 recipe frames excepted).
+- [ ] No single `\n` between sentences; at most one `\n\n` note per tooltip, and it survived the section 4 cut.
 - [ ] No semicolons, dashes or parenthetical asides in player text.
 - [ ] No hyphenated coinage that vanilla does not already use.
 - [ ] Ability descriptions open with an imperative and use "will" for consequences.
