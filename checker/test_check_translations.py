@@ -701,6 +701,26 @@ class PlayerTextTest(unittest.TestCase):
                             "an em/en dash" in l for l in lines))
         self.assertFalse(any("FX_Lookup" in l for l in lines))
 
+    def test_single_line_break_between_sentences_warns_once(self):
+        code, lines = self.check(self.files(
+            keyed=[("FX_Break", "It is fast.\\nIt is loud.\\nIt is red."),
+                   ("FX_Blank", "It is fast.\\n\\nNote: it is loud."),
+                   ("FX_List", "1) Open Steam\\n2) Go to the page.\\n3) Done"),
+                   ("FX_Dashes", "- one.\\n- two."),
+                   ("FX_Lower", "It is fast.\\nand loud."),
+                   ("FX_Label", "Version {0}\\nWe are running.")],
+            english="It is fast.\nIt is loud.",
+            about="Line one.\nLine two."))
+        self.assertEqual(code, 0)
+        msg = "single line break between sentences; join them into one " \
+              "paragraph, or use a blank line to set off a note"
+        self.assertEqual(len(lines), 2, lines)
+        self.assertTrue(any("<FX_Break> " + msg in l for l in lines))
+        self.assertTrue(any("[English/DefInjected/ThingDef]" in l
+                            and "<FX_Helmet.description> " + msg in l
+                            for l in lines))   # a real newline in the sidecar
+        self.assertFalse(any("About.xml" in l for l in lines))
+
     def test_strict_fails_on_a_tell(self):
         code, lines = self.check(self.files(keyed=[("FX_Dash", "Fast — loud.")]),
                                  strict=True)

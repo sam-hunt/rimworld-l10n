@@ -67,9 +67,11 @@
 #                no "Whether" opener, no parenthetical aside in any English
 #                player-facing string (Keyed, the sidecar's required
 #                DefInjected English, About.xml's description, the English
-#                Workshop page), and no dash in a translation into a language
-#                whose vanilla data uses none (warnings; --strict makes the
-#                release gate fail on them, CI's non-strict run only reports)
+#                Workshop page), no single line break between two sentences
+#                (Keyed and sidecar English only), and no dash in a
+#                translation into a language whose vanilla data uses none
+#                (warnings; --strict makes the release gate fail on them,
+#                CI's non-strict run only reports)
 #   LoadFolders: every Defs/ or Languages/ root sits in a listed load folder,
 #                and only the roots the game loads on the sidecar's game
 #                version (meta.gameBuild) are checked: a repo that keeps a
@@ -1270,6 +1272,13 @@ DASH_RE = re.compile("[\u2013\u2014\u2015]")           # en dash, em dash, horiz
 WHETHER_RE = re.compile(r"\s*Whether\b")
 PAREN_RE = re.compile(r"\(([^()]*)\)")
 SENTENCE_RE = re.compile(r"[.!?](\s|$)")              # "1.5" is not a sentence end
+# A sentence end, exactly one line break, then a capital: the break renders
+# as a hard return with no gap, so it reads as a ragged soft wrap. Keyed
+# values carry the literal two characters backslash-n; the sidecar's
+# DefInjected English carries a real newline. A blank line (two breaks) is
+# vanilla's way to set off a note, and list items ("1) ...", "- ...") or
+# label lines never match the sentence-end + capital shape.
+SINGLE_BREAK_RE = re.compile(r"[.!?](?:\\n|\r?\n)(?!\\n|\r?\n)[A-Z]")
 PAREN_ASIDE_MIN_WORDS = 3   # "(requires restart)", "(held by {3})" are labels, not asides
 
 # Languages whose vanilla text contains no dash at all, so a dash in a
@@ -1283,8 +1292,10 @@ PAREN_ASIDE_MIN_WORDS = 3   # "(requires restart)", "(held by {3})" are labels, 
 DASH_FREE_LANGUAGES = {"Spanish", "PortugueseBrazilian", "Korean"}
 
 
-def player_text_findings(text):
+def player_text_findings(text, line_breaks=False):
     # The tells one English string can carry, as messages; [] when clean.
+    # line_breaks opts into the single-break rule, off for About.xml, whose
+    # description is hand-formatted with real newlines and lists.
     msgs = []
     if DASH_RE.search(text):
         msgs.append("contains an em/en dash; reflow the sentence (no dashes "
@@ -1305,6 +1316,9 @@ def player_text_findings(text):
             if len(m.group(1).split()) >= PAREN_ASIDE_MIN_WORDS:
                 msgs.append(f"parenthetical aside ({m.group(1).strip()}); "
                             "make it a sentence or drop it")
+    if line_breaks and SINGLE_BREAK_RE.search(text):
+        msgs.append("single line break between sentences; join them into one "
+                    "paragraph, or use a blank line to set off a note")
     return msgs
 
 
@@ -1313,9 +1327,9 @@ def check_player_text(english_keyed, views, root, report):
     # the sidecar's required DefInjected English (every world's view, so a
     # per-world variant is read too), About.xml's description. The Workshop
     # page is read in check_workshop, which already parses it.
-    def scan(label, key, text):
+    def scan(label, key, text, line_breaks=True):
         for t in (text if isinstance(text, list) else [text]):
-            for msg in player_text_findings(t or ""):
+            for msg in player_text_findings(t or "", line_breaks):
                 report.warn(label, f"[player text] <{key}> {msg}")
     for key, (text, _, path) in sorted(english_keyed.items()):
         scan(path, key, text)
@@ -1337,7 +1351,7 @@ def check_player_text(english_keyed, views, root, report):
             report.error(about, f"not well-formed XML: {e}")
             desc = None
         if desc is not None:
-            scan(about, "description", desc.text or "")
+            scan(about, "description", desc.text or "", line_breaks=False)
 
 
 def check_translation_dash(lang, key, text, en_text, path, report):
